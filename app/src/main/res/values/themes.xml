@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme._23110035_23110060" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Fix màu primary để tránh Material3 override button thành màu tím -->
+        <item name="colorPrimary">#F47B7B</item>
+        <item name="colorPrimaryVariant">#E53935</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#E53935</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+    </style>
+
+    <style name="Theme._23110035_23110060" parent="Base.Theme._23110035_23110060" />
+</resources>

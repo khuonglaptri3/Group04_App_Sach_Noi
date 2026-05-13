@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App -->
+    <string name="app_name">MyApp</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="email">Email</string>
+    <string name="email_hint">demo@email.com</string>
+    <string name="password">Mật khẩu</string>
+    <string name="password_hint">Nhập mật khẩu</string>
+    <string name="remember_me">Ghi nhớ đăng nhập</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="login">Đăng nhập</string>
+    <string name="login_btn_description">Nút đăng nhập</string>
+    <string name="toggle_password_visibility">Hiện hoặc ẩn mật khẩu</string>
+    <string name="no_account">Chưa có tài khoản?</string>
+    <string name="sign_up">Đăng ký</string>
+    <string name="full_name">Họ và tên</string>
+    <string name="full_name_hint">Nhập họ và tên</string>
+    <string name="confirm_password">Xác nhận mật khẩu</string>
+    <string name="confirm_password_hint">Nhập lại mật khẩu</string>
+    <string name="already_have_account">Đã có tài khoản?</string>
+    <string name="sign_up_btn_description">Tạo tài khoản mới</string>
+
+</resources>

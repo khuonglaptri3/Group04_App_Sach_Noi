@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_top_coral.xml
+    This is a solid coral color background for the top section.
+    For the topographic/contour line pattern visible in the design,
+    you can either:
+    1. Use a PNG/SVG asset placed as a foreground overlay in FrameLayout
+    2. Draw it programmatically in a custom View
+    3. Use a vector drawable with paths for the contour lines
+
+    The base coral color matches the design: #F08080 / salmon-coral.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base coral fill -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#F08080" />
+        </shape>
+    </item>
+
+    <!-- Subtle lighter overlay for depth (optional) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="400dp"
+                android:startColor="#00FFFFFF"
+                android:endColor="#1AFFFFFF"
+                android:centerX="0.5"
+                android:centerY="0.5" />
+        </shape>
+    </item>
+</layer-list>

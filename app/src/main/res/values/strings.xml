@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyApp</string>
+
+    <!-- Login Screen -->
+    <string name="sign_in">Login</string>
+    <string name="email">Email</string>
+    <string name="email_hint">demo@email.com</string>
+    <string name="password">Password</string>
+    <string name="password_hint">Enter your password</string>
+    <string name="toggle_password_visibility">Show/Hide password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="login">Login</string>
+    <string name="login_btn_description">Log in to your account</string>
+    <string name="no_account">Don’t have an account? </string>
+    <string name="sign_up">Sign up</string>
+    <string name="full_name">Full name</string>
+    <string name="full_name_hint">Enter your full name</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="confirm_password_hint">Re-enter your password</string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="sign_up_btn_description">Create a new account</string>
+</resources>
