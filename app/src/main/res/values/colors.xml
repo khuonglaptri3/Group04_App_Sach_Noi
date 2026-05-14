@@ -1,5 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Material 3 Light Colors -->
+    <color name="md_theme_light_primary">#4f378a</color>
+    <color name="md_theme_light_onPrimary">#ffffff</color>
+    <color name="md_theme_light_primaryContainer">#6750a4</color>
+    <color name="md_theme_light_onPrimaryContainer">#e0d2ff</color>
+    <color name="md_theme_light_secondary">#ab3500</color>
+    <color name="md_theme_light_onSecondary">#ffffff</color>
+    <color name="md_theme_light_secondaryContainer">#fe6a34</color>
+    <color name="md_theme_light_onSecondaryContainer">#5d1900</color>
+    <color name="md_theme_light_tertiary">#765b00</color>
+    <color name="md_theme_light_onTertiary">#ffffff</color>
+    <color name="md_theme_light_tertiaryContainer">#c9a74d</color>
+    <color name="md_theme_light_onTertiaryContainer">#503d00</color>
+    <color name="md_theme_light_error">#B3261E</color>
+    <color name="md_theme_light_errorContainer">#ffdad6</color>
+    <color name="md_theme_light_onError">#ffffff</color>
+    <color name="md_theme_light_onErrorContainer">#93000a</color>
+    <color name="md_theme_light_background">#fdf7ff</color>
+    <color name="md_theme_light_onBackground">#1d1b20</color>
+    <color name="md_theme_light_surface">#FFFBFE</color>
+    <color name="md_theme_light_onSurface">#1d1b20</color>
+    <color name="md_theme_light_surfaceVariant">#E7E0EC</color>
+    <color name="md_theme_light_onSurfaceVariant">#494551</color>
+    <color name="md_theme_light_outline">#7a7582</color>
+    <color name="md_theme_light_inverseOnSurface">#f5eff7</color>
+    <color name="md_theme_light_inverseSurface">#322f35</color>
+    <color name="md_theme_light_inversePrimary">#cfbcff</color>
+    <color name="md_theme_light_surfaceTint">#6750a4</color>
+    <color name="md_theme_light_outlineVariant">#cbc4d2</color>
+    <color name="md_theme_light_scrim">#000000</color>
+
+    <!-- Category Colors -->
+    <color name="cat_audiobook">#FF8C42</color>
+    <color name="cat_ebook">#56AB2F</color>
+    <color name="cat_summary">#F7971E</color>
+    <color name="cat_kids">#FF6B9D</color>
+    <color name="cat_business">#1A237E</color>
+    <color name="cat_meditation">#8E2DE2</color>
+    <color name="gradient_cta_start">#FF6B35</color>
+    <color name="gradient_cta_end">#FF0000</color>
 </resources>
