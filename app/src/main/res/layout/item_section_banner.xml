@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_section_banner.xml
+    Banner "Quà tặng hôm nay" — hiển thị như 1 section item trong HomeSectionAdapter
+    ViewType riêng để adapter phân biệt với carousel thông thường
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardBanner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="20dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="#EEDDFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#AFA9EC"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Icon quà -->
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="Quà tặng"
+            android:padding="2dp"
+            android:src="@drawable/ic_gift"
+            app:tint="#534AB7" />
+
+        <!-- Nội dung text -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvBannerTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quà tặng hôm nay — miễn phí"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="#3C3489"
+                tools:text="Quà tặng hôm nay — miễn phí" />
+
+            <TextView
+                android:id="@+id/tvBannerSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="#534AB7"
+                tools:text="Đắc Nhân Tâm · Còn 12 giờ" />
+
+        </LinearLayout>
+
+        <!-- Mũi tên -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="Xem chi tiết"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="#7F77DD" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
