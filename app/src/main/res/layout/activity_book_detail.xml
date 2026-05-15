@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorBackground">
+    android:background="android:attr/colorBackground">
 
     <!-- Scrollable content and collapsible header -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -82,7 +82,7 @@
                             android:layout_height="40dp"
                             android:layout_centerVertical="true"
                             android:background="@drawable/bg_circle_blur"
-                            android:src="@drawable/ic_arrow_back"
+                            android:src="@drawable/ic_back"
                             app:tint="?attr/colorOnSurface" />
 
                         <LinearLayout
@@ -402,7 +402,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="?attr/colorSurfaceContainer"
-        app:menu="@menu/bottom_nav_menu"
+        app:menu="@menu/menu_bottom_nav"
         app:itemIconTint="@color/bottom_nav_color_selector"
         app:itemTextColor="@color/bottom_nav_color_selector" />
 

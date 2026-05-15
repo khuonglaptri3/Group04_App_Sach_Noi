@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Màu nền: Trắng (vì đây là Light Theme) -->
+    <solid android:color="#FFFFFF" />
+
+    <!-- Bo góc cho thẻ (bạn có thể chỉnh sửa bán kính tùy ý) -->
+    <corners android:radius="16dp" />
+
+    <!-- Đường viền bao quanh để thể hiện trạng thái "Đang chọn" -->
+    <!-- width: độ dày của viền, color: màu của viền (màu chủ đạo của app) -->
+    <stroke
+        android:width="2dp"
+        android:color="?attr/colorPrimary" />
+
+</shape>

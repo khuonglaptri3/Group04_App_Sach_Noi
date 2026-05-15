@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Đổ màu nền: Ở đây mình dùng màu xám nhạt mặc định của hệ thống -->
+    <solid android:color="?attr/colorSurfaceVariant" />
+
+    <!-- Bo góc thật lớn (ví dụ 100dp) để 2 đầu tròn xoe thành hình viên thuốc -->
+    <corners android:radius="100dp" />
+
+</shape>

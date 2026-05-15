@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Đổ màu nền: Tím nhạt (Mã màu chuẩn của Material Design 3) -->
+    <solid android:color="#E8DEF8" />
+
+    <!-- Bo góc thật lớn để tạo hình viên thuốc -->
+    <corners android:radius="100dp" />
+
+</shape>

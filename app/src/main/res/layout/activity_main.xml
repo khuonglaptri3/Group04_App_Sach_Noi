@@ -27,7 +27,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-    <!-- BottomNavigationView — luôn ghim dưới cùng -->
+<!--     BottomNavigationView — luôn ghim dưới cùng -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
