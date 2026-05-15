@@ -13,15 +13,9 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
-
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M18.5,7.5L12,14 5.5,7.5 4,9l8,8 8,-8z"/>
-
-</vector>
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_demo_ebook_img_background"/>
+    <foreground android:drawable="@mipmap/ic_demo_ebook_img_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_demo_ebook_img_foreground"/>
+</adaptive-icon>

@@ -177,7 +177,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_play_arrow"
+            android:src="@drawable/ic_play"
             app:backgroundTint="?attr/colorPrimary"
             app:fabCustomSize="72dp"
             app:maxImageSize="36dp"
@@ -189,7 +189,7 @@
             android:layout_height="56dp"
             android:layout_marginEnd="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_forward_30"
+            android:src="@drawable/ic_forward_10"
             app:tint="?attr/colorPrimary" />
 
         <ImageButton
