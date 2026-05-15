@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    layout_mini_player.xml
+    Thanh mini player hiện phía trên BottomNavigationView
+    Hiện: khi đang phát audio | Ẩn: không có gì đang phát
+    Nhấn vào → mở AudioPlayerFragment (fullscreen)
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardMiniPlayer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="8dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:strokeWidth="0.5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Thanh tiến trình mỏng trên cùng -->
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/miniPlayerProgress"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:max="100"
+            android:progress="62"
+            app:indicatorColor="?attr/colorPrimary"
+            app:trackColor="?attr/colorSurfaceVariant"
+            app:trackCornerRadius="0dp" />
+
+        <!-- Row nội dung -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10px">
+
+            <!-- Bìa sách nhỏ -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivMiniCover"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedSmall"
+                tools:src="@color/teal_200" />
+
+            <!-- Thông tin sách -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvMiniTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="Đắc Nhân Tâm · Chương 3" />
+
+                <TextView
+                    android:id="@+id/tvMiniAuthor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    tools:text="Dale Carnegie" />
+
+            </LinearLayout>
+
+            <!-- Nút Play / Pause -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMiniPlayPause"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Phát / Tạm dừng"
+                app:icon="@drawable/ic_pause"
+                app:iconSize="22dp"
+                app:iconTint="?attr/colorPrimary" />
+
+            <!-- Nút Next chapter -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMiniNext"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Chương tiếp theo"
+                app:icon="@drawable/ic_skip_next"
+                app:iconSize="20dp"
+                app:iconTint="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

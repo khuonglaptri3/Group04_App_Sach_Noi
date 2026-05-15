@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_category_chip.xml
+    Mỗi ô danh mục: icon tròn + label bên dưới
+    Dùng trong RecyclerView ngang của item_section_categories.xml
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="12dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:gravity="center"
+    android:minWidth="64dp"
+    android:orientation="vertical"
+    android:padding="4dp">
+
+    <!-- Icon wrap — màu nền thay đổi theo danh mục qua adapter -->
+    <FrameLayout
+        android:id="@+id/flIconWrap"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_category_chip">
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:contentDescription="Danh mục"
+            tools:src="@drawable/ic_brain" />
+
+    </FrameLayout>
+
+    <!-- Tên danh mục -->
+    <TextView
+        android:id="@+id/tvCategoryName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:maxLines="1"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        tools:text="Thiền định" />
+
+</LinearLayout>
