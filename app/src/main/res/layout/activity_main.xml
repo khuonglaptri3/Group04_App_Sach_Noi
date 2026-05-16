@@ -14,7 +14,38 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
-    <!-- NavHostFragment — phần trên, co lại khi BottomNav hiện -->
+    <!-- Top AppBar (Shared) -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayoutMain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        app:elevation="0dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarMain"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_menu"
+            app:title="BookHub"
+            app:titleCentered="true">
+
+            <ImageView
+                android:id="@+id/btnNotificationMain"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="Thông báo"
+                android:src="@drawable/ic_bell"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- NavHostFragment — Dưới AppBar -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/navHostFragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -24,7 +55,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayoutMain"
         app:navGraph="@navigation/mobile_navigation" />
 
 <!--     BottomNavigationView — luôn ghim dưới cùng -->
