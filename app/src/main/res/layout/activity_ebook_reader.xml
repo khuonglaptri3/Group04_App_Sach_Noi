@@ -156,18 +156,27 @@
                 android:lineSpacingExtra="10dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cv_selection_toolbar"
+    <include
+        android:id="@+id/selection_popup"
+        layout="@layout/reader_selection_popup"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        app:cardBackgroundColor="#322F35"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="380dp">
+        android:layout_marginTop="360dp"/>
+<!--    <com.google.android.material.card.MaterialCardView-->
+<!--        android:id="@+id/cv_selection_toolbar"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="48dp"-->
+<!--        app:cardBackgroundColor="#322F35"-->
+<!--        app:cardCornerRadius="24dp"-->
+<!--        app:cardElevation="8dp"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        android:layout_marginStart="24dp"-->
+<!--        android:layout_marginTop="380dp">-->
 
 <!--        <LinearLayout-->
 <!--            android:layout_width="wrap_content"-->
@@ -200,157 +209,157 @@
 <!--                android:textAlignment="center" />-->
 <!--        </LinearLayout>-->
 
-    </com.google.android.material.card.MaterialCardView>
+<!--    </com.google.android.material.card.MaterialCardView>-->
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cv_settings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="#F3EDF7"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="16dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_container">
+<!--    <com.google.android.material.card.MaterialCardView-->
+<!--        android:id="@+id/cv_settings"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginHorizontal="16dp"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        app:cardBackgroundColor="#F3EDF7"-->
+<!--        app:cardCornerRadius="24dp"-->
+<!--        app:cardElevation="16dp"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/bottom_container">-->
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:orientation="vertical"-->
+<!--            android:padding="20dp">-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_light_mode"
-                    app:tint="#49454F" />
-                <SeekBar
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:progress="60"
-                    android:thumbTint="#6750A4"
-                    android:progressTint="#6750A4" />
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_dark_mode"
-                    app:tint="#49454F" />
-            </LinearLayout>
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:gravity="center_vertical"-->
+<!--                android:layout_marginBottom="24dp">-->
+<!--                <ImageView-->
+<!--                    android:layout_width="24dp"-->
+<!--                    android:layout_height="24dp"-->
+<!--                    android:src="@drawable/ic_light_mode"-->
+<!--                    app:tint="#49454F" />-->
+<!--                <SeekBar-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:progress="60"-->
+<!--                    android:thumbTint="#6750A4"-->
+<!--                    android:progressTint="#6750A4" />-->
+<!--                <ImageView-->
+<!--                    android:layout_width="24dp"-->
+<!--                    android:layout_height="24dp"-->
+<!--                    android:src="@drawable/ic_dark_mode"-->
+<!--                    app:tint="#49454F" />-->
+<!--            </LinearLayout>-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:orientation="horizontal"
-                android:background="@drawable/bg_pill_white"
-                android:layout_marginBottom="20dp">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="A-"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#1D1B20"/>
-                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginVertical="8dp" android:background="#E7E0EC" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="18px"
-                    android:textColor="#49454F"/>
-                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginVertical="8dp" android:background="#E7E0EC" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="A+"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#1D1B20"/>
-            </LinearLayout>
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:orientation="horizontal"-->
+<!--                android:background="@drawable/bg_pill_white"-->
+<!--                android:layout_marginBottom="20dp">-->
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="A-"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textColor="#1D1B20"/>-->
+<!--                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginVertical="8dp" android:background="#E7E0EC" />-->
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="18px"-->
+<!--                    android:textColor="#49454F"/>-->
+<!--                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginVertical="8dp" android:background="#E7E0EC" />-->
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="A+"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textColor="#1D1B20"/>-->
+<!--            </LinearLayout>-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="20dp">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:orientation="horizontal"-->
+<!--                android:layout_marginBottom="20dp">-->
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Light"
-                    android:textColor="#6750A4"
-                    android:background="@drawable/bg_theme_light_selected"
-                    android:layout_marginEnd="8dp"/>
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="Light"-->
+<!--                    android:textColor="#6750A4"-->
+<!--                    android:background="@drawable/bg_theme_light_selected"-->
+<!--                    android:layout_marginEnd="8dp"/>-->
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Sepia"
-                    android:textColor="#5D4037"
-                    android:background="@drawable/bg_theme_sepia"
-                    android:layout_marginEnd="8dp"/>
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="Sepia"-->
+<!--                    android:textColor="#5D4037"-->
+<!--                    android:background="@drawable/bg_theme_sepia"-->
+<!--                    android:layout_marginEnd="8dp"/>-->
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Dark"
-                    android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_theme_dark_read"/>
-            </LinearLayout>
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="Dark"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:background="@drawable/bg_theme_dark_read"/>-->
+<!--            </LinearLayout>-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:orientation="horizontal">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:orientation="horizontal">-->
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:background="@drawable/bg_pill_purple_light"
-                    android:layout_marginEnd="8dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Literata"
-                        android:textColor="#1D1B20"
-                        android:layout_marginEnd="8dp"/>
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@drawable/ic_check_circle"
-                        app:tint="#6750A4" />
-                </LinearLayout>
+<!--                <LinearLayout-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:background="@drawable/bg_pill_purple_light"-->
+<!--                    android:layout_marginEnd="8dp">-->
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="Literata"-->
+<!--                        android:textColor="#1D1B20"-->
+<!--                        android:layout_marginEnd="8dp"/>-->
+<!--                    <ImageView-->
+<!--                        android:layout_width="18dp"-->
+<!--                        android:layout_height="18dp"-->
+<!--                        android:src="@drawable/ic_check_circle"-->
+<!--                        app:tint="#6750A4" />-->
+<!--                </LinearLayout>-->
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Be Vietnam Pro"
-                    android:textColor="#49454F"
-                    android:background="@drawable/bg_pill_white"/>
-            </LinearLayout>
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="Be Vietnam Pro"-->
+<!--                    android:textColor="#49454F"-->
+<!--                    android:background="@drawable/bg_pill_white"/>-->
+<!--            </LinearLayout>-->
 
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+<!--        </LinearLayout>-->
+<!--    </com.google.android.material.card.MaterialCardView>-->
 
     <LinearLayout
         android:id="@+id/bottom_container"
