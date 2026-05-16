@@ -1,0 +1,8 @@
+<!-- res/drawable/bg_circle_pink.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <!-- A vibrant pink color. You can change this hex code to match your UI -->
+    <solid android:color="#E91E63" />
+
+</shape>
