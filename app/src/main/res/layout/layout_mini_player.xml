@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    layout_mini_player.xml
-    Thanh mini player hiện phía trên BottomNavigationView
-    Hiện: khi đang phát audio | Ẩn: không có gì đang phát
-    Nhấn vào → mở AudioPlayerFragment (fullscreen)
--->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -23,8 +17,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <!-- Thanh tiến trình mỏng trên cùng -->
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/miniPlayerProgress"
             android:layout_width="match_parent"
@@ -34,8 +26,6 @@
             app:indicatorColor="?attr/colorPrimary"
             app:trackColor="?attr/colorSurfaceVariant"
             app:trackCornerRadius="0dp" />
-
-        <!-- Row nội dung -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,8 +33,6 @@
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
             android:paddingVertical="10px">
-
-            <!-- Bìa sách nhỏ -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivMiniCover"
                 android:layout_width="36dp"
@@ -52,8 +40,6 @@
                 android:scaleType="centerCrop"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedSmall"
                 tools:src="@color/teal_200" />
-
-            <!-- Thông tin sách -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -83,8 +69,6 @@
                     tools:text="Dale Carnegie" />
 
             </LinearLayout>
-
-            <!-- Nút Play / Pause -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMiniPlayPause"
                 style="@style/Widget.Material3.Button.IconButton"
@@ -94,8 +78,6 @@
                 app:icon="@drawable/ic_pause"
                 app:iconSize="22dp"
                 app:iconTint="?attr/colorPrimary" />
-
-            <!-- Nút Next chapter -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMiniNext"
                 style="@style/Widget.Material3.Button.IconButton"

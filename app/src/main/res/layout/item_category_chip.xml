@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    item_category_chip.xml
-    Mỗi ô danh mục: icon tròn + label bên dưới
-    Dùng trong RecyclerView ngang của item_section_categories.xml
--->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -15,8 +10,6 @@
     android:minWidth="64dp"
     android:orientation="vertical"
     android:padding="4dp">
-
-    <!-- Icon wrap — màu nền thay đổi theo danh mục qua adapter -->
     <FrameLayout
         android:id="@+id/flIconWrap"
         android:layout_width="52dp"
@@ -32,8 +25,6 @@
             tools:src="@drawable/ic_brain" />
 
     </FrameLayout>
-
-    <!-- Tên danh mục -->
     <TextView
         android:id="@+id/tvCategoryName"
         android:layout_width="wrap_content"

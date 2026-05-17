@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    item_section_categories.xml
-    Section danh mục — row icon chip cuộn ngang
-    ViewType riêng trong HomeSectionAdapter
--->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -11,8 +6,6 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingTop="20dp">
-
-    <!-- Header "DANH MỤC" — không có "Xem tất cả" -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -23,8 +16,6 @@
         android:textAppearance="?attr/textAppearanceLabelSmall"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:letterSpacing="0.05" />
-
-    <!-- RecyclerView chip ngang -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCategories"
         android:layout_width="match_parent"

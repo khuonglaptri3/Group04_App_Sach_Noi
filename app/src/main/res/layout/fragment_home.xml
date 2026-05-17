@@ -13,9 +13,6 @@
         android:background="?attr/colorSurface"
         app:elevation="0dp"
         app:liftOnScroll="true">
-
-        <!-- Toolbar đã có ở MainActivity nên xóa Toolbar cục bộ ở đây -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

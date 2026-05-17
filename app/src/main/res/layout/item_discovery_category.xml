@@ -16,8 +16,6 @@
         android:layout_height="match_parent"
         android:padding="16dp"
         tools:background="@drawable/bg_grad_audiobook">
-
-        <!-- Pill top: Count -->
         <TextView
             android:id="@+id/tvCategoryCount"
             android:layout_width="wrap_content"
@@ -28,8 +26,6 @@
             android:textColor="@android:color/white"
             android:textSize="11sp"
             tools:text="1.2k+ đầu sách" />
-
-        <!-- Main Title -->
         <TextView
             android:id="@+id/tvCategoryName"
             android:layout_width="wrap_content"
@@ -39,8 +35,6 @@
             android:textSize="20sp"
             android:textStyle="bold"
             tools:text="Thiền &amp; Chữa lành" />
-
-        <!-- Pill bottom: Badge -->
         <TextView
             android:id="@+id/tvCategoryBadge"
             android:layout_width="wrap_content"
