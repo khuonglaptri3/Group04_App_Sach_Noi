@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    fragment_home_tab.xml
-    Layout dùng chung cho 3 tab: Sách nói / Ebook / Tóm tắt
-    RecyclerView dọc chứa các section carousel
--->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

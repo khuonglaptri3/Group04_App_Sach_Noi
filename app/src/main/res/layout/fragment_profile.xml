@@ -12,7 +12,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Profile Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="140dp"
@@ -79,16 +78,12 @@
 
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- Stats Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:orientation="horizontal"
             android:weightSum="3">
-
-            <!-- Sách đã đọc -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -123,8 +118,6 @@
                         android:textColor="?attr/colorOnSurfaceVariant"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- Giờ nghe -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -159,8 +152,6 @@
                         android:textColor="?attr/colorOnSurfaceVariant"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- Huy hiệu -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -196,8 +187,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
-
-        <!-- Premium Banner -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -252,7 +241,6 @@
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Settings List -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -274,39 +262,30 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Item 1 -->
                 <LinearLayout style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_edit" />
                     <TextView style="@style/ProfileSettingText" android:text="Chỉnh sửa thông tin" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-
-                <!-- Item 2 -->
                 <LinearLayout style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_bell" />
                     <TextView style="@style/ProfileSettingText" android:text="Thông báo" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-
-                <!-- Item 3 -->
                 <LinearLayout style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_download" />
                     <TextView style="@style/ProfileSettingText" android:text="Quản lý tải xuống" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-
-                <!-- Item 4 -->
                 <LinearLayout style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_shield" />
                     <TextView style="@style/ProfileSettingText" android:text="Bảo mật &amp; Quyền riêng tư" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-
-                <!-- Item 5 -->
                 <LinearLayout style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_help" />
                     <TextView style="@style/ProfileSettingText" android:text="Trợ giúp &amp; Hỗ trợ" />
@@ -315,8 +294,6 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- Logout Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             style="@style/Widget.Material3.Button.OutlinedButton"

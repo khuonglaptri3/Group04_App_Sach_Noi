@@ -15,8 +15,6 @@
     android:layout_marginEnd="10dp"
     android:background="?attr/selectableItemBackground"
     android:orientation="vertical">
-
-    <!-- Bìa sách -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardCover"
         android:layout_width="120dp"
@@ -24,16 +22,12 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="3dp"
         app:cardPreventCornerOverlap="true">
-
-        <!-- Ảnh bìa — Glide sẽ load vào đây -->
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/ivBookCover"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             tools:src="@color/purple_200" />
-
-        <!-- Badge PREMIUM (góc trên phải) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardBadgePremium"
             android:layout_width="wrap_content"
@@ -58,8 +52,6 @@
                 android:textStyle="bold" />
 
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- Badge NEW (góc trên trái) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardBadgeNew"
             android:layout_width="wrap_content"
@@ -85,8 +77,6 @@
         </com.google.android.material.card.MaterialCardView>
 
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- Tên sách -->
     <TextView
         android:id="@+id/tvBookTitle"
         android:layout_width="match_parent"
@@ -97,8 +87,6 @@
         android:textAppearance="?attr/textAppearanceLabelMedium"
         android:textColor="?attr/colorOnSurface"
         tools:text="Đắc Nhân Tâm" />
-
-    <!-- Tác giả -->
     <TextView
         android:id="@+id/tvBookAuthor"
         android:layout_width="match_parent"

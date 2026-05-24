@@ -96,8 +96,6 @@
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- Mũi tên chỉ xuống đoạn text được chọn -->
     <View
         android:id="@+id/view_arrow"
         android:layout_width="16dp"

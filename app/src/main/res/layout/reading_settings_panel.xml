@@ -15,9 +15,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp">
-
-        <!-- Brightness -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,9 +43,6 @@
                 android:src="@drawable/ic_dark_mode"
                 app:tint="#49454F"/>
         </LinearLayout>
-
-        <!-- Font size -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"
@@ -99,9 +93,6 @@
                 android:textStyle="bold"
                 android:textColor="#1D1B20"/>
         </LinearLayout>
-
-        <!-- Theme -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -140,9 +131,6 @@
                 android:text="Tối"
                 android:textColor="#FFFFFF"/>
         </LinearLayout>
-
-        <!-- Fonts -->
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="48dp"
