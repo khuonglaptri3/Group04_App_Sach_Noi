@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -28,8 +29,13 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
     public void onBindViewHolder(@NonNull DiscoveryViewHolder holder, int position) {
         Category category = categories.get(position);
         
-        holder.tvName.setText(category.getName());
-        holder.rlBackground.setBackgroundResource(category.getBackgroundRes());
+        holder.tvName.setText(category.getNameVi());
+        
+        if (category.getBackgroundRes() != 0) {
+            holder.rlBackground.setBackgroundResource(category.getBackgroundRes());
+        } else {
+            holder.rlBackground.setBackgroundColor(0xFF6750A4);
+        }
         
         // Xử lý count (số lượng sách)
         if (category.getCount() != null && !category.getCount().isEmpty()) {
@@ -46,6 +52,10 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
         } else {
             holder.tvBadge.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            Toast.makeText(v.getContext(), "Danh mục: " + category.getNameVi(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override

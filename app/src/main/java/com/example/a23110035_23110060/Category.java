@@ -1,37 +1,57 @@
 package com.example.a23110035_23110060;
 
 public class Category {
-    private String name;
-    private int iconResId;
+    private String id;
+    private String nameVi;
+    private String nameEn;
+    private String iconUrl;
     private int color;
 
-    // Các field mới cho giao diện Discovery
+    // For legacy UI
+    private int iconResId;
     private String count;
     private int backgroundRes;
     private String badge;
 
-    // Constructor cũ để không làm lỗi code hiện tại
-    public Category(String name, int iconResId, int color) {
-        this.name = name;
+    public Category() {}
+
+    // Minimal constructor for current adapters
+    public Category(String nameVi, String iconUrl, int color) {
+        this.nameVi = nameVi;
+        this.iconUrl = iconUrl;
+        this.color = color;
+    }
+
+    // Legacy constructor
+    public Category(String nameVi, int iconResId, int color) {
+        this.nameVi = nameVi;
         this.iconResId = iconResId;
         this.color = color;
     }
 
-    // Constructor mới cho giao diện Discovery
-    public Category(String name, String count, int backgroundRes, String badge) {
-        this.name = name;
-        this.count = count;
-        this.backgroundRes = backgroundRes;
-        this.badge = badge;
+    // Full constructor for Database
+    public Category(String id, String nameVi, String nameEn, String iconUrl) {
+        this.id = id;
+        this.nameVi = nameVi;
+        this.nameEn = nameEn;
+        this.iconUrl = iconUrl;
     }
 
-    // Getter cũ
-    public String getName() { return name; }
-    public int getIconResId() { return iconResId; }
+    // Getters
+    public String getId() { return id; }
+    public String getNameVi() { return nameVi; }
+    public String getName() { return nameVi; } // For legacy support
+    public String getNameEn() { return nameEn; }
+    public String getIconUrl() { return iconUrl; }
     public int getColor() { return color; }
-
-    // Getter mới
+    public int getIconResId() { return iconResId; }
     public String getCount() { return count; }
     public int getBackgroundRes() { return backgroundRes; }
     public String getBadge() { return badge; }
+
+    // Setters
+    public void setId(String id) { this.id = id; }
+    public void setNameVi(String nameVi) { this.nameVi = nameVi; }
+    public void setNameEn(String nameEn) { this.nameEn = nameEn; }
+    public void setIconUrl(String iconUrl) { this.iconUrl = iconUrl; }
 }

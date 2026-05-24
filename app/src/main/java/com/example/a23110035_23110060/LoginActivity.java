@@ -20,6 +20,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -159,26 +160,80 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = response.body() != null ? response.body().string() : "";
-                runOnUiThread(() -> {
-                    btnSignIn.setEnabled(true);
-                    if (response.isSuccessful()) {
-                        Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                    } else {
+                if (response.isSuccessful()) {
+                    try {
+                        JSONObject jsonResponse = new JSONObject(responseData);
+                        String accessToken = jsonResponse.optString("access_token");
+                        JSONObject userJson = jsonResponse.getJSONObject("user");
+                        String userId = userJson.getString("id");
+                        String userEmail = userJson.optString("email", email);
+
+                        // Query profiles table for full_name using user's access token
+                        String profileUrl = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=full_name,email";
+                        Request profileRequest = new Request.Builder()
+                                .url(profileUrl)
+                                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                                .addHeader("Authorization", "Bearer " + accessToken)
+                                .get()
+                                .build();
+
+                        client.newCall(profileRequest).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                handleLoginSuccess(userId, userEmail, accessToken);
+                            }
+
+                            @Override
+                            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                String name = userEmail;
+                                if (response.isSuccessful() && response.body() != null) {
+                                    try {
+                                        JSONArray array = new JSONArray(response.body().string());
+                                        if (array.length() > 0) {
+                                            JSONObject profile = array.getJSONObject(0);
+                                            name = profile.optString("full_name", userEmail);
+                                            if (name == null || name.isEmpty() || name.equals("null")) name = userEmail;
+                                        }
+                                    } catch (JSONException e) {
+                                        Log.e(TAG, "Profile Parse Error", e);
+                                    }
+                                }
+                                handleLoginSuccess(userId, name, accessToken);
+                            }
+                        });
+                    } catch (JSONException e) {
+                        Log.e(TAG, "JSON Error: " + e.getMessage());
+                        runOnUiThread(() -> btnSignIn.setEnabled(true));
+                    }
+                } else {
+                    runOnUiThread(() -> {
+                        btnSignIn.setEnabled(true);
                         try {
                             JSONObject errorJson = new JSONObject(responseData);
                             String errorMessage = errorJson.optString("error_description", 
                                     errorJson.optString("error", "Login failed"));
                             Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                            Log.e(TAG, "Login Error: " + responseData);
                         } catch (JSONException e) {
                             Toast.makeText(LoginActivity.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
                         }
-                    }
-                });
+                    });
+                }
             }
+        });
+    }
+
+    private void handleLoginSuccess(String userId, String name, String token) {
+        runOnUiThread(() -> {
+            btnSignIn.setEnabled(true);
+            SessionManager session = new SessionManager(LoginActivity.this);
+            session.setUserId(userId);
+            session.setUserName(name);
+            session.setAccessToken(token);
+
+            Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
         });
     }
 }

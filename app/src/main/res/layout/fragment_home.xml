@@ -25,10 +25,10 @@
                 android:id="@+id/tvGreetingSub"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Xin chào, Văn Minh 👋"
+                android:text="Xin chào, Lê Đức 👋"
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="Xin chào, Văn Minh 👋" />
+                tools:text="Xin chào, Lê Đức 👋" />
 
             <TextView
                 android:id="@+id/tvGreetingMain"
