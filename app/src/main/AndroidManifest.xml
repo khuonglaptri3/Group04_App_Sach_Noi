@@ -29,6 +29,20 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+        <activity
+            android:name=".BookDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BookListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AudioPlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme._23110035_23110060" />
+        <activity
+            android:name=".EbookReaderActivity"
+            android:exported="false"
+            android:theme="@style/Theme._23110035_23110060" />
     </application>
 
 </manifest>

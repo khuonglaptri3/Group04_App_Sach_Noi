@@ -1,9 +1,11 @@
 package com.example.a23110035_23110060;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,10 +44,22 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             h.tvTitle.setText(section.getTitle());
             h.rvCarousel.setAdapter(new BookAdapter(section.getBooks()));
             h.rvCarousel.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
+            
+            h.tvSeeAll.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), BookListActivity.class);
+                intent.putExtra("title", section.getTitle());
+                intent.putExtra("filter", section.getFilter());
+                v.getContext().startActivity(intent);
+            });
         } else if (holder instanceof CategoriesViewHolder) {
             CategoriesViewHolder h = (CategoriesViewHolder) holder;
             h.rvCategories.setAdapter(new CategoryAdapter(section.getCategories()));
             h.rvCategories.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
+        } else if (holder instanceof BannerViewHolder) {
+            BannerViewHolder h = (BannerViewHolder) holder;
+            h.itemView.findViewById(R.id.cardBanner).setOnClickListener(v -> {
+                Toast.makeText(v.getContext(), "Nhận quà", Toast.LENGTH_SHORT).show();
+            });
         }
     }
 
@@ -55,11 +69,12 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     static class CarouselViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle;
+        TextView tvTitle, tvSeeAll;
         RecyclerView rvCarousel;
         public CarouselViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tvSectionTitle);
+            tvSeeAll = itemView.findViewById(R.id.tvSeeAll);
             rvCarousel = itemView.findViewById(R.id.rvCarousel);
         }
     }

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
@@ -28,8 +29,21 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
         Category category = categories.get(position);
         holder.tvName.setText(category.getName());
-        holder.ivIcon.setImageResource(category.getIconResId());
+        
+        if (category.getIconUrl() != null && !category.getIconUrl().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                .load(category.getIconUrl())
+                .into(holder.ivIcon);
+        } else {
+            holder.ivIcon.setImageResource(category.getIconResId());
+        }
+
         holder.flIconWrap.setBackgroundTintList(ColorStateList.valueOf(category.getColor()));
+
+        holder.itemView.setOnClickListener(v -> {
+            // Logic to navigate to DiscoveryFragment
+            // Usually via NavController or Activity callback
+        });
     }
 
     @Override

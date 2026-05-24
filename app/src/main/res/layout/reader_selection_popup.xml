@@ -26,18 +26,21 @@
             android:paddingHorizontal="14dp">
 
             <View
+                android:id="@+id/color_green"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/bg_circle_green"/>
 
             <View
+                android:id="@+id/color_pink"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/bg_circle_pink"/>
 
             <View
+                android:id="@+id/color_blue"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="14dp"

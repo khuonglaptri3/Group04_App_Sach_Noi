@@ -11,11 +11,19 @@ public class Section {
     private List<Book> books;
     private List<Category> categories;
     private int type;
+    private String filter; // e.g., "is_audiobook=eq.true"
 
     public Section(String title, List<Book> books, int type) {
         this.title = title;
         this.books = books;
         this.type = type;
+    }
+
+    public Section(String title, List<Book> books, int type, String filter) {
+        this.title = title;
+        this.books = books;
+        this.type = type;
+        this.filter = filter;
     }
 
     public Section(String title, List<Category> categories, int type, boolean dummy) {
@@ -28,4 +36,5 @@ public class Section {
     public List<Book> getBooks() { return books; }
     public List<Category> getCategories() { return categories; }
     public int getType() { return type; }
+    public String getFilter() { return filter; }
 }
