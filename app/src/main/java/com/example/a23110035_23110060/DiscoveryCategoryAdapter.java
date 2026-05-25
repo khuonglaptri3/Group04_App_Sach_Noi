@@ -54,7 +54,10 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Toast.makeText(v.getContext(), "Danh mục: " + category.getNameVi(), Toast.LENGTH_SHORT).show();
+            android.content.Intent intent = new android.content.Intent(v.getContext(), BookListActivity.class);
+            intent.putExtra("title", category.getNameVi());
+            intent.putExtra("filter", "category_id=eq." + category.getId());
+            v.getContext().startActivity(intent);
         });
     }
 

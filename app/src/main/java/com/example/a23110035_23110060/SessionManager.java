@@ -40,6 +40,11 @@ public class SessionManager {
     }
 
     public String getUserName() {
-        return pref.getString(KEY_USER_NAME, "Lê Đức");
+        return pref.getString(KEY_USER_NAME, "Người dùng");
+    }
+
+    public void clear() {
+        editor.clear();
+        editor.apply();
     }
 }

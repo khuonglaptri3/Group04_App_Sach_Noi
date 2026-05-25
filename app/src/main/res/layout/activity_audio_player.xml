@@ -66,6 +66,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
+            android:id="@+id/ll_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -96,6 +97,7 @@
             android:background="?attr/colorOutlineVariant" />
 
         <LinearLayout
+            android:id="@+id/ll_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -123,6 +125,7 @@
             android:background="?attr/colorOutlineVariant" />
 
         <LinearLayout
+            android:id="@+id/ll_chapters"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"

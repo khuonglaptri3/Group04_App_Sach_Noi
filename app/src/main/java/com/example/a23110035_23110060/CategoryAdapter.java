@@ -41,8 +41,10 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         holder.flIconWrap.setBackgroundTintList(ColorStateList.valueOf(category.getColor()));
 
         holder.itemView.setOnClickListener(v -> {
-            // Logic to navigate to DiscoveryFragment
-            // Usually via NavController or Activity callback
+            android.content.Intent intent = new android.content.Intent(v.getContext(), BookListActivity.class);
+            intent.putExtra("title", category.getName());
+            intent.putExtra("filter", "category_id=eq." + category.getId());
+            v.getContext().startActivity(intent);
         });
     }
 

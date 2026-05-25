@@ -47,6 +47,15 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        SessionManager session = new SessionManager(this);
+        if (session.getAccessToken() != null) {
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_sign_in);
         
@@ -168,6 +177,17 @@ public class LoginActivity extends AppCompatActivity {
                         String userId = userJson.getString("id");
                         String userEmail = userJson.optString("email", email);
 
+                        // Extract full name from user_metadata first as fallback
+                        JSONObject userMetadata = userJson.optJSONObject("user_metadata");
+                        String metaName = null;
+                        if (userMetadata != null) {
+                            metaName = userMetadata.optString("full_name", null);
+                        }
+                        if (metaName == null || metaName.isEmpty() || metaName.equals("null")) {
+                            metaName = userEmail;
+                        }
+                        final String finalMetaName = metaName;
+
                         // Query profiles table for full_name using user's access token
                         String profileUrl = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=full_name,email";
                         Request profileRequest = new Request.Builder()
@@ -180,25 +200,34 @@ public class LoginActivity extends AppCompatActivity {
                         client.newCall(profileRequest).enqueue(new Callback() {
                             @Override
                             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                handleLoginSuccess(userId, userEmail, accessToken);
+                                handleLoginSuccess(userId, finalMetaName, accessToken);
                             }
 
                             @Override
                             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                String name = userEmail;
+                                String resolvedName = finalMetaName;
+                                boolean profileExists = false;
                                 if (response.isSuccessful() && response.body() != null) {
                                     try {
                                         JSONArray array = new JSONArray(response.body().string());
                                         if (array.length() > 0) {
+                                            profileExists = true;
                                             JSONObject profile = array.getJSONObject(0);
-                                            name = profile.optString("full_name", userEmail);
-                                            if (name == null || name.isEmpty() || name.equals("null")) name = userEmail;
+                                            String dbName = profile.optString("full_name", null);
+                                            if (dbName != null && !dbName.isEmpty() && !dbName.equals("null")) {
+                                                resolvedName = dbName;
+                                            }
                                         }
                                     } catch (JSONException e) {
                                         Log.e(TAG, "Profile Parse Error", e);
                                     }
                                 }
-                                handleLoginSuccess(userId, name, accessToken);
+
+                                if (!profileExists) {
+                                    upsertProfile(userId, userEmail, resolvedName, accessToken);
+                                }
+
+                                handleLoginSuccess(userId, resolvedName, accessToken);
                             }
                         });
                     } catch (JSONException e) {
@@ -218,6 +247,46 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
                 }
+            }
+        });
+    }
+
+    private void upsertProfile(String userId, String email, String fullName, String accessToken) {
+        String profileUrl = BuildConfig.SUPABASE_URL + "/rest/v1/profiles";
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("id", userId);
+            jsonBody.put("full_name", fullName);
+            jsonBody.put("email", email);
+        } catch (JSONException e) {
+            Log.e(TAG, "JSON error creating profile upsert body", e);
+            return;
+        }
+
+        RequestBody body = RequestBody.create(
+                jsonBody.toString(),
+                MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url(profileUrl)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + accessToken)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e(TAG, "Failed to upsert profile: " + e.getMessage());
+            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                try {
+                    String resStr = response.body() != null ? response.body().string() : "";
+                    Log.d(TAG, "Profile upsert response: " + response.code() + ", " + resStr);
+                } catch (Exception ex) {}
             }
         });
     }
