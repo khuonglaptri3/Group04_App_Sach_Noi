@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -63,7 +64,9 @@ public class LibraryFragment extends Fragment {
         layoutEmpty = view.findViewById(R.id.layoutEmpty);
 
         rvLibraryBooks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new LibraryBookAdapter(libraryBooks);
+        adapter = new LibraryBookAdapter(libraryBooks, (book, position) -> {
+            deleteBookFromLibrary(book, position);
+        });
         rvLibraryBooks.setAdapter(adapter);
 
         setupFilters(view);
@@ -226,8 +229,9 @@ public class LibraryFragment extends Fragment {
                             lb.setAuthor(authorObj != null ? authorObj.optString("name") : "Unknown");
                             lb.setCoverUrl(bookObj.optString("cover_url"));
                             lb.setPremium(bookObj.optBoolean("is_premium_only"));
-                            lb.setProgress((int)(Math.random() * 100));
-                            lb.setTimeRemaining("Còn " + (int)(Math.random() * 10) + "g");
+                            lb.setProgress(item.optInt("progress", 0));
+                            int timeRemaining = item.optInt("time_remaining_minutes", 0);
+                            lb.setTimeRemaining(timeRemaining > 0 ? "Còn " + (timeRemaining/60) + "g" : "");
                             libraryBooks.add(lb);
                         }
                         if (isAdded()) {
@@ -240,6 +244,42 @@ public class LibraryFragment extends Fragment {
                         }
                     } catch (Exception e) {
                         Log.e("Library", "Error", e);
+                    }
+                }
+            }
+        });
+    }
+
+    private void deleteBookFromLibrary(LibraryBook book, int position) {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + book.getBookId();
+        
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .delete()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            libraryBooks.remove(position);
+                            adapter.notifyItemRemoved(position);
+                            if (libraryBooks.isEmpty()) {
+                                layoutEmpty.setVisibility(View.VISIBLE);
+                                rvLibraryBooks.setVisibility(View.GONE);
+                            }
+                            Toast.makeText(getContext(), "Đã xóa khỏi thư viện", Toast.LENGTH_SHORT).show();
+                        });
                     }
                 }
             }

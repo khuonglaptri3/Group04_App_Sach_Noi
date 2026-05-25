@@ -160,10 +160,19 @@ public class HomeTabFragment extends Fragment {
         if (isAdded()) {
             requireActivity().runOnUiThread(() -> {
                 sections.clear();
-                if (!books.isEmpty()) sections.add(new Section("THỊNH HÀNH HÔM NAY", books, Section.TYPE_CAROUSEL, filter));
+                if (!books.isEmpty()) {
+                    sections.add(new Section("THỊNH HÀNH HÔM NAY", books, Section.TYPE_CAROUSEL, filter));
+                }
                 sections.add(new Section("BANNER", (List<Book>)null, Section.TYPE_BANNER));
-                if (!categories.isEmpty()) sections.add(new Section("DANH MỤC", categories, Section.TYPE_CATEGORIES, true));
-                if (!books.isEmpty()) sections.add(new Section("MỚI XUẤT BẢN", books, Section.TYPE_CAROUSEL, filter));
+                if (!categories.isEmpty()) {
+                    sections.add(new Section("DANH MỤC", categories, Section.TYPE_CATEGORIES, true));
+                }
+                if (!books.isEmpty()) {
+                    // Create a reversed copy to simulate a different list for 'Mới xuất bản'
+                    List<Book> newBooks = new ArrayList<>(books);
+                    java.util.Collections.reverse(newBooks);
+                    sections.add(new Section("MỚI XUẤT BẢN", newBooks, Section.TYPE_CAROUSEL, filter));
+                }
                 adapter.notifyDataSetChanged();
                 swipeRefresh.setRefreshing(false);
             });

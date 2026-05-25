@@ -248,7 +248,16 @@ public class BookDetailActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         String result = response.body().string();
-                        isFavorite = result.trim().equalsIgnoreCase("true");
+                        try {
+                            Object jsonResult = new org.json.JSONTokener(result).nextValue();
+                            if (jsonResult instanceof Boolean) {
+                                isFavorite = (Boolean) jsonResult;
+                            } else {
+                                isFavorite = result.trim().replace("\"", "").equalsIgnoreCase("true");
+                            }
+                        } catch (Exception e) {
+                            isFavorite = result.trim().replace("\"", "").equalsIgnoreCase("true");
+                        }
                         runOnUiThread(() -> {
                             updateFavoriteUI();
                             Toast.makeText(BookDetailActivity.this, isFavorite ? "Đã thêm vào yêu thích" : "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
@@ -317,7 +326,13 @@ public class BookDetailActivity extends AppCompatActivity {
             bodyJson.put("is_purchased", true);
         } catch (Exception e) {}
         RequestBody body = RequestBody.create(bodyJson.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder().url(url).addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY).addHeader("Authorization", "Bearer " + token).post(body).build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}

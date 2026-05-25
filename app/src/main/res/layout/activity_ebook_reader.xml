@@ -246,15 +246,15 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btn_listen"
+                android:id="@+id/btn_notes"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_headphones" app:tint="#49454F" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nghe" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_edit" app:tint="#49454F" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ghi chú" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
         </LinearLayout>

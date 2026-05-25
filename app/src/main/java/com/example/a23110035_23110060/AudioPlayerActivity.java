@@ -14,7 +14,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Locale;
 
-public class AudioPlayerActivity extends AppCompatActivity {
+public class  AudioPlayerActivity extends AppCompatActivity {
 
     private ImageButton btnCollapse, btnSkipPrevious, btnSkipNext, btnReplay10, btnForward30;
     private FloatingActionButton fabPlay;
@@ -91,12 +91,34 @@ public class AudioPlayerActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        // Speed Click Area (The first vertical LinearLayout in secondary controls)
-        findViewById(R.id.ll_secondary_controls).setOnClickListener(v -> {
+        findViewById(R.id.ll_speed).setOnClickListener(v -> {
             speedIndex = (speedIndex + 1) % speeds.length;
             float currentSpeed = speeds[speedIndex];
             playerManager.setPlaybackSpeed(currentSpeed);
             tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", currentSpeed));
+        });
+
+        findViewById(R.id.ll_timer).setOnClickListener(v -> {
+            String[] timerOptions = {"Tắt", "15 phút", "30 phút", "45 phút", "60 phút"};
+            int[] timerMinutes = {0, 15, 30, 45, 60};
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Hẹn giờ tắt")
+                .setItems(timerOptions, (dialog, which) -> {
+                    int minutes = timerMinutes[which];
+                    if (minutes > 0) {
+                        Toast.makeText(this, "Sẽ tắt sau " + minutes + " phút", Toast.LENGTH_SHORT).show();
+                        playerManager.setSleepTimer(minutes);
+                    } else {
+                        Toast.makeText(this, "Đã tắt hẹn giờ", Toast.LENGTH_SHORT).show();
+                        playerManager.cancelSleepTimer();
+                    }
+                })
+                .show();
+        });
+
+        findViewById(R.id.ll_chapters).setOnClickListener(v -> {
+            Toast.makeText(this, "Chapters list", Toast.LENGTH_SHORT).show();
+            // TODO: show chapter bottom sheet
         });
     }
 
