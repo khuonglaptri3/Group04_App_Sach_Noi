@@ -3,16 +3,18 @@ package com.example.a23110035_23110060;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -20,11 +22,17 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import okhttp3.Call;
@@ -41,11 +49,19 @@ public class EbookReaderActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private OkHttpClient client = new OkHttpClient();
 
-    private View settingsPanel, selectionPopup, brightnessOverlay, scrollContent;
+    private View settingsPanel, selectionPopup, brightnessOverlay;
     private LinearLayout bottomContainer;
-    private TextView tvFontSizeDisplay, tvToolbarTitle, tvToolbarChapter, tvContentChapterTitle, tvReaderBody;
-    private float currentTextSize = 18;
+    private TextView tvFontSizeDisplay, tvToolbarTitle, tvToolbarChapter;
+    private ViewPager2 vpEbook;
+    private EbookPagerAdapter pagerAdapter;
+
+    private float currentTextSize = 18f;
     private boolean isNightMode = false;
+
+    private List<CharSequence> pages = new ArrayList<>();
+    private List<Integer> chapterStartPages = new ArrayList<>();
+    private List<String> chapterTitles = new ArrayList<>();
+    private JSONArray cachedChapters = new JSONArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,37 +81,29 @@ public class EbookReaderActivity extends AppCompatActivity {
         settingsPanel = findViewById(R.id.settings_panel);
         selectionPopup = findViewById(R.id.selection_popup);
         brightnessOverlay = findViewById(R.id.view_brightness_overlay);
-        scrollContent = findViewById(R.id.scroll_content);
         tvFontSizeDisplay = findViewById(R.id.tv_font_size);
         
         tvToolbarTitle = findViewById(R.id.tv_toolbar_title);
         tvToolbarChapter = findViewById(R.id.tv_toolbar_chapter);
-        tvContentChapterTitle = findViewById(R.id.tv_content_chapter_title);
-        tvReaderBody = findViewById(R.id.tv_reader_body);
+        
+        vpEbook = findViewById(R.id.vp_ebook);
+        pagerAdapter = new EbookPagerAdapter(pages);
+        vpEbook.setAdapter(pagerAdapter);
+
+        vpEbook.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                updateProgressUI(position);
+            }
+        });
     }
 
     private void setupListeners() {
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_bookmark).setOnClickListener(v -> addBookmark());
+        findViewById(R.id.btn_bookmark).setOnClickListener(v -> saveReadingProgress());
         
-        findViewById(R.id.btn_search).setOnClickListener(v -> {
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Tìm kiếm")
-                .setMessage("Tính năng tìm kiếm sẽ được cập nhật sớm.")
-                .setPositiveButton("Đóng", null)
-                .show();
-        });
-        
-        findViewById(R.id.btn_contents).setOnClickListener(v -> {
-            String[] mockChapters = {"Chương 1: Bắt đầu", "Chương 2: Diễn biến", "Chương 3: Kết thúc"};
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Mục lục")
-                .setItems(mockChapters, (dialog, which) -> {
-                    Toast.makeText(this, "Chuyển đến " + mockChapters[which], Toast.LENGTH_SHORT).show();
-                    // TODO: scroll to chapter
-                })
-                .show();
-        });
+        findViewById(R.id.btn_search).setOnClickListener(v -> showSearchDialog());
+        findViewById(R.id.btn_contents).setOnClickListener(v -> showTableOfContents());
         
         View btnMore = findViewById(R.id.btn_more);
         if (btnMore != null) {
@@ -126,49 +134,6 @@ public class EbookReaderActivity extends AppCompatActivity {
 
         setupSettingsPanel();
         setupSelectionPopup();
-        setupScrollAndSwipe();
-    }
-
-    private void setupScrollAndSwipe() {
-        androidx.core.widget.NestedScrollView scrollView = findViewById(R.id.scroll_content);
-        
-        scrollView.setOnScrollChangeListener((androidx.core.widget.NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
-            int maxScroll = v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight();
-            if (maxScroll > 0) {
-                int percentage = (int) (((float) scrollY / maxScroll) * 100);
-                TextView tvPercent = findViewById(R.id.tv_percent_read);
-                com.google.android.material.progressindicator.LinearProgressIndicator pbReading = findViewById(R.id.pb_reading);
-                
-                tvPercent.setText(percentage + "% đã đọc");
-                pbReading.setProgress(percentage);
-                
-                TextView tvPage = findViewById(R.id.tv_page_info);
-                int pageNum = (scrollY / (v.getHeight() > 0 ? v.getHeight() : 1)) + 1;
-                tvPage.setText("Trang " + pageNum);
-            }
-        });
-
-        final GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 != null && e2 != null && Math.abs(velocityX) > Math.abs(velocityY)) {
-                    int pageHeight = scrollView.getHeight() - 50;
-                    if (velocityX < 0) { // Swipe Left -> Next Page
-                        scrollView.smoothScrollBy(0, pageHeight);
-                        return true;
-                    } else if (velocityX > 0) { // Swipe Right -> Prev Page
-                        scrollView.smoothScrollBy(0, -pageHeight);
-                        return true;
-                    }
-                }
-                return super.onFling(e1, e2, velocityX, velocityY);
-            }
-        });
-
-        scrollView.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
-            return false; // Let scrollview handle normal scrolls too
-        });
     }
 
     private void fetchBookContent() {
@@ -191,20 +156,10 @@ public class EbookReaderActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        JSONArray array = new JSONArray(response.body().string());
-                        if (array.length() > 0) {
-                            StringBuilder fullContent = new StringBuilder();
-                            for (int i = 0; i < array.length(); i++) {
-                                JSONObject obj = array.getJSONObject(i);
-                                String title = obj.optString("title", "Chương " + (i + 1));
-                                String text = obj.optString("text_content", "");
-                                fullContent.append(title).append("\n\n").append(text).append("\n\n---\n\n");
-                            }
-                            String firstChapterTitle = array.getJSONObject(0).optString("title", "Chương 1");
-                            runOnUiThread(() -> {
-                                tvContentChapterTitle.setText(firstChapterTitle);
-                                tvReaderBody.setText(fullContent.toString());
-                            });
+                        cachedChapters = new JSONArray(response.body().string());
+                        if (cachedChapters.length() > 0) {
+                            paginateText(cachedChapters);
+                            fetchLastProgress(); // Try restoring progress
                         } else {
                             fetchLegacyDescription();
                         }
@@ -230,9 +185,7 @@ public class EbookReaderActivity extends AppCompatActivity {
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e("EbookReader", "Fetch content failed", e);
-            }
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -242,14 +195,16 @@ public class EbookReaderActivity extends AppCompatActivity {
                         if (array.length() > 0) {
                             JSONObject obj = array.getJSONObject(0);
                             String title = obj.getString("title");
-                            String content = obj.optString("description", "Không có nội dung cho sách này.");
+                            String content = obj.optString("description", "Không có nội dung.");
 
-                            runOnUiThread(() -> {
-                                tvToolbarTitle.setText(title);
-                                tvToolbarChapter.setText("Chương 1");
-                                tvContentChapterTitle.setText("Giới thiệu");
-                                tvReaderBody.setText(content);
-                            });
+                            runOnUiThread(() -> tvToolbarTitle.setText(title));
+
+                            JSONArray mockChapters = new JSONArray();
+                            JSONObject mockChapter = new JSONObject();
+                            mockChapter.put("title", "Giới thiệu");
+                            mockChapter.put("text_content", content);
+                            mockChapters.put(mockChapter);
+                            paginateText(mockChapters);
                         }
                     } catch (Exception e) {
                         Log.e("EbookReader", "Parse content error", e);
@@ -257,6 +212,229 @@ public class EbookReaderActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void paginateText(JSONArray chaptersArray) {
+        new Thread(() -> {
+            TextPaint paint = new TextPaint();
+            paint.setTextSize(currentTextSize * getResources().getDisplayMetrics().scaledDensity);
+            paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+            
+            // Wait for ViewPager to get dimensions
+            int maxRetries = 20;
+            while (vpEbook.getWidth() == 0 && maxRetries > 0) {
+                try { Thread.sleep(50); } catch (Exception ignored) {}
+                maxRetries--;
+            }
+            
+            int width = vpEbook.getWidth() - dpToPx(48); // 24dp horizontal padding * 2
+            int height = vpEbook.getHeight() - dpToPx(48); // 24dp vertical padding * 2
+            
+            if (width <= 0 || height <= 0) {
+                width = getResources().getDisplayMetrics().widthPixels - dpToPx(48);
+                height = getResources().getDisplayMetrics().heightPixels - dpToPx(200);
+            }
+            
+            List<CharSequence> newPages = new ArrayList<>();
+            List<Integer> newChapterStarts = new ArrayList<>();
+            List<String> newChapterTitles = new ArrayList<>();
+            
+            try {
+                for (int i = 0; i < chaptersArray.length(); i++) {
+                    JSONObject obj = chaptersArray.getJSONObject(i);
+                    String title = obj.optString("title", "Chương " + (i + 1));
+                    String text = obj.optString("text_content", "");
+                    String content = title.toUpperCase() + "\n\n" + text;
+                    
+                    newChapterStarts.add(newPages.size());
+                    newChapterTitles.add(title);
+                    
+                    StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, width)
+                            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                            .setLineSpacing(dpToPx(10), 1.0f)
+                            .setIncludePad(false)
+                            .build();
+                    
+                    int startOffset = 0;
+                    int lineCount = layout.getLineCount();
+                    int pageStartLine = 0;
+                    
+                    for (int line = 0; line < lineCount; line++) {
+                        int bottom = layout.getLineBottom(line);
+                        int top = layout.getLineTop(pageStartLine);
+                        if (bottom - top > height) {
+                            int endOffset = layout.getLineEnd(line - 1);
+                            newPages.add(content.substring(startOffset, endOffset));
+                            startOffset = endOffset;
+                            pageStartLine = line;
+                        }
+                    }
+                    if (startOffset < content.length()) {
+                        newPages.add(content.substring(startOffset));
+                    }
+                }
+                
+                runOnUiThread(() -> {
+                    pages.clear();
+                    pages.addAll(newPages);
+                    chapterStartPages.clear();
+                    chapterStartPages.addAll(newChapterStarts);
+                    chapterTitles.clear();
+                    chapterTitles.addAll(newChapterTitles);
+                    
+                    pagerAdapter.updatePages(pages);
+                    updateProgressUI(vpEbook.getCurrentItem());
+                });
+                
+            } catch (Exception e) {
+                Log.e("Pagination", "Error", e);
+            }
+        }).start();
+    }
+
+    private void updateProgressUI(int position) {
+        if (pages.isEmpty()) return;
+        
+        int percentage = (int) (((float) (position + 1) / pages.size()) * 100);
+        TextView tvPercent = findViewById(R.id.tv_percent_read);
+        com.google.android.material.progressindicator.LinearProgressIndicator pbReading = findViewById(R.id.pb_reading);
+        
+        tvPercent.setText(percentage + "% đã đọc");
+        pbReading.setProgress(percentage);
+        
+        TextView tvPage = findViewById(R.id.tv_page_info);
+        tvPage.setText("Trang " + (position + 1) + " / " + pages.size());
+        
+        int currentChapterIndex = 0;
+        for (int i = 0; i < chapterStartPages.size(); i++) {
+            if (position >= chapterStartPages.get(i)) {
+                currentChapterIndex = i;
+            } else {
+                break;
+            }
+        }
+        if (currentChapterIndex < chapterTitles.size()) {
+            tvToolbarChapter.setText(chapterTitles.get(currentChapterIndex));
+        }
+    }
+
+    private void saveReadingProgress() {
+        if (pages.isEmpty()) return;
+        int progress = (int) (((float) (vpEbook.getCurrentItem() + 1) / pages.size()) * 100);
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + bookId;
+        JSONObject json = new JSONObject();
+        try {
+            json.put("progress", progress);
+            json.put("last_accessed", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(new Date()));
+            json.put("last_page_index", vpEbook.getCurrentItem());
+        } catch (Exception e) {}
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .patch(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> Toast.makeText(EbookReaderActivity.this, "Đã đánh dấu trang " + (vpEbook.getCurrentItem() + 1), Toast.LENGTH_SHORT).show());
+                }
+            }
+        });
+    }
+
+    private void fetchLastProgress() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + bookId + "&select=last_page_index";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray arr = new JSONArray(response.body().string());
+                        if (arr.length() > 0) {
+                            int lastPage = arr.getJSONObject(0).optInt("last_page_index", 0);
+                            if (lastPage > 0 && lastPage < pages.size()) {
+                                runOnUiThread(() -> vpEbook.setCurrentItem(lastPage, false));
+                            }
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        });
+    }
+
+    private void showTableOfContents() {
+        if (chapterTitles.isEmpty()) {
+            Toast.makeText(this, "Không có mục lục", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] titles = chapterTitles.toArray(new String[0]);
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Mục lục")
+            .setItems(titles, (dialog, which) -> {
+                if (which < chapterStartPages.size()) {
+                    vpEbook.setCurrentItem(chapterStartPages.get(which), false);
+                }
+            })
+            .show();
+    }
+
+    private void showSearchDialog() {
+        EditText input = new EditText(this);
+        input.setHint("Nhập từ khóa");
+        input.setPadding(48, 32, 48, 32);
+        
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Tìm kiếm")
+            .setView(input)
+            .setPositiveButton("Tìm", (dialog, which) -> {
+                String query = input.getText().toString().toLowerCase();
+                if (query.isEmpty()) return;
+                
+                for (int i = vpEbook.getCurrentItem(); i < pages.size(); i++) {
+                    if (pages.get(i).toString().toLowerCase().contains(query)) {
+                        vpEbook.setCurrentItem(i, false);
+                        Toast.makeText(this, "Đã tìm thấy ở trang " + (i + 1), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                for (int i = 0; i < vpEbook.getCurrentItem(); i++) {
+                    if (pages.get(i).toString().toLowerCase().contains(query)) {
+                        vpEbook.setCurrentItem(i, false);
+                        Toast.makeText(this, "Đã tìm thấy ở trang " + (i + 1), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                Toast.makeText(this, "Không tìm thấy", Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
     }
 
     private void setupSettingsPanel() {
@@ -284,23 +462,22 @@ public class EbookReaderActivity extends AppCompatActivity {
     private void adjustFontSize(int delta) {
         currentTextSize = Math.max(14, Math.min(28, currentTextSize + delta));
         tvFontSizeDisplay.setText(String.format(Locale.getDefault(), "%.0fpx", currentTextSize));
-        
-        tvReaderBody.setTextSize(currentTextSize);
-        tvContentChapterTitle.setTextSize(currentTextSize + 10);
+        pagerAdapter.setTextSize(currentTextSize);
+        if (cachedChapters.length() > 0) {
+            paginateText(cachedChapters);
+        }
     }
 
     private void applyTheme(String bgColor, String textColor) {
         int bgInt = Color.parseColor(bgColor);
         int textInt = Color.parseColor(textColor);
         
-        scrollContent.setBackgroundColor(bgInt);
+        vpEbook.setBackgroundColor(bgInt);
         findViewById(R.id.appbar).setBackgroundColor(bgInt);
         bottomContainer.setBackgroundColor(bgInt);
         
         tvToolbarTitle.setTextColor(textInt);
         tvToolbarChapter.setTextColor(textInt);
-        tvContentChapterTitle.setTextColor(textInt);
-        tvReaderBody.setTextColor(textInt);
         
         Toast.makeText(this, "Đã đổi chủ đề", Toast.LENGTH_SHORT).show();
     }
@@ -315,37 +492,72 @@ public class EbookReaderActivity extends AppCompatActivity {
         }
     }
 
+    private TextView getCurrentTextView() {
+        View pageView = vpEbook.getChildAt(0);
+        if (pageView instanceof RecyclerView) {
+            RecyclerView rv = (RecyclerView) pageView;
+            View currentView = rv.getLayoutManager().findViewByPosition(vpEbook.getCurrentItem());
+            if (currentView != null) {
+                return currentView.findViewById(R.id.tv_page_content);
+            }
+        }
+        return null;
+    }
+
     private void setupSelectionPopup() {
-        tvReaderBody.setTextIsSelectable(true);
-        tvReaderBody.setCustomSelectionActionModeCallback(new android.view.ActionMode.Callback() {
+        android.view.ActionMode.Callback customCallback = new android.view.ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(android.view.ActionMode mode, android.view.Menu menu) {
-                selectionPopup.setVisibility(View.VISIBLE);
-                return true;
+                menu.clear(); // Hide default menu
+                return true; 
             }
+
             @Override
             public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+                menu.clear();
+                selectionPopup.setVisibility(View.VISIBLE);
+                
+                // Try to position popup above text
+                TextView tv = getCurrentTextView();
+                if (tv != null) {
+                    int start = tv.getSelectionStart();
+                    if (start >= 0) {
+                        Layout layout = tv.getLayout();
+                        if (layout != null) {
+                            int line = layout.getLineForOffset(start);
+                            int y = layout.getLineTop(line);
+                            float adjustedY = y + vpEbook.getY() - dpToPx(80);
+                            selectionPopup.setY(Math.max(dpToPx(80), adjustedY)); // keep within bounds
+                        }
+                    }
+                }
                 return false;
             }
+
             @Override
             public boolean onActionItemClicked(android.view.ActionMode mode, android.view.MenuItem item) {
                 return false;
             }
+
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
                 selectionPopup.setVisibility(View.GONE);
             }
-        });
+        };
+        pagerAdapter.setCustomSelectionCallback(customCallback);
 
         findViewById(R.id.btn_copy).setOnClickListener(v -> {
-            int start = tvReaderBody.getSelectionStart();
-            int end = tvReaderBody.getSelectionEnd();
-            if (start >= 0 && end > start) {
-                String selectedText = tvReaderBody.getText().toString().substring(start, end);
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("ebook_text", selectedText);
-                clipboard.setPrimaryClip(clip);
-                Toast.makeText(this, "Đã sao chép", Toast.LENGTH_SHORT).show();
+            TextView tv = getCurrentTextView();
+            if (tv != null) {
+                int start = tv.getSelectionStart();
+                int end = tv.getSelectionEnd();
+                if (start >= 0 && end > start) {
+                    String selectedText = tv.getText().toString().substring(start, end);
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("ebook_text", selectedText);
+                    clipboard.setPrimaryClip(clip);
+                    Toast.makeText(this, "Đã sao chép", Toast.LENGTH_SHORT).show();
+                }
             }
             selectionPopup.setVisibility(View.GONE);
         });
@@ -353,11 +565,14 @@ public class EbookReaderActivity extends AppCompatActivity {
         View btnSaveNote = findViewById(R.id.btn_save_note);
         if (btnSaveNote != null) {
             btnSaveNote.setOnClickListener(v -> {
-                int start = tvReaderBody.getSelectionStart();
-                int end = tvReaderBody.getSelectionEnd();
-                if (start >= 0 && end > start) {
-                    String selectedText = tvReaderBody.getText().toString().substring(start, end);
-                    addBookmarkWithNote(selectedText);
+                TextView tv = getCurrentTextView();
+                if (tv != null) {
+                    int start = tv.getSelectionStart();
+                    int end = tv.getSelectionEnd();
+                    if (start >= 0 && end > start) {
+                        String selectedText = tv.getText().toString().substring(start, end);
+                        addBookmarkWithNote(selectedText);
+                    }
                 }
                 selectionPopup.setVisibility(View.GONE);
             });
@@ -378,10 +593,6 @@ public class EbookReaderActivity extends AppCompatActivity {
         selectionPopup.setVisibility(View.GONE);
     }
 
-    private void addBookmark() {
-        addBookmarkWithNote("Đánh dấu trang");
-    }
-
     private void addBookmarkWithNote(String noteText) {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
@@ -392,7 +603,7 @@ public class EbookReaderActivity extends AppCompatActivity {
         try {
             json.put("user_id", userId);
             json.put("book_id", bookId);
-            json.put("page_number", 1);
+            json.put("page_number", vpEbook.getCurrentItem() + 1);
             json.put("note", noteText);
         } catch (Exception e) {}
 
@@ -407,7 +618,6 @@ public class EbookReaderActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful()) {
@@ -415,5 +625,9 @@ public class EbookReaderActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 }
