@@ -1,12 +1,16 @@
 package com.example.a23110035_23110060;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.util.List;
 
@@ -31,7 +35,15 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
 
         holder.tvTitle.setText(book.getTitle());
         holder.tvAuthor.setText(book.getAuthor());
-        holder.ivCover.setImageResource(book.getCoverResId());
+        
+        if (book.getCoverUrl() != null && !book.getCoverUrl().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                .load(book.getCoverUrl())
+                .placeholder(R.drawable.bacl)
+                .into(holder.ivCover);
+        } else {
+            holder.ivCover.setImageResource(book.getCoverResId());
+        }
         
         // Premium Badge
         holder.tvPremium.setVisibility(book.isPremium() ? View.VISIBLE : View.GONE);
@@ -40,6 +52,23 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
         holder.tvProgressPercent.setText(book.getProgress() + "% hoàn thành");
         holder.tvTimeRemaining.setText(book.getTimeRemaining());
         holder.pbProgress.setProgress(book.getProgress());
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            intent.putExtra("bookId", book.getBookId());
+            v.getContext().startActivity(intent);
+        });
+
+        holder.btnMore.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(v.getContext(), v);
+            popup.getMenu().add("Xóa khỏi thư viện");
+            popup.getMenu().add("Tải xuống");
+            popup.setOnMenuItemClickListener(item -> {
+                Toast.makeText(v.getContext(), item.getTitle() + ": " + book.getTitle(), Toast.LENGTH_SHORT).show();
+                return true;
+            });
+            popup.show();
+        });
     }
 
     @Override
@@ -51,6 +80,7 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
         ImageView ivCover;
         TextView tvTitle, tvAuthor, tvPremium, tvProgressPercent, tvTimeRemaining;
         LinearProgressIndicator pbProgress;
+        View btnMore;
 
         public LibraryViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -61,6 +91,7 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
             tvProgressPercent = itemView.findViewById(R.id.tvProgressPercent);
             tvTimeRemaining = itemView.findViewById(R.id.tvTimeRemaining);
             pbProgress = itemView.findViewById(R.id.pbBookProgress);
+            btnMore = itemView.findViewById(R.id.btnMore);
         }
     }
 }

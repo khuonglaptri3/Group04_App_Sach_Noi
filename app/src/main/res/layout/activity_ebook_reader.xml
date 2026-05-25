@@ -5,167 +5,157 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"> <com.google.android.material.appbar.AppBarLayout
-    android:id="@+id/appbar"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="#FFFFFF"
-    app:elevation="0dp"
-    app:layout_constraintTop_toTopOf="parent">
+    android:background="#FFFFFF">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:contentInsetStart="0dp"
-        app:contentInsetStart="0dp">
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        app:elevation="0dp"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="?attr/actionBarSize"
+            android:contentInsetStart="0dp"
+            app:contentInsetStart="0dp">
 
-            <ImageButton
-                android:id="@+id/btn_back"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_back"
-                app:tint="#49454F"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="8dp"
-                app:layout_constraintStart_toEndOf="@id/btn_back"
-                app:layout_constraintEnd_toStartOf="@id/btn_search"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                <ImageButton
+                    android:id="@+id/btn_back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_back"
+                    app:tint="#49454F"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="The Alchemist"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="#1D1B20"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintStart_toEndOf="@id/btn_back"
+                    app:layout_constraintEnd_toStartOf="@id/btn_search"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Chapter IV: The Burning Desert"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="#49454F"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tv_toolbar_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="#1D1B20"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Tên sách" />
 
-            <ImageButton
-                android:id="@+id/btn_search"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_search"
-                app:tint="#49454F"
-                app:layout_constraintEnd_toStartOf="@id/btn_bookmark"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                    <TextView
+                        android:id="@+id/tv_toolbar_chapter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="#49454F"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Chương 1" />
+                </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/btn_bookmark"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_bookmark_add"
-                app:tint="#49454F"
-                app:layout_constraintEnd_toStartOf="@id/btn_more"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                <ImageButton
+                    android:id="@+id/btn_search"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_search"
+                    app:tint="#49454F"
+                    app:layout_constraintEnd_toStartOf="@id/btn_bookmark"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <ImageButton
-                android:id="@+id/btn_more"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_more_vert"
-                app:tint="#49454F"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                <ImageButton
+                    android:id="@+id/btn_bookmark"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_bookmark_add"
+                    app:tint="#49454F"
+                    app:layout_constraintEnd_toStartOf="@id/btn_more"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.appcompat.widget.Toolbar>
-</com.google.android.material.appbar.AppBarLayout>
+                <ImageButton
+                    android:id="@+id/btn_more"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_more_vert"
+                    app:tint="#49454F"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll_content"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingBottom="100dp"
         app:layout_constraintTop_toBottomOf="@id/appbar"
         app:layout_constraintBottom_toTopOf="@id/bottom_container">
 
         <LinearLayout
+            android:id="@+id/ll_reader_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
-            android:paddingTop="24dp">
+            android:paddingTop="24dp"
+            android:paddingBottom="100dp">
 
             <TextView
+                android:id="@+id/tv_content_chapter_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chapter IV: The Burning Desert"
                 android:fontFamily="serif"
                 android:textSize="28sp"
                 android:textColor="#1D1B20"
-                android:layout_marginBottom="32dp" />
+                android:layout_marginBottom="32dp"
+                tools:text="Tiêu đề chương" />
 
             <TextView
+                android:id="@+id/tv_reader_body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="He looked out at the horizon, where the dunes rolled under the glaring midday sun. The wind blew fiercely, carrying fine grains of sand into his eyes. Santiago suddenly realized that the desert was not just a barren wasteland, but a living entity, full of mystery and power.\n\n"
                 android:fontFamily="serif"
                 android:textSize="18sp"
                 android:textColor="#1D1B20"
-                android:lineSpacingExtra="10dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="&quot;Everyone has their own way of learning,&quot; he thought to himself. &quot;His way isn't the same as mine, nor is mine the same as his. But we're both in search of our Personal Legends, and that's why I respect him.&quot;\n\n"
-                android:fontFamily="serif"
-                android:textSize="18sp"
-                android:textColor="#1D1B20"
-                android:background="#FFF59D"
-                android:lineSpacingExtra="10dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="The alchemist looked at the boy with deep eyes. He knew that the boy had begun to understand the language of the universe. No words were needed, no complex formulas, just silence and listening to the beating of his own heart."
-                android:fontFamily="serif"
-                android:textSize="18sp"
-                android:textColor="#1D1B20"
-                android:lineSpacingExtra="10dp" />
+                android:lineSpacingExtra="10dp"
+                tools:text="Nội dung sách tải từ database sẽ hiện ở đây..." />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
     <include
         android:id="@+id/selection_popup"
         layout="@layout/reader_selection_popup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="24dp"
         android:layout_marginTop="360dp"/>
+
     <LinearLayout
         android:id="@+id/bottom_container"
         android:layout_width="match_parent"
@@ -186,27 +176,30 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp">
                 <TextView
+                    android:id="@+id/tv_page_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Page 45/210"
+                    android:text="Trang 1"
                     android:textSize="12sp"
                     android:textColor="#49454F" />
                 <TextView
+                    android:id="@+id/tv_percent_read"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:text="22% read"
+                    android:text="0% đã đọc"
                     android:textSize="12sp"
                     android:textColor="#49454F" />
             </RelativeLayout>
 
             <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/pb_reading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:trackCornerRadius="2dp"
                 app:indicatorColor="#6750A4"
                 app:trackColor="#E7E0EC"
-                android:progress="22" />
+                android:progress="0" />
         </LinearLayout>
 
         <LinearLayout
@@ -217,6 +210,7 @@
             android:gravity="center_vertical">
 
             <LinearLayout
+                android:id="@+id/btn_contents"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -224,21 +218,23 @@
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_format_list_bulleted" app:tint="#49454F" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Contents" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mục lục" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btn_night_mode"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_dark_mode" app:tint="#49454F" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Night" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
+                <ImageView android:id="@+id/iv_night_mode" android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_dark_mode" app:tint="#49454F" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tối" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btn_settings"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -246,10 +242,11 @@
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
                 <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_text_fields" app:tint="#6750A4" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Settings" android:textSize="12sp" android:textStyle="bold" android:textColor="#6750A4" android:layout_marginTop="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cài đặt" android:textSize="12sp" android:textStyle="bold" android:textColor="#6750A4" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btn_listen"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -257,10 +254,28 @@
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
                 <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_headphones" app:tint="#49454F" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Listen" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nghe" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
+
+    <!-- Brightness Overlay -->
+    <View
+        android:id="@+id/view_brightness_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:alpha="0"
+        android:visibility="gone" />
+
+    <!-- Settings Panel -->
+    <include
+        android:id="@+id/settings_panel"
+        layout="@layout/reading_settings_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

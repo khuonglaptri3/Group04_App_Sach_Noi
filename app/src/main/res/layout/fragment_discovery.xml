@@ -29,17 +29,21 @@
                     android:gravity="center_vertical"
                     android:paddingHorizontal="16dp">
                     <ImageView
+                        android:id="@+id/ivSearchAction"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_search"
-                        app:tint="?attr/colorOnSurfaceVariant" />
+                        app:tint="?attr/colorOnSurfaceVariant"
+                        android:background="?attr/selectableItemBackgroundBorderless"/>
                     <EditText
                         android:id="@+id/etSearch"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@android:color/transparent"
-                        android:hint="Tâm lý h"
+                        android:hint="Tìm kiếm sách, tác giả..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
                         android:paddingHorizontal="12dp"
                         android:textSize="16sp" />
                     <ImageView
@@ -68,6 +72,7 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFeaturedCollection"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="12dp"
@@ -123,5 +128,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </com.google.android.material.card.MaterialCardView>
+
+    <include
+        android:id="@+id/miniPlayer"
+        layout="@layout/layout_mini_player"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
