@@ -11,8 +11,8 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_selection_popup"
         android:layout_width="wrap_content"
-        android:layout_height="56dp"
-        android:layout_marginBottom="8dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="4dp"
         app:cardCornerRadius="18dp"
         app:cardElevation="10dp"
         app:cardBackgroundColor="#2B2830"
@@ -74,27 +74,6 @@
                     android:textColor="#FFFFFF"/>
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/btn_dictionary"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:paddingHorizontal="10dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_dictionary"
-                    app:tint="#FFFFFF"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tra từ"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"/>
-            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/btn_save_note"
