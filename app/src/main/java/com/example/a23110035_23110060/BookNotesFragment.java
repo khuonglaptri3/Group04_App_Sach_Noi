@@ -94,8 +94,8 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null || bookId == null) return;
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?user_id=eq." + userId + 
-                     "&book_id=eq." + bookId + "&select=id,note,created_at,page_number&order=created_at.desc";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_notes?user_id=eq." + userId + 
+                     "&book_id=eq." + bookId + "&select=id,note,created_at,book_highlights(page_number,highlighted_text)&order=created_at.desc";
 
         Request request = new Request.Builder()
                 .url(url)
@@ -121,8 +121,16 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
                             String id = obj.getString("id");
                             String note = obj.optString("note", "");
                             String createdAt = obj.optString("created_at", "");
-                            int page = obj.optInt("page_number", 1);
-                            notesList.add(new BookNote(id, note, createdAt, page));
+                            
+                            int page = 1;
+                            String highlightedText = "";
+                            JSONObject highlightObj = obj.optJSONObject("book_highlights");
+                            if (highlightObj != null) {
+                                page = highlightObj.optInt("page_number", 1);
+                                highlightedText = highlightObj.optString("highlighted_text", "");
+                            }
+                            
+                            notesList.add(new BookNote(id, note, createdAt, page, highlightedText));
                         }
                         if (isAdded()) {
                             requireActivity().runOnUiThread(() -> {
@@ -154,7 +162,7 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
 
         if (editingNoteId != null) {
             // Update mode (PATCH)
-            String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?id=eq." + editingNoteId;
+            String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_notes?id=eq." + editingNoteId;
             JSONObject json = new JSONObject();
             try {
                 json.put("note", noteText);
@@ -180,35 +188,8 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
                 }
             });
         } else {
-            // Create mode (POST)
-            String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
-            JSONObject json = new JSONObject();
-            try {
-                json.put("user_id", userId);
-                json.put("book_id", bookId);
-                json.put("page_number", 1);
-                json.put("note", noteText);
-            } catch (Exception e) {}
-
-            RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
-            Request request = new Request.Builder()
-                    .url(url)
-                    .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                    .addHeader("Authorization", "Bearer " + token)
-                    .post(body)
-                    .build();
-
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    resetInputStateAndRefresh(false, "Thêm thất bại");
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    resetInputStateAndRefresh(response.isSuccessful(), response.isSuccessful() ? "Đã thêm ghi chú" : "Thêm thất bại");
-                }
-            });
+            btnSaveNote.setEnabled(true);
+            Toast.makeText(getContext(), "Chỉ có thể tạo ghi chú bằng cách chọn văn bản trong sách", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -216,7 +197,7 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
         String token = sessionManager.getAccessToken();
         if (token == null) return;
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?id=eq." + id;
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_notes?id=eq." + id;
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
@@ -269,12 +250,14 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
         public String note;
         public String createdAt;
         public int pageNumber;
+        public String highlightedText;
 
-        public BookNote(String id, String note, String createdAt, int pageNumber) {
+        public BookNote(String id, String note, String createdAt, int pageNumber, String highlightedText) {
             this.id = id;
             this.note = note;
             this.createdAt = createdAt;
             this.pageNumber = pageNumber;
+            this.highlightedText = highlightedText;
         }
     }
 
@@ -298,10 +281,24 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
             BookNote note = list.get(position);
             holder.tvText.setText(note.note);
             
+            if (note.highlightedText != null && !note.highlightedText.isEmpty()) {
+                holder.tvHighlightedText.setVisibility(View.VISIBLE);
+                holder.tvHighlightedText.setText("\"" + note.highlightedText + "\"");
+            } else {
+                holder.tvHighlightedText.setVisibility(View.GONE);
+            }
+            
             // Format page number and date
             String pageText = "Trang " + note.pageNumber;
             String dateText = formatSupabaseDate(note.createdAt);
             holder.tvDate.setText(pageText + "  •  " + dateText);
+
+            holder.itemView.setOnClickListener(v -> {
+                if (getActivity() instanceof EbookReaderActivity) {
+                    ((EbookReaderActivity) getActivity()).jumpToPage(note.pageNumber - 1);
+                    dismiss();
+                }
+            });
 
             holder.btnEdit.setOnClickListener(v -> {
                 editingNoteId = note.id;
@@ -353,12 +350,13 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvText, tvDate;
+            TextView tvText, tvDate, tvHighlightedText;
             ImageButton btnEdit, btnDelete;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvText = itemView.findViewById(R.id.tv_note_text);
+                tvHighlightedText = itemView.findViewById(R.id.tv_highlighted_text);
                 tvDate = itemView.findViewById(R.id.tv_note_date);
                 btnEdit = itemView.findViewById(R.id.btn_edit_note);
                 btnDelete = itemView.findViewById(R.id.btn_delete_note);

@@ -62,6 +62,7 @@ public class EbookReaderActivity extends AppCompatActivity {
     private List<Integer> chapterStartPages = new ArrayList<>();
     private List<String> chapterTitles = new ArrayList<>();
     private JSONArray cachedChapters = new JSONArray();
+    private java.util.Set<Integer> bookmarkedPages = new java.util.HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,6 +205,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                                         }
                                         cachedChapters = jsonChapters;
                                         paginateText(jsonChapters);
+                                        fetchBookmarks();
                                         fetchLastProgress();
                                     } catch (Exception ex) {
                                         fetchLegacyDescription();
@@ -367,6 +369,48 @@ public class EbookReaderActivity extends AppCompatActivity {
         if (currentChapterIndex < chapterTitles.size()) {
             tvToolbarChapter.setText(chapterTitles.get(currentChapterIndex));
         }
+        
+        android.widget.ImageButton btnBookmark = findViewById(R.id.btn_bookmark);
+        if (bookmarkedPages.contains(position + 1)) {
+            btnBookmark.setColorFilter(Color.parseColor("#FFC107"));
+        } else {
+            btnBookmark.clearColorFilter();
+        }
+    }
+
+    private void fetchBookmarks() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?user_id=eq." + userId + "&book_id=eq." + bookId + "&select=page_number";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray arr = new JSONArray(response.body().string());
+                        bookmarkedPages.clear();
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject obj = arr.getJSONObject(i);
+                            if (obj.has("page_number") && !obj.isNull("page_number")) {
+                                bookmarkedPages.add(obj.getInt("page_number"));
+                            }
+                        }
+                        runOnUiThread(() -> updateProgressUI(vpEbook.getCurrentItem()));
+                    } catch (Exception e) {}
+                }
+            }
+        });
     }
 
     private void saveBookmark() {
@@ -378,37 +422,59 @@ public class EbookReaderActivity extends AppCompatActivity {
             return;
         }
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
-        JSONObject json = new JSONObject();
-        try {
-            json.put("user_id", userId);
-            json.put("book_id", bookId);
-            json.put("page_number", vpEbook.getCurrentItem() + 1);
-            json.put("note", "Đánh dấu trang " + (vpEbook.getCurrentItem() + 1));
-        } catch (Exception e) {}
+        int currentPage = vpEbook.getCurrentItem() + 1;
+        
+        if (bookmarkedPages.contains(currentPage)) {
+            // Remove bookmark
+            String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?user_id=eq." + userId + "&book_id=eq." + bookId + "&page_number=eq." + currentPage;
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + token)
+                    .delete()
+                    .build();
 
-        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + token)
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    runOnUiThread(() -> {
-                        android.widget.ImageButton btnBookmark = findViewById(R.id.btn_bookmark);
-                        btnBookmark.setColorFilter(Color.parseColor("#FFC107"));
-                        Toast.makeText(EbookReaderActivity.this, "Đã đánh dấu trang " + (vpEbook.getCurrentItem() + 1), Toast.LENGTH_SHORT).show();
-                    });
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        bookmarkedPages.remove(currentPage);
+                        runOnUiThread(() -> updateProgressUI(vpEbook.getCurrentItem()));
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            // Add bookmark
+            String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
+            JSONObject json = new JSONObject();
+            try {
+                json.put("user_id", userId);
+                json.put("book_id", bookId);
+                json.put("page_number", currentPage);
+            } catch (Exception e) {}
+
+            RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                    .addHeader("Authorization", "Bearer " + token)
+                    .post(body)
+                    .build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        bookmarkedPages.add(currentPage);
+                        runOnUiThread(() -> updateProgressUI(vpEbook.getCurrentItem()));
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -631,7 +697,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                     int end = tv.getSelectionEnd();
                     if (start >= 0 && end > start) {
                         String selectedText = tv.getText().toString().substring(start, end);
-                        addBookmarkWithNote(selectedText);
+                        showNoteInputDialog(selectedText, start, end);
                     }
                 }
                 selectionPopup.setVisibility(View.GONE);
@@ -649,27 +715,125 @@ public class EbookReaderActivity extends AppCompatActivity {
             int start = tv.getSelectionStart();
             int end = tv.getSelectionEnd();
             if (start >= 0 && end > start) {
+                String selectedText = tv.getText().toString().substring(start, end);
                 android.text.SpannableString spannable = new android.text.SpannableString(tv.getText());
                 spannable.setSpan(new android.text.style.BackgroundColorSpan(Color.parseColor(color)), start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 tv.setText(spannable);
                 pages.set(vpEbook.getCurrentItem(), spannable); // Save the span in memory
+                
+                saveHighlightToDb(color, selectedText, start, end);
                 Toast.makeText(this, "Đã đánh dấu màu", Toast.LENGTH_SHORT).show();
             }
         }
         selectionPopup.setVisibility(View.GONE);
     }
 
-    private void addBookmarkWithNote(String noteText) {
+    private void saveHighlightToDb(String color, String highlightedText, int startOffset, int endOffset) {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) return;
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_highlights";
         JSONObject json = new JSONObject();
         try {
             json.put("user_id", userId);
             json.put("book_id", bookId);
             json.put("page_number", vpEbook.getCurrentItem() + 1);
+            json.put("color", color);
+            json.put("highlighted_text", highlightedText);
+            json.put("start_offset", startOffset);
+            json.put("end_offset", endOffset);
+        } catch (Exception e) {}
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {}
+        });
+    }
+
+    private void showNoteInputDialog(String selectedText, int startOffset, int endOffset) {
+        EditText input = new EditText(this);
+        input.setHint("Nhập nội dung ghi chú");
+        input.setPadding(48, 32, 48, 32);
+        
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Thêm Ghi chú")
+            .setView(input)
+            .setPositiveButton("Lưu", (dialog, which) -> {
+                String note = input.getText().toString().trim();
+                if (!note.isEmpty()) {
+                    saveHighlightAndNote(note, selectedText, startOffset, endOffset);
+                }
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+
+    private void saveHighlightAndNote(String noteText, String highlightedText, int startOffset, int endOffset) {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_highlights";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", bookId);
+            json.put("page_number", vpEbook.getCurrentItem() + 1);
+            json.put("color", "#FFC107"); // Default color for notes
+            json.put("highlighted_text", highlightedText);
+            json.put("start_offset", startOffset);
+            json.put("end_offset", endOffset);
+        } catch (Exception e) {}
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "return=representation")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray arr = new JSONArray(response.body().string());
+                        if (arr.length() > 0) {
+                            String highlightId = arr.getJSONObject(0).getString("id");
+                            saveNoteToDb(highlightId, noteText);
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        });
+    }
+
+    private void saveNoteToDb(String highlightId, String noteText) {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_notes";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", bookId);
+            json.put("highlight_id", highlightId);
             json.put("note", noteText);
         } catch (Exception e) {}
 
@@ -695,5 +859,11 @@ public class EbookReaderActivity extends AppCompatActivity {
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    public void jumpToPage(int pageIndex) {
+        if (pageIndex >= 0 && pageIndex < pages.size()) {
+            vpEbook.setCurrentItem(pageIndex, false);
+        }
     }
 }

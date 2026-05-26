@@ -23,10 +23,15 @@ public class EbookChaptersBottomSheet extends BottomSheetDialogFragment {
 
     private List<String> chapterTitles;
     private ChapterListener listener;
+    private int currentChapterIndex = -1;
 
     public EbookChaptersBottomSheet(List<String> chapterTitles, ChapterListener listener) {
         this.chapterTitles = chapterTitles;
         this.listener = listener;
+    }
+
+    public void setCurrentChapterIndex(int index) {
+        this.currentChapterIndex = index;
     }
 
     @Nullable
@@ -47,6 +52,15 @@ public class EbookChaptersBottomSheet extends BottomSheetDialogFragment {
             @Override
             public void onBindViewHolder(@NonNull ChapterViewHolder holder, int position) {
                 holder.tvTitle.setText(chapterTitles.get(position));
+                
+                if (position == currentChapterIndex) {
+                    holder.tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+                    holder.tvTitle.setTextColor(android.graphics.Color.parseColor("#4F46E5")); // Primary color
+                } else {
+                    holder.tvTitle.setTypeface(null, android.graphics.Typeface.NORMAL);
+                    holder.tvTitle.setTextColor(android.graphics.Color.parseColor("#808080")); // Secondary color
+                }
+
                 holder.itemView.setOnClickListener(v -> {
                     if (listener != null) listener.onChapterSelected(position);
                     dismiss();

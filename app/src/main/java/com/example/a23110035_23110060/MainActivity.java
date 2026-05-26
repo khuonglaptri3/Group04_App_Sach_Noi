@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
         android.widget.ImageView btnNotification = findViewById(R.id.btnNotificationMain);
         if (btnNotification != null) {
             btnNotification.setOnClickListener(v -> {
-                android.widget.Toast.makeText(this, "Không có thông báo mới", android.widget.Toast.LENGTH_SHORT).show();
+                NotificationsBottomSheet bottomSheet = new NotificationsBottomSheet();
+                bottomSheet.show(getSupportFragmentManager(), "Notifications");
             });
         }
     }
