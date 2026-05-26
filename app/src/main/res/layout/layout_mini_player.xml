@@ -35,11 +35,11 @@
             android:paddingVertical="10px">
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivMiniCover"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:scaleType="centerCrop"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedSmall"
-                tools:src="@color/teal_200" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"
+                tools:src="@drawable/bacl" />
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

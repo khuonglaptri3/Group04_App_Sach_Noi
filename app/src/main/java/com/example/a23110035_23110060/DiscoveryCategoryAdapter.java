@@ -1,11 +1,11 @@
 package com.example.a23110035_23110060;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -34,10 +34,12 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
         if (category.getBackgroundRes() != 0) {
             holder.rlBackground.setBackgroundResource(category.getBackgroundRes());
         } else {
-            holder.rlBackground.setBackgroundColor(0xFF6750A4);
+            // Assign a default colorful background based on position if no background is set
+            int[] colors = {0xFF6750A4, 0xFF4F378A, 0xFFfe6a34, 0xFF56AB2F, 0xFF8E2DE2, 0xFFF7971E};
+            holder.rlBackground.setBackgroundColor(colors[position % colors.length]);
         }
         
-        // Xử lý count (số lượng sách)
+        // Xử lý count (số lượng sách) - can be actual data from DB if available
         if (category.getCount() != null && !category.getCount().isEmpty()) {
             holder.tvCount.setVisibility(View.VISIBLE);
             holder.tvCount.setText(category.getCount());
@@ -54,7 +56,10 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Toast.makeText(v.getContext(), "Danh mục: " + category.getNameVi(), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(v.getContext(), BookListActivity.class);
+            intent.putExtra("title", category.getNameVi());
+            intent.putExtra("filter", "category_id=eq." + category.getId());
+            v.getContext().startActivity(intent);
         });
     }
 

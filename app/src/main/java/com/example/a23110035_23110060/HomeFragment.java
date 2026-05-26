@@ -1,5 +1,7 @@
 package com.example.a23110035_23110060;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7,11 +9,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
+
+import com.bumptech.glide.Glide;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -31,6 +37,7 @@ public class HomeFragment extends Fragment {
     private OkHttpClient client = new OkHttpClient();
     private Handler progressHandler = new Handler();
     private Runnable progressRunnable;
+    private ObjectAnimator rotateAnimator;
 
     @Nullable
     @Override
@@ -83,10 +90,36 @@ public class HomeFragment extends Fragment {
                 miniPlayer.setVisibility(View.VISIBLE);
                 ((TextView) miniPlayer.findViewById(R.id.tvMiniTitle)).setText(currentBook.getTitle());
                 ((TextView) miniPlayer.findViewById(R.id.tvMiniAuthor)).setText(currentBook.getAuthorName());
+                
+                ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
+                Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
+
                 com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
-                btnPlay.setIconResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                boolean isPlaying = PlayerManager.getInstance().isPlaying();
+                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+
+                handleRotation(ivCover, isPlaying);
             } else {
                 miniPlayer.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void handleRotation(View view, boolean isPlaying) {
+        if (rotateAnimator == null) {
+            rotateAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, 360f);
+            rotateAnimator.setDuration(10000);
+            rotateAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            rotateAnimator.setInterpolator(new LinearInterpolator());
+            rotateAnimator.start();
+        }
+        if (isPlaying) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                if (rotateAnimator.isPaused()) rotateAnimator.resume();
+            }
+        } else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                rotateAnimator.pause();
             }
         }
     }
