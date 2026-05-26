@@ -1,6 +1,8 @@
 package com.example.a23110035_23110060;
 
+import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,11 +40,15 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
             holder.ivIcon.setImageResource(category.getIconResId());
         }
 
-        holder.flIconWrap.setBackgroundTintList(ColorStateList.valueOf(category.getColor()));
+        // Use a default color if not specified
+        int color = category.getColor() != 0 ? category.getColor() : Color.parseColor("#E0E0E0");
+        holder.flIconWrap.setBackgroundTintList(ColorStateList.valueOf(color));
 
         holder.itemView.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(v.getContext(), BookListActivity.class);
-            intent.putExtra("title", category.getName());
+
+            Intent intent = new Intent(v.getContext(), BookListActivity.class);
+            intent.putExtra("title", category.getNameVi());
+
             intent.putExtra("filter", "category_id=eq." + category.getId());
             v.getContext().startActivity(intent);
         });
