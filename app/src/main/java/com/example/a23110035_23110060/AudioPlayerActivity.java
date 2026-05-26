@@ -38,7 +38,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
             v.setLayoutParams(mlp);
             return windowInsets;
         });
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_more), (v, windowInsets) -> {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_bookmark), (v, windowInsets) -> {
             androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
             android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
             mlp.topMargin = insets.top + (int)(16 * getResources().getDisplayMetrics().density);
@@ -96,6 +96,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
 
     private void setupListeners() {
         btnCollapse.setOnClickListener(v -> finish());
+        findViewById(R.id.btn_bookmark).setOnClickListener(v -> saveAudioBookmark());
         fabPlay.setOnClickListener(v -> playerManager.togglePlayPause());
         btnReplay10.setOnClickListener(v -> playerManager.seekBack(10000));
         btnForward30.setOnClickListener(v -> playerManager.seekForward(30000));
@@ -155,6 +156,19 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                 EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(titles, index -> {
                     playerManager.playChapter(index);
                 });
+                
+                // Set the current playing chapter index to highlight it
+                int currentIdx = -1;
+                long currentPos = playerManager.getCurrentPosition();
+                for (int i = 0; i < playerManager.getChapters().size(); i++) {
+                    Chapter c = playerManager.getChapters().get(i);
+                    if (currentPos >= c.getStartTime() && (c.getEndTime() == 0 || currentPos < c.getEndTime())) {
+                        currentIdx = i;
+                        break;
+                    }
+                }
+                bottomSheet.setCurrentChapterIndex(currentIdx);
+                
                 bottomSheet.show(getSupportFragmentManager(), "AudioChapters");
             } else {
                 Toast.makeText(this, "Không có mục lục", Toast.LENGTH_SHORT).show();
@@ -192,5 +206,47 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         int minutes = (ms / 1000) / 60;
         int seconds = (ms / 1000) % 60;
         return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+    }
+
+    private void saveAudioBookmark() {
+        Book book = playerManager.getCurrentBook();
+        if (book == null) return;
+        
+        SessionManager sessionManager = new SessionManager(this);
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int positionSeconds = playerManager.getCurrentPosition() / 1000;
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
+        org.json.JSONObject json = new org.json.JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", book.getId());
+            json.put("position_seconds", positionSeconds);
+            json.put("note", "Đánh dấu tại " + formatTime(playerManager.getCurrentPosition()));
+        } catch (Exception e) {}
+
+        okhttp3.RequestBody body = okhttp3.RequestBody.create(json.toString(), okhttp3.MediaType.parse("application/json"));
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+
+        new okhttp3.OkHttpClient().newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(@androidx.annotation.NonNull okhttp3.Call call, @androidx.annotation.NonNull java.io.IOException e) {}
+            @Override
+            public void onResponse(@androidx.annotation.NonNull okhttp3.Call call, @androidx.annotation.NonNull okhttp3.Response response) {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> Toast.makeText(AudioPlayerActivity.this, "Đã đánh dấu âm thanh", Toast.LENGTH_SHORT).show());
+                }
+            }
+        });
     }
 }

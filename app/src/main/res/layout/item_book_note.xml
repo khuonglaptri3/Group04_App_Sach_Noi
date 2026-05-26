@@ -16,6 +16,19 @@
         android:padding="12dp">
 
         <TextView
+            android:id="@+id/tv_highlighted_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="&quot;Văn bản được tô màu&quot;"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:layout_marginBottom="8dp"
+            android:background="#1A000000"
+            android:padding="8dp"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/tv_note_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

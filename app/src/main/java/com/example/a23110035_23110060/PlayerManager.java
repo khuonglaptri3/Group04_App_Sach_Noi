@@ -20,6 +20,7 @@ public class PlayerManager {
     
     private List<Chapter> chapters = new ArrayList<>();
     private int currentChapterIndex = -1;
+    private boolean isPrepared = false;
     
     private Handler sleepTimerHandler = new Handler(Looper.getMainLooper());
     private Runnable sleepTimerRunnable;
@@ -56,11 +57,16 @@ public class PlayerManager {
 
         try {
             this.currentBook = book;
+            isPrepared = false;
             mediaPlayer.reset();
             mediaPlayer.setDataSource(book.getAudioUrl());
             mediaPlayer.prepareAsync();
             mediaPlayer.setOnPreparedListener(mp -> {
+                isPrepared = true;
                 setPlaybackSpeed(currentSpeed);
+                if (currentChapterIndex >= 0 && chapters != null && !chapters.isEmpty()) {
+                    mediaPlayer.seekTo(chapters.get(currentChapterIndex).getStartTime());
+                }
                 mediaPlayer.start();
                 isPlaying = true;
                 if (callback != null) callback.onStateChange(true);
@@ -120,21 +126,33 @@ public class PlayerManager {
     public void playChapter(int index) {
         if (chapters == null || index < 0 || index >= chapters.size()) return;
         Chapter chapter = chapters.get(index);
+        this.currentChapterIndex = index;
+        
         if (chapter.getAudioUrl() == null || chapter.getAudioUrl().isEmpty()) return;
 
-        try {
-            mediaPlayer.reset();
-            mediaPlayer.setDataSource(chapter.getAudioUrl());
-            mediaPlayer.prepareAsync();
-            mediaPlayer.setOnPreparedListener(mp -> {
-                setPlaybackSpeed(currentSpeed);
-                mediaPlayer.start();
-                isPlaying = true;
-                if (callback != null) callback.onStateChange(true);
-                startProgressUpdate();
-            });
-        } catch (IOException e) {
-            Log.e("PlayerManager", "Error playing chapter", e);
+        if (currentBook != null && chapter.getAudioUrl().equals(currentBook.getAudioUrl())) {
+             if (isPrepared) {
+                 mediaPlayer.seekTo(chapter.getStartTime());
+                 if (!isPlaying) togglePlayPause();
+             }
+        } else {
+             try {
+                 isPrepared = false;
+                 mediaPlayer.reset();
+                 mediaPlayer.setDataSource(chapter.getAudioUrl());
+                 mediaPlayer.prepareAsync();
+                 mediaPlayer.setOnPreparedListener(mp -> {
+                     isPrepared = true;
+                     setPlaybackSpeed(currentSpeed);
+                     mediaPlayer.seekTo(chapter.getStartTime());
+                     mediaPlayer.start();
+                     isPlaying = true;
+                     if (callback != null) callback.onStateChange(true);
+                     startProgressUpdate();
+                 });
+             } catch (IOException e) {
+                 Log.e("PlayerManager", "Error playing chapter", e);
+             }
         }
     }
 
@@ -195,11 +213,20 @@ public class PlayerManager {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer != null && isPlaying) {
+                if (mediaPlayer != null && isPlaying && isPrepared) {
                     try {
                         int current = mediaPlayer.getCurrentPosition();
                         int total = mediaPlayer.getDuration();
                         if (callback != null) callback.onProgress(current, total);
+                        
+                        if (currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
+                            Chapter currentChapter = chapters.get(currentChapterIndex);
+                            if (currentChapter.getEndTime() > 0 && current >= currentChapter.getEndTime()) {
+                                nextChapter();
+                                return;
+                            }
+                        }
+                        
                         handler.postDelayed(this, 1000);
                     } catch (Exception e) {}
                 }

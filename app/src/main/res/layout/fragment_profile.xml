@@ -266,33 +266,21 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout style="@style/ProfileSettingItem">
+                <LinearLayout android:id="@+id/ll_edit_profile" style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_edit" />
                     <TextView style="@style/ProfileSettingText" android:text="Chỉnh sửa thông tin" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-                <LinearLayout style="@style/ProfileSettingItem">
-                    <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_bell" />
-                    <TextView style="@style/ProfileSettingText" android:text="Thông báo" />
-                    <ImageView style="@style/ProfileSettingChevron" />
-                </LinearLayout>
-                <View style="@style/ProfileDivider" />
-                <LinearLayout style="@style/ProfileSettingItem">
+                <LinearLayout android:id="@+id/ll_downloads" style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_download" />
                     <TextView style="@style/ProfileSettingText" android:text="Quản lý tải xuống" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
                 <View style="@style/ProfileDivider" />
-                <LinearLayout style="@style/ProfileSettingItem">
+                <LinearLayout android:id="@+id/ll_security" style="@style/ProfileSettingItem">
                     <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_shield" />
                     <TextView style="@style/ProfileSettingText" android:text="Bảo mật &amp; Quyền riêng tư" />
-                    <ImageView style="@style/ProfileSettingChevron" />
-                </LinearLayout>
-                <View style="@style/ProfileDivider" />
-                <LinearLayout style="@style/ProfileSettingItem">
-                    <ImageView style="@style/ProfileSettingIcon" android:src="@drawable/ic_help" />
-                    <TextView style="@style/ProfileSettingText" android:text="Trợ giúp &amp; Hỗ trợ" />
                     <ImageView style="@style/ProfileSettingChevron" />
                 </LinearLayout>
 
