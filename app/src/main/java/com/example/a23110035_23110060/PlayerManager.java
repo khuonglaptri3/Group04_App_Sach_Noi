@@ -115,7 +115,9 @@ public class PlayerManager {
         }
     }
 
-    private void playChapter(int index) {
+    public List<Chapter> getChapters() { return chapters; }
+
+    public void playChapter(int index) {
         if (chapters == null || index < 0 || index >= chapters.size()) return;
         Chapter chapter = chapters.get(index);
         if (chapter.getAudioUrl() == null || chapter.getAudioUrl().isEmpty()) return;

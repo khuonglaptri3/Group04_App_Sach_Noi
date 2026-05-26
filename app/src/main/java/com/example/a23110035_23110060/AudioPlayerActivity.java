@@ -31,6 +31,28 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
 
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_collapse), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            mlp.topMargin = insets.top + (int)(16 * getResources().getDisplayMetrics().density);
+            v.setLayoutParams(mlp);
+            return windowInsets;
+        });
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_more), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            mlp.topMargin = insets.top + (int)(16 * getResources().getDisplayMetrics().density);
+            v.setLayoutParams(mlp);
+            return windowInsets;
+        });
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.ll_secondary_controls), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            mlp.bottomMargin = insets.bottom + (int)(32 * getResources().getDisplayMetrics().density);
+            v.setLayoutParams(mlp);
+            return windowInsets;
+        });
+
         playerManager = PlayerManager.getInstance();
         initViews();
         setupListeners();
@@ -92,33 +114,51 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.ll_speed).setOnClickListener(v -> {
-            speedIndex = (speedIndex + 1) % speeds.length;
             float currentSpeed = speeds[speedIndex];
-            playerManager.setPlaybackSpeed(currentSpeed);
-            tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", currentSpeed));
+            AudioSettingsBottomSheet bottomSheet = new AudioSettingsBottomSheet(new AudioSettingsBottomSheet.AudioSettingsListener() {
+                @Override
+                public void onSpeedChanged(float speed) {
+                    playerManager.setPlaybackSpeed(speed);
+                    tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", speed));
+                    // Update index if it matches our presets
+                    for (int i = 0; i < speeds.length; i++) {
+                        if (Math.abs(speeds[i] - speed) < 0.01f) {
+                            speedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                @Override
+                public void onTimerSet(int minutes) {
+                    if (minutes > 0) {
+                        playerManager.setSleepTimer(minutes);
+                    } else {
+                        playerManager.cancelSleepTimer();
+                    }
+                }
+            }, currentSpeed);
+            bottomSheet.show(getSupportFragmentManager(), "AudioSettings");
         });
 
         findViewById(R.id.ll_timer).setOnClickListener(v -> {
-            String[] timerOptions = {"Tắt", "15 phút", "30 phút", "45 phút", "60 phút"};
-            int[] timerMinutes = {0, 15, 30, 45, 60};
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Hẹn giờ tắt")
-                .setItems(timerOptions, (dialog, which) -> {
-                    int minutes = timerMinutes[which];
-                    if (minutes > 0) {
-                        Toast.makeText(this, "Sẽ tắt sau " + minutes + " phút", Toast.LENGTH_SHORT).show();
-                        playerManager.setSleepTimer(minutes);
-                    } else {
-                        Toast.makeText(this, "Đã tắt hẹn giờ", Toast.LENGTH_SHORT).show();
-                        playerManager.cancelSleepTimer();
-                    }
-                })
-                .show();
+            findViewById(R.id.ll_speed).performClick(); // Same bottom sheet
         });
 
         findViewById(R.id.ll_chapters).setOnClickListener(v -> {
-            Toast.makeText(this, "Chapters list", Toast.LENGTH_SHORT).show();
-            // TODO: show chapter bottom sheet
+            Book book = playerManager.getCurrentBook();
+            if (playerManager.getChapters() != null && !playerManager.getChapters().isEmpty()) {
+                java.util.List<String> titles = new java.util.ArrayList<>();
+                for (Chapter c : playerManager.getChapters()) {
+                    titles.add(c.getTitle() != null ? c.getTitle() : "Chương " + c.getChapterNumber());
+                }
+                EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(titles, index -> {
+                    playerManager.playChapter(index);
+                });
+                bottomSheet.show(getSupportFragmentManager(), "AudioChapters");
+            } else {
+                Toast.makeText(this, "Không có mục lục", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

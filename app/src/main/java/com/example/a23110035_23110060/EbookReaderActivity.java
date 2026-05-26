@@ -49,7 +49,7 @@ public class EbookReaderActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private OkHttpClient client = new OkHttpClient();
 
-    private View settingsPanel, selectionPopup, brightnessOverlay;
+    private View selectionPopup, brightnessOverlay;
     private LinearLayout bottomContainer;
     private TextView tvFontSizeDisplay, tvToolbarTitle, tvToolbarChapter;
     private ViewPager2 vpEbook;
@@ -68,6 +68,17 @@ public class EbookReaderActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ebook_reader);
 
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.appbar), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, insets.top, 0, 0);
+            return windowInsets;
+        });
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottom_container), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, 0, 0, insets.bottom);
+            return windowInsets;
+        });
+
         sessionManager = new SessionManager(this);
         bookId = getIntent().getStringExtra("bookId");
 
@@ -78,10 +89,8 @@ public class EbookReaderActivity extends AppCompatActivity {
 
     private void initViews() {
         bottomContainer = findViewById(R.id.bottom_container);
-        settingsPanel = findViewById(R.id.settings_panel);
         selectionPopup = findViewById(R.id.selection_popup);
         brightnessOverlay = findViewById(R.id.view_brightness_overlay);
-        tvFontSizeDisplay = findViewById(R.id.tv_font_size);
         
         tvToolbarTitle = findViewById(R.id.tv_toolbar_title);
         tvToolbarChapter = findViewById(R.id.tv_toolbar_chapter);
@@ -100,7 +109,7 @@ public class EbookReaderActivity extends AppCompatActivity {
 
     private void setupListeners() {
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_bookmark).setOnClickListener(v -> saveReadingProgress());
+        findViewById(R.id.btn_bookmark).setOnClickListener(v -> saveBookmark());
         
         findViewById(R.id.btn_search).setOnClickListener(v -> showSearchDialog());
         findViewById(R.id.btn_contents).setOnClickListener(v -> showTableOfContents());
@@ -125,24 +134,45 @@ public class EbookReaderActivity extends AppCompatActivity {
             else applyTheme("#FFFFFF", "#1D1B20");
         });
 
-        findViewById(R.id.btn_settings).setOnClickListener(v -> toggleSettingsPanel());
+        findViewById(R.id.btn_settings).setOnClickListener(v -> {
+            EbookSettingsBottomSheet bottomSheet = new EbookSettingsBottomSheet(new EbookSettingsBottomSheet.SettingsListener() {
+                @Override
+                public void onBrightnessChanged(int progress) {
+                    float alpha = (100 - progress) / 100f * 0.8f;
+                    brightnessOverlay.setVisibility(alpha > 0 ? View.VISIBLE : View.GONE);
+                    brightnessOverlay.setAlpha(alpha);
+                }
+
+                @Override
+                public void onFontSizeAdjusted(int delta) {
+                    adjustFontSize(delta);
+                }
+
+                @Override
+                public void onThemeChanged(String bgColor, String textColor) {
+                    applyTheme(bgColor, textColor);
+                }
+            }, currentTextSize);
+            bottomSheet.show(getSupportFragmentManager(), "EbookSettings");
+        });
 
         findViewById(R.id.btn_notes).setOnClickListener(v -> {
             BookNotesFragment fragment = BookNotesFragment.newInstance(bookId);
             fragment.show(getSupportFragmentManager(), "BookNotesFragment");
         });
 
-        setupSettingsPanel();
         setupSelectionPopup();
     }
 
     private void fetchBookContent() {
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/chapters?book_id=eq." + bookId + "&order=chapter_number.asc";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_files?book_id=eq." + bookId + "&file_type=eq.epub";
+        String token = sessionManager.getAccessToken();
+        String authHeader = (token != null) ? "Bearer " + token : "Bearer " + BuildConfig.SUPABASE_ANON_KEY;
         
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", authHeader)
                 .get()
                 .build();
 
@@ -156,10 +186,36 @@ public class EbookReaderActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        cachedChapters = new JSONArray(response.body().string());
-                        if (cachedChapters.length() > 0) {
-                            paginateText(cachedChapters);
-                            fetchLastProgress(); // Try restoring progress
+                        JSONArray array = new JSONArray(response.body().string());
+                        if (array.length() > 0) {
+                            String fileUrl = array.getJSONObject(0).getString("file_url");
+                            runOnUiThread(() -> Toast.makeText(EbookReaderActivity.this, "Đang tải sách...", Toast.LENGTH_SHORT).show());
+                            
+                            EpubExtractor.fetchAndParseEpub(fileUrl, getCacheDir(), new EpubExtractor.EpubCallback() {
+                                @Override
+                                public void onSuccess(List<Chapter> chapters) {
+                                    try {
+                                        JSONArray jsonChapters = new JSONArray();
+                                        for (Chapter c : chapters) {
+                                            JSONObject obj = new JSONObject();
+                                            obj.put("title", c.getTitle());
+                                            obj.put("text_content", c.getTextContent());
+                                            jsonChapters.put(obj);
+                                        }
+                                        cachedChapters = jsonChapters;
+                                        paginateText(jsonChapters);
+                                        fetchLastProgress();
+                                    } catch (Exception ex) {
+                                        fetchLegacyDescription();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    runOnUiThread(() -> Toast.makeText(EbookReaderActivity.this, "Lỗi giải nén EPUB", Toast.LENGTH_SHORT).show());
+                                    fetchLegacyDescription();
+                                }
+                            });
                         } else {
                             fetchLegacyDescription();
                         }
@@ -215,20 +271,14 @@ public class EbookReaderActivity extends AppCompatActivity {
     }
 
     private void paginateText(JSONArray chaptersArray) {
-        new Thread(() -> {
-            TextPaint paint = new TextPaint();
-            paint.setTextSize(currentTextSize * getResources().getDisplayMetrics().scaledDensity);
-            paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
-            
-            // Wait for ViewPager to get dimensions
-            int maxRetries = 20;
-            while (vpEbook.getWidth() == 0 && maxRetries > 0) {
-                try { Thread.sleep(50); } catch (Exception ignored) {}
-                maxRetries--;
-            }
-            
-            int width = vpEbook.getWidth() - dpToPx(48); // 24dp horizontal padding * 2
-            int height = vpEbook.getHeight() - dpToPx(48); // 24dp vertical padding * 2
+        vpEbook.post(() -> {
+            new Thread(() -> {
+                TextPaint paint = new TextPaint();
+                paint.setTextSize(currentTextSize * getResources().getDisplayMetrics().scaledDensity);
+                paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+                
+                int width = vpEbook.getWidth() - dpToPx(48); // 24dp horizontal padding * 2
+                int height = vpEbook.getHeight() - dpToPx(48); // 24dp vertical padding * 2
             
             if (width <= 0 || height <= 0) {
                 width = getResources().getDisplayMetrics().widthPixels - dpToPx(48);
@@ -289,7 +339,8 @@ public class EbookReaderActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.e("Pagination", "Error", e);
             }
-        }).start();
+            }).start();
+        });
     }
 
     private void updateProgressUI(int position) {
@@ -318,9 +369,8 @@ public class EbookReaderActivity extends AppCompatActivity {
         }
     }
 
-    private void saveReadingProgress() {
+    private void saveBookmark() {
         if (pages.isEmpty()) return;
-        int progress = (int) (((float) (vpEbook.getCurrentItem() + 1) / pages.size()) * 100);
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) {
@@ -328,12 +378,13 @@ public class EbookReaderActivity extends AppCompatActivity {
             return;
         }
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + bookId;
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks";
         JSONObject json = new JSONObject();
         try {
-            json.put("progress", progress);
-            json.put("last_accessed", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(new Date()));
-            json.put("last_page_index", vpEbook.getCurrentItem());
+            json.put("user_id", userId);
+            json.put("book_id", bookId);
+            json.put("page_number", vpEbook.getCurrentItem() + 1);
+            json.put("note", "Đánh dấu trang " + (vpEbook.getCurrentItem() + 1));
         } catch (Exception e) {}
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
@@ -341,7 +392,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
                 .addHeader("Authorization", "Bearer " + token)
-                .patch(body)
+                .post(body)
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -350,9 +401,53 @@ public class EbookReaderActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful()) {
-                    runOnUiThread(() -> Toast.makeText(EbookReaderActivity.this, "Đã đánh dấu trang " + (vpEbook.getCurrentItem() + 1), Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> {
+                        android.widget.ImageButton btnBookmark = findViewById(R.id.btn_bookmark);
+                        btnBookmark.setColorFilter(Color.parseColor("#FFC107"));
+                        Toast.makeText(EbookReaderActivity.this, "Đã đánh dấu trang " + (vpEbook.getCurrentItem() + 1), Toast.LENGTH_SHORT).show();
+                    });
                 }
             }
+        });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        autoSaveProgress();
+    }
+
+    private void autoSaveProgress() {
+        if (pages.isEmpty()) return;
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        int percent = (int) (((float) (vpEbook.getCurrentItem() + 1) / pages.size()) * 100);
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + userId + "&book_id=eq." + bookId;
+        JSONObject json = new JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", bookId);
+            json.put("last_page_number", vpEbook.getCurrentItem() + 1);
+            json.put("percent_complete", percent);
+        } catch (Exception e) {}
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {}
         });
     }
 
@@ -361,7 +456,7 @@ public class EbookReaderActivity extends AppCompatActivity {
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) return;
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + bookId + "&select=last_page_index";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + userId + "&book_id=eq." + bookId + "&select=last_page_number";
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
@@ -378,7 +473,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                     try {
                         JSONArray arr = new JSONArray(response.body().string());
                         if (arr.length() > 0) {
-                            int lastPage = arr.getJSONObject(0).optInt("last_page_index", 0);
+                            int lastPage = arr.getJSONObject(0).optInt("last_page_number", 1) - 1;
                             if (lastPage > 0 && lastPage < pages.size()) {
                                 runOnUiThread(() -> vpEbook.setCurrentItem(lastPage, false));
                             }
@@ -394,15 +489,12 @@ public class EbookReaderActivity extends AppCompatActivity {
             Toast.makeText(this, "Không có mục lục", Toast.LENGTH_SHORT).show();
             return;
         }
-        String[] titles = chapterTitles.toArray(new String[0]);
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Mục lục")
-            .setItems(titles, (dialog, which) -> {
-                if (which < chapterStartPages.size()) {
-                    vpEbook.setCurrentItem(chapterStartPages.get(which), false);
-                }
-            })
-            .show();
+        EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(chapterTitles, index -> {
+            if (index < chapterStartPages.size()) {
+                vpEbook.setCurrentItem(chapterStartPages.get(index), false);
+            }
+        });
+        bottomSheet.show(getSupportFragmentManager(), "EbookChapters");
     }
 
     private void showSearchDialog() {
@@ -437,31 +529,8 @@ public class EbookReaderActivity extends AppCompatActivity {
             .show();
     }
 
-    private void setupSettingsPanel() {
-        SeekBar seekBrightness = findViewById(R.id.seek_brightness);
-        seekBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float alpha = (100 - progress) / 100f * 0.8f;
-                brightnessOverlay.setVisibility(alpha > 0 ? View.VISIBLE : View.GONE);
-                brightnessOverlay.setAlpha(alpha);
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        findViewById(R.id.btn_font_decrease).setOnClickListener(v -> adjustFontSize(-2));
-        findViewById(R.id.btn_font_increase).setOnClickListener(v -> adjustFontSize(2));
-        findViewById(R.id.btn_theme_light).setOnClickListener(v -> applyTheme("#FFFFFF", "#1D1B20"));
-        findViewById(R.id.btn_theme_sepia).setOnClickListener(v -> applyTheme("#F5E6C8", "#5D4037"));
-        findViewById(R.id.btn_theme_dark).setOnClickListener(v -> applyTheme("#1A1A2E", "#E0E0E0"));
-    }
-
     private void adjustFontSize(int delta) {
         currentTextSize = Math.max(14, Math.min(28, currentTextSize + delta));
-        tvFontSizeDisplay.setText(String.format(Locale.getDefault(), "%.0fpx", currentTextSize));
         pagerAdapter.setTextSize(currentTextSize);
         if (cachedChapters.length() > 0) {
             paginateText(cachedChapters);
@@ -482,15 +551,6 @@ public class EbookReaderActivity extends AppCompatActivity {
         Toast.makeText(this, "Đã đổi chủ đề", Toast.LENGTH_SHORT).show();
     }
 
-    private void toggleSettingsPanel() {
-        if (settingsPanel.getVisibility() == View.VISIBLE) {
-            settingsPanel.setVisibility(View.GONE);
-        } else {
-            settingsPanel.setVisibility(View.VISIBLE);
-            Animation slideUp = AnimationUtils.loadAnimation(this, android.R.anim.slide_in_left);
-            settingsPanel.startAnimation(slideUp);
-        }
-    }
 
     private TextView getCurrentTextView() {
         View pageView = vpEbook.getChildAt(0);
@@ -526,8 +586,8 @@ public class EbookReaderActivity extends AppCompatActivity {
                         if (layout != null) {
                             int line = layout.getLineForOffset(start);
                             int y = layout.getLineTop(line);
-                            float adjustedY = y + vpEbook.getY() - dpToPx(80);
-                            selectionPopup.setY(Math.max(dpToPx(80), adjustedY)); // keep within bounds
+                            float adjustedY = y + vpEbook.getY() - dpToPx(55);
+                            selectionPopup.setY(Math.max(dpToPx(55), adjustedY)); // keep within bounds
                         }
                     }
                 }
@@ -578,18 +638,24 @@ public class EbookReaderActivity extends AppCompatActivity {
             });
         }
 
-        findViewById(R.id.btn_dictionary).setOnClickListener(v -> {
-            Toast.makeText(this, "Tra từ điển...", Toast.LENGTH_SHORT).show();
-            selectionPopup.setVisibility(View.GONE);
-        });
-        
         findViewById(R.id.color_green).setOnClickListener(v -> highlightText("#A8E063"));
         findViewById(R.id.color_pink).setOnClickListener(v -> highlightText("#FF6B9D"));
         findViewById(R.id.color_blue).setOnClickListener(v -> highlightText("#2575FC"));
     }
 
     private void highlightText(String color) {
-        Toast.makeText(this, "Đã highlight với màu " + color, Toast.LENGTH_SHORT).show();
+        TextView tv = getCurrentTextView();
+        if (tv != null) {
+            int start = tv.getSelectionStart();
+            int end = tv.getSelectionEnd();
+            if (start >= 0 && end > start) {
+                android.text.SpannableString spannable = new android.text.SpannableString(tv.getText());
+                spannable.setSpan(new android.text.style.BackgroundColorSpan(Color.parseColor(color)), start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tv.setText(spannable);
+                pages.set(vpEbook.getCurrentItem(), spannable); // Save the span in memory
+                Toast.makeText(this, "Đã đánh dấu màu", Toast.LENGTH_SHORT).show();
+            }
+        }
         selectionPopup.setVisibility(View.GONE);
     }
 
