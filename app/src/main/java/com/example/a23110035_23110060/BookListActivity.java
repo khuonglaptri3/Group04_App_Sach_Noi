@@ -38,8 +38,8 @@ public class BookListActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         rvBookList = findViewById(R.id.rvBookList);
-        rvBookList.setLayoutManager(new GridLayoutManager(this, 3));
-        adapter = new BookAdapter(bookList);
+        rvBookList.setLayoutManager(new GridLayoutManager(this, 2));
+        adapter = new BookAdapter(bookList, R.layout.item_book_grid); // Sử dụng layout 2 cột mới
         rvBookList.setAdapter(adapter);
 
         fetchBooks(filter);

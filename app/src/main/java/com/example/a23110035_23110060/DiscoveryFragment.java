@@ -1,5 +1,7 @@
 package com.example.a23110035_23110060;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,6 +26,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -52,6 +56,7 @@ public class DiscoveryFragment extends Fragment {
     private SuggestionAdapter suggestionAdapter;
     private Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable, progressRunnable;
+    private ObjectAnimator rotateAnimator;
 
     @Nullable
     @Override
@@ -84,7 +89,12 @@ public class DiscoveryFragment extends Fragment {
         setupSearchLogic();
 
         // 4. Featured Click
-        cardFeaturedCollection.setOnClickListener(v -> Toast.makeText(getContext(), "Bộ sưu tập nổi bật", Toast.LENGTH_SHORT).show());
+        cardFeaturedCollection.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), BookListActivity.class);
+            intent.putExtra("title", "Bộ sưu tập nổi bật");
+            intent.putExtra("filter", "rating_avg=gte.4.5"); // Ví dụ: lọc các sách đánh giá cao
+            startActivity(intent);
+        });
         
         setupMiniPlayer(view);
     }
@@ -110,10 +120,36 @@ public class DiscoveryFragment extends Fragment {
                 miniPlayer.setVisibility(View.VISIBLE);
                 ((TextView) miniPlayer.findViewById(R.id.tvMiniTitle)).setText(currentBook.getTitle());
                 ((TextView) miniPlayer.findViewById(R.id.tvMiniAuthor)).setText(currentBook.getAuthorName());
+                
+                ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
+                Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
+
                 com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
-                btnPlay.setIconResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                boolean isPlaying = PlayerManager.getInstance().isPlaying();
+                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                
+                handleRotation(ivCover, isPlaying);
             } else {
                 miniPlayer.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void handleRotation(View view, boolean isPlaying) {
+        if (rotateAnimator == null) {
+            rotateAnimator = ObjectAnimator.ofFloat(view, "rotation", 0f, 360f);
+            rotateAnimator.setDuration(10000);
+            rotateAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            rotateAnimator.setInterpolator(new LinearInterpolator());
+            rotateAnimator.start();
+        }
+        if (isPlaying) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                if (rotateAnimator.isPaused()) rotateAnimator.resume();
+            }
+        } else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                rotateAnimator.pause();
             }
         }
     }

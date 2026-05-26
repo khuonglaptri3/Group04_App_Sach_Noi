@@ -13,15 +13,21 @@ import java.util.List;
 
 public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder> {
     private List<Book> books;
+    private int layoutResId = R.layout.item_book_card; // Mặc định
 
     public BookAdapter(List<Book> books) {
         this.books = books;
     }
 
+    public BookAdapter(List<Book> books, int layoutResId) {
+        this.books = books;
+        this.layoutResId = layoutResId;
+    }
+
     @NonNull
     @Override
     public BookViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_book_card, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(layoutResId, parent, false);
         return new BookViewHolder(view);
     }
 

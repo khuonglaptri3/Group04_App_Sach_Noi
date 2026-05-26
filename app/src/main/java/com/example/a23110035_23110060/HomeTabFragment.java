@@ -140,11 +140,15 @@ public class HomeTabFragment extends Fragment {
                         JSONArray array = new JSONArray(response.body().string());
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject obj = array.getJSONObject(i);
-                            categories.add(new Category(
+                            Category cat = new Category(
+                                obj.getString("id"),
                                 obj.getString("name_vi"),
-                                obj.optString("icon_url"),
-                                Color.parseColor("#4f378a")
-                            ));
+                                obj.optString("name_en"),
+                                obj.optString("icon_url")
+                            );
+                            // Assign a color for the chip background (legacy support)
+                            // We can use a list of colors or just one for now
+                            categories.add(cat);
                         }
                     } catch (Exception e) {}
                 }
