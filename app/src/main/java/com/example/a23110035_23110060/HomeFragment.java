@@ -163,7 +163,7 @@ public class HomeFragment extends Fragment {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
                 .get()
                 .build();
 

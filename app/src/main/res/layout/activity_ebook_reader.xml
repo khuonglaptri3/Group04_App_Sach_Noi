@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
@@ -106,44 +107,12 @@
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scroll_content"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vp_ebook"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/appbar"
-        app:layout_constraintBottom_toTopOf="@id/bottom_container">
-
-        <LinearLayout
-            android:id="@+id/ll_reader_content"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="100dp">
-
-            <TextView
-                android:id="@+id/tv_content_chapter_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="serif"
-                android:textSize="28sp"
-                android:textColor="#1D1B20"
-                android:layout_marginBottom="32dp"
-                tools:text="Tiêu đề chương" />
-
-            <TextView
-                android:id="@+id/tv_reader_body"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="serif"
-                android:textSize="18sp"
-                android:textColor="#1D1B20"
-                android:lineSpacingExtra="10dp"
-                tools:text="Nội dung sách tải từ database sẽ hiện ở đây..." />
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+        app:layout_constraintBottom_toTopOf="@id/bottom_container" />
 
     <include
         android:id="@+id/selection_popup"
@@ -246,15 +215,15 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btn_listen"
+                android:id="@+id/btn_notes"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless">
-                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_headphones" app:tint="#49454F" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nghe" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_edit" app:tint="#49454F" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ghi chú" android:textSize="12sp" android:textColor="#49454F" android:layout_marginTop="4dp"/>
             </LinearLayout>
 
         </LinearLayout>

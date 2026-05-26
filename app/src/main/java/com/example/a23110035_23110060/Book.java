@@ -57,8 +57,23 @@ public class Book {
 
     public void setId(String id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
-    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public void setDescription(String description) { this.description = description; }
     public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
+    public void setLanguage(String language) { this.language = language; }
+    public void setRatingAvg(double ratingAvg) { this.ratingAvg = ratingAvg; }
+    public void setRatingCount(int ratingCount) { this.ratingCount = ratingCount; }
+    public void setPrice(double price) { this.price = price; }
+    public void setAudiobook(boolean audiobook) { isAudiobook = audiobook; }
+    public void setEbook(boolean ebook) { isEbook = ebook; }
     public void setPremiumOnly(boolean premiumOnly) { isPremiumOnly = premiumOnly; }
+    public void setDurationSeconds(int durationSeconds) { this.durationSeconds = durationSeconds; }
+    public void setPageCount(int pageCount) { this.pageCount = pageCount; }
+    public void setPublishedYear(int publishedYear) { this.publishedYear = publishedYear; }
+    public void setAuthorId(String authorId) { this.authorId = authorId; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
+    public void setCategoryNameVi(String categoryNameVi) { this.categoryNameVi = categoryNameVi; }
+    public void setCategoryNameEn(String categoryNameEn) { this.categoryNameEn = categoryNameEn; }
     public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
 }

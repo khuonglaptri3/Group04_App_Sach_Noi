@@ -56,7 +56,9 @@ public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCate
         }
 
         holder.itemView.setOnClickListener(v -> {
+
             Intent intent = new Intent(v.getContext(), BookListActivity.class);
+
             intent.putExtra("title", category.getNameVi());
             intent.putExtra("filter", "category_id=eq." + category.getId());
             v.getContext().startActivity(intent);

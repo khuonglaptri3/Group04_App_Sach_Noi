@@ -13,6 +13,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return windowInsets;
+        });
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.navHostFragment);
@@ -20,6 +26,14 @@ public class MainActivity extends AppCompatActivity {
             NavController navController = navHostFragment.getNavController();
             BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
             NavigationUI.setupWithNavController(bottomNav, navController);
+        }
+        
+        android.widget.ImageView btnNotification = findViewById(R.id.btnNotificationMain);
+        if (btnNotification != null) {
+            btnNotification.setOnClickListener(v -> {
+                NotificationsBottomSheet bottomSheet = new NotificationsBottomSheet();
+                bottomSheet.show(getSupportFragmentManager(), "Notifications");
+            });
         }
     }
 }

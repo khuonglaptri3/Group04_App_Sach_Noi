@@ -17,9 +17,15 @@ import java.util.List;
 public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.LibraryViewHolder> {
 
     private List<LibraryBook> bookList;
+    private OnItemDeleteListener deleteListener;
 
-    public LibraryBookAdapter(List<LibraryBook> bookList) {
+    public interface OnItemDeleteListener {
+        void onDelete(LibraryBook book, int position);
+    }
+
+    public LibraryBookAdapter(List<LibraryBook> bookList, OnItemDeleteListener deleteListener) {
         this.bookList = bookList;
+        this.deleteListener = deleteListener;
     }
 
     @NonNull
@@ -64,7 +70,13 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
             popup.getMenu().add("Xóa khỏi thư viện");
             popup.getMenu().add("Tải xuống");
             popup.setOnMenuItemClickListener(item -> {
-                Toast.makeText(v.getContext(), item.getTitle() + ": " + book.getTitle(), Toast.LENGTH_SHORT).show();
+                if (item.getTitle().equals("Xóa khỏi thư viện")) {
+                    if (deleteListener != null) {
+                        deleteListener.onDelete(book, position);
+                    }
+                } else {
+                    Toast.makeText(v.getContext(), item.getTitle() + ": " + book.getTitle(), Toast.LENGTH_SHORT).show();
+                }
                 return true;
             });
             popup.show();

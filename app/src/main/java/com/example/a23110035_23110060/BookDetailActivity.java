@@ -96,9 +96,7 @@ public class BookDetailActivity extends AppCompatActivity {
 
         btnPreview.setOnClickListener(v -> {
             if (currentBook != null && currentBook.getAudioUrl() != null) {
-                PlayerManager.getInstance().playBook(currentBook);
-                Intent intent = new Intent(this, AudioPlayerActivity.class);
-                startActivity(intent);
+                fetchChaptersAndPlay();
             } else {
                 Toast.makeText(this, "Sách này chưa có file âm thanh trong database", Toast.LENGTH_SHORT).show();
             }
@@ -206,6 +204,63 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
+    private void fetchChaptersAndPlay() {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_chapters?book_id=eq." + bookId + "&order=chapter_index.asc";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .get()
+                .build();
+                
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(() -> {
+                    PlayerManager.getInstance().playBook(currentBook);
+                    startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        List<Chapter> chapters = new ArrayList<>();
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject obj = array.getJSONObject(i);
+                            Chapter chapter = new Chapter();
+                            chapter.setId(obj.getString("id"));
+                            chapter.setBookId(obj.getString("book_id"));
+                            chapter.setChapterNumber(obj.getInt("chapter_index"));
+                            chapter.setTitle(obj.optString("title"));
+                            chapter.setStartTime(obj.optInt("start_time_seconds", 0) * 1000);
+                            chapter.setEndTime(obj.optInt("end_time_seconds", 0) * 1000);
+                            chapter.setAudioUrl(currentBook.getAudioUrl());
+                            chapters.add(chapter);
+                        }
+                        
+                        runOnUiThread(() -> {
+                            PlayerManager.getInstance().playBook(currentBook);
+                            PlayerManager.getInstance().setChapters(chapters);
+                            startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            PlayerManager.getInstance().playBook(currentBook);
+                            startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                        });
+                    }
+                } else {
+                    runOnUiThread(() -> {
+                        PlayerManager.getInstance().playBook(currentBook);
+                        startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                    });
+                }
+            }
+        });
+    }
+
     private void updateFavoriteUI() {
         if (isFavorite) {
             btnFavorite.setIconTint(ColorStateList.valueOf(Color.RED));
@@ -248,7 +303,16 @@ public class BookDetailActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         String result = response.body().string();
-                        isFavorite = result.trim().equalsIgnoreCase("true");
+                        try {
+                            Object jsonResult = new org.json.JSONTokener(result).nextValue();
+                            if (jsonResult instanceof Boolean) {
+                                isFavorite = (Boolean) jsonResult;
+                            } else {
+                                isFavorite = result.trim().replace("\"", "").equalsIgnoreCase("true");
+                            }
+                        } catch (Exception e) {
+                            isFavorite = result.trim().replace("\"", "").equalsIgnoreCase("true");
+                        }
                         runOnUiThread(() -> {
                             updateFavoriteUI();
                             Toast.makeText(BookDetailActivity.this, isFavorite ? "Đã thêm vào yêu thích" : "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
@@ -317,7 +381,13 @@ public class BookDetailActivity extends AppCompatActivity {
             bodyJson.put("is_purchased", true);
         } catch (Exception e) {}
         RequestBody body = RequestBody.create(bodyJson.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder().url(url).addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY).addHeader("Authorization", "Bearer " + token).post(body).build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}

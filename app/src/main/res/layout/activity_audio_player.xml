@@ -40,13 +40,13 @@
         app:layout_constraintTop_toTopOf="@+id/btn_collapse" />
 
     <ImageButton
-        android:id="@+id/btn_more"
+        android:id="@+id/btn_bookmark"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_more_vert"
+        android:src="@drawable/ic_bookmark"
         app:tint="?attr/colorOnSurfaceVariant"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -66,6 +66,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
+            android:id="@+id/ll_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -96,6 +97,7 @@
             android:background="?attr/colorOutlineVariant" />
 
         <LinearLayout
+            android:id="@+id/ll_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -123,6 +125,7 @@
             android:background="?attr/colorOutlineVariant" />
 
         <LinearLayout
+            android:id="@+id/ll_chapters"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
