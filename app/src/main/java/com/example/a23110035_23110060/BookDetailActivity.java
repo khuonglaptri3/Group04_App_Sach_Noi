@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.view.View;
+
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -50,6 +52,14 @@ public class BookDetailActivity extends AppCompatActivity {
     
     private boolean isDescriptionExpanded = false;
     private boolean isFavorite = false;
+    private boolean isBookInLibrary = false;
+    private boolean isUserPremium = false;
+    private View layoutWriteReview;
+    private RecyclerView rvReviews;
+    private TextView tvOverallRating, tvOverallRatingCount;
+    private ImageView ivRatingBookCover, ivUserAvatar;
+    private MaterialButton btnViewAllReviews;
+    private int currentReviewCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +91,17 @@ public class BookDetailActivity extends AppCompatActivity {
         btnRead = findViewById(R.id.btn_read);
         btnFavorite = findViewById(R.id.btn_favorite);
         rvSimilarBooks = findViewById(R.id.rv_similar_books);
+        rvReviews = findViewById(R.id.rv_reviews);
+        layoutWriteReview = findViewById(R.id.layout_write_review);
+        tvOverallRating = findViewById(R.id.tv_overall_rating);
+        tvOverallRatingCount = findViewById(R.id.tv_overall_rating_count);
+        ivRatingBookCover = findViewById(R.id.iv_rating_book_cover);
+        ivUserAvatar = findViewById(R.id.iv_user_avatar);
+        btnViewAllReviews = findViewById(R.id.btn_view_all_reviews);
+        View btnWriteReviewReal = findViewById(R.id.btn_write_review);
 
         rvSimilarBooks.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        rvReviews.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void setupListeners() {
@@ -111,6 +130,94 @@ public class BookDetailActivity extends AppCompatActivity {
         });
 
         btnFavorite.setOnClickListener(v -> toggleFavorite());
+
+        findViewById(R.id.btn_write_review).setOnClickListener(v -> writeReview());
+        
+        btnViewAllReviews.setOnClickListener(v -> {
+            Toast.makeText(this, "Xem tất cả đánh giá", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void writeReview() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("Nhập nhận xét của bạn...");
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Viết đánh giá")
+            .setView(input)
+            .setPositiveButton("Gửi", (dialog, which) -> submitReview(input.getText().toString(), 5))
+            .setNegativeButton("Hủy", null)
+            .show();
+    }
+
+    private void submitReview(String comment, int rating) {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", bookId);
+            json.put("rating", rating);
+            json.put("comment", comment);
+        } catch (Exception e) {}
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(BookDetailActivity.this, "Đã gửi đánh giá", Toast.LENGTH_SHORT).show();
+                        fetchReviews();
+                    });
+                }
+            }
+        });
+    }
+
+    private void checkUserPremiumStatus() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=is_premium";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        if (array.length() > 0) {
+                            isUserPremium = array.getJSONObject(0).optBoolean("is_premium", false);
+                            runOnUiThread(() -> updatePurchaseButtonUI());
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        });
     }
 
     private void fetchBookDetails() {
@@ -174,15 +281,35 @@ public class BookDetailActivity extends AppCompatActivity {
                             if (libArray != null && libArray.length() > 0) {
                                 JSONObject libEntry = libArray.getJSONObject(0);
                                 isFavorite = libEntry.optBoolean("is_favorite", false);
-                                boolean isPurchased = libEntry.optBoolean("is_purchased", false);
-                                
-                                runOnUiThread(() -> {
-                                    if (isPurchased) {
-                                        btnBuy.setEnabled(false);
-                                        btnBuy.setText("Đã sở hữu");
-                                    }
-                                });
+                                isBookInLibrary = libEntry.optBoolean("is_purchased", false);
                             }
+
+                            runOnUiThread(() -> {
+                                if (isBookInLibrary) {
+                                    layoutWriteReview.setVisibility(android.view.View.VISIBLE);
+                                    // Load user avatar
+                                    String userId = sessionManager.getUserId();
+                                    if (userId != null) {
+                                        String url2 = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=avatar_url";
+                                        Request req = new Request.Builder().url(url2).addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY).build();
+                                        client.newCall(req).enqueue(new Callback() {
+                                            @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                                            @Override public void onResponse(@NonNull Call call, @NonNull Response r) throws IOException {
+                                                if(r.isSuccessful() && r.body()!=null) {
+                                                    try {
+                                                        JSONArray arr = new JSONArray(r.body().string());
+                                                        if(arr.length()>0) {
+                                                            String avatar = arr.getJSONObject(0).optString("avatar_url");
+                                                            runOnUiThread(() -> Glide.with(BookDetailActivity.this).load(avatar).placeholder(R.drawable.bacl).into(ivUserAvatar));
+                                                        }
+                                                    } catch (Exception e){}
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                                updatePurchaseButtonUI();
+                            });
 
                             runOnUiThread(() -> {
                                 tvTitle.setText(currentBook.getTitle());
@@ -190,10 +317,17 @@ public class BookDetailActivity extends AppCompatActivity {
                                 tvDescription.setText(description);
                                 rbBook.setRating((float) rating);
                                 tvRatingCount.setText(String.format(Locale.getDefault(), "(%d)", ratingCount));
-                                btnBuy.setText(String.format(Locale.getDefault(), "Mua với %,.0fđ", price));
+                                
+                                tvOverallRating.setText(String.format(Locale.getDefault(), "%.1f", rating));
+                                tvOverallRatingCount.setText(String.format(Locale.getDefault(), "/5.0 (%d đánh giá)", ratingCount));
+                                Glide.with(BookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivRatingBookCover);
+
                                 updateFavoriteUI();
                                 Glide.with(BookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
+                                
+                                checkUserPremiumStatus();
                                 fetchSimilarBooks(obj.optString("category_id"));
+                                fetchReviews();
                             });
                         }
                     } catch (Exception e) {
@@ -366,11 +500,78 @@ public class BookDetailActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(sendIntent, "Chia sẻ sách"));
     }
 
+    private void fetchReviews() {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .get()
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        List<ReviewAdapter.Review> reviews = new ArrayList<>();
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject obj = array.getJSONObject(i);
+                            JSONObject profile = obj.optJSONObject("profiles");
+                            String name = profile != null ? profile.optString("full_name", "Ẩn danh") : "Ẩn danh";
+                            String avatar = profile != null ? profile.optString("avatar_url") : null;
+                            reviews.add(new ReviewAdapter.Review(
+                                    obj.getString("id"), name, avatar, obj.optString("comment"),
+                                    obj.optInt("rating", 5), obj.optString("created_at")
+                            ));
+                        }
+                        runOnUiThread(() -> {
+                            currentReviewCount = reviews.size();
+                            btnViewAllReviews.setText("Xem tất cả " + currentReviewCount + " đánh giá");
+                            ReviewAdapter adapter = new ReviewAdapter(reviews);
+                            rvReviews.setAdapter(adapter);
+                        });
+                    } catch (Exception e) {}
+                }
+            }
+        });
+    }
+
+    private void updatePurchaseButtonUI() {
+        if (currentBook == null) return;
+        
+        if (isBookInLibrary) {
+            btnBuy.setEnabled(false);
+            btnBuy.setText(currentBook.isPremiumOnly() ? "Đã thêm vào thư viện" : "Đã lưu vào thư viện");
+            return;
+        }
+
+        if (currentBook.isPremiumOnly()) {
+            if (isUserPremium) {
+                btnBuy.setEnabled(true);
+                btnBuy.setText("Thêm vào thư viện");
+            } else {
+                btnBuy.setEnabled(true);
+                btnBuy.setText("Mua Premium");
+            }
+        } else {
+            btnBuy.setEnabled(true);
+            btnBuy.setText("Lưu vào thư viện");
+        }
+    }
+
     private void performPurchase() {
+        if (currentBook != null && currentBook.isPremiumOnly() && !isUserPremium) {
+            Toast.makeText(this, "Vui lòng mua gói Premium để truy cập sách này!", Toast.LENGTH_SHORT).show();
+            // Intent to Premium Activity here if it exists
+            return;
+        }
+
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập để mua sách", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
             return;
         }
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library";
@@ -395,9 +596,10 @@ public class BookDetailActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 runOnUiThread(() -> {
                     if (response.isSuccessful()) {
-                        Toast.makeText(BookDetailActivity.this, "Mua thành công", Toast.LENGTH_SHORT).show();
-                        btnBuy.setEnabled(false);
-                        btnBuy.setText("Đã sở hữu");
+                        Toast.makeText(BookDetailActivity.this, currentBook.isPremiumOnly() ? "Đã thêm vào thư viện" : "Đã lưu vào thư viện", Toast.LENGTH_SHORT).show();
+                        isBookInLibrary = true;
+                        updatePurchaseButtonUI();
+                        layoutWriteReview.setVisibility(android.view.View.VISIBLE);
                     } else {
                         Toast.makeText(BookDetailActivity.this, "Có lỗi xảy ra", Toast.LENGTH_SHORT).show();
                     }

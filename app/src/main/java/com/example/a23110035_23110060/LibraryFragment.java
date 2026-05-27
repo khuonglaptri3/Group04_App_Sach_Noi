@@ -48,8 +48,10 @@ public class LibraryFragment extends Fragment {
     private List<LibraryBook> libraryBooks = new ArrayList<>();
     private LibraryBookAdapter adapter;
     private SessionManager sessionManager;
-    private String currentFilter = "recent";
-    private MaterialButton btnRecent, btnPurchased, btnDownloaded, btnFavorite;
+    private String currentTabFilter = "recent";
+    private String currentFormatFilter = "all";
+    private com.google.android.material.tabs.TabLayout tabLayoutLibrary;
+    private com.google.android.material.chip.ChipGroup chipGroupFormat;
     private Handler progressHandler = new Handler();
     private Runnable progressRunnable;
     private ObjectAnimator rotateAnimator;
@@ -77,8 +79,8 @@ public class LibraryFragment extends Fragment {
 
         setupFilters(view);
 
-        swipeRefresh.setOnRefreshListener(() -> fetchLibraryData(currentFilter));
-        fetchLibraryData("recent");
+        swipeRefresh.setOnRefreshListener(() -> fetchLibraryData());
+        fetchLibraryData();
 
         setupMiniPlayer(view);
     }
@@ -181,45 +183,38 @@ public class LibraryFragment extends Fragment {
     }
 
     private void setupFilters(View view) {
-        btnRecent = view.findViewById(R.id.btnFilterRecent);
-        btnPurchased = view.findViewById(R.id.btnFilterPurchased);
-        btnDownloaded = view.findViewById(R.id.btnFilterDownloaded);
-        btnFavorite = view.findViewById(R.id.btnFilterFavorite);
+        tabLayoutLibrary = view.findViewById(R.id.tabLayoutLibrary);
+        chipGroupFormat = view.findViewById(R.id.chipGroupFormat);
 
-        View.OnClickListener listener = v -> {
-            updateFilterUI((MaterialButton) v);
-            if (v.getId() == R.id.btnFilterRecent) currentFilter = "recent";
-            else if (v.getId() == R.id.btnFilterPurchased) currentFilter = "is_purchased=eq.true";
-            else if (v.getId() == R.id.btnFilterDownloaded) currentFilter = "is_downloaded=eq.true";
-            else if (v.getId() == R.id.btnFilterFavorite) currentFilter = "is_favorite=eq.true";
-            fetchLibraryData(currentFilter);
-        };
-
-        btnRecent.setOnClickListener(listener);
-        btnPurchased.setOnClickListener(listener);
-        btnDownloaded.setOnClickListener(listener);
-        btnFavorite.setOnClickListener(listener);
-        updateFilterUI(btnRecent);
-    }
-
-    private void updateFilterUI(MaterialButton selected) {
-        MaterialButton[] buttons = {btnRecent, btnPurchased, btnDownloaded, btnFavorite};
-        int primaryColor = Color.parseColor("#4f378a");
-        for (MaterialButton btn : buttons) {
-            if (btn == selected) {
-                btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(primaryColor));
-                btn.setTextColor(Color.WHITE);
-                btn.setStrokeColor(android.content.res.ColorStateList.valueOf(primaryColor));
-            } else {
-                btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT));
-                btn.setTextColor(Color.WHITE);
-                btn.setStrokeColor(android.content.res.ColorStateList.valueOf(Color.WHITE));
-                btn.setStrokeWidth(2);
+        tabLayoutLibrary.addOnTabSelectedListener(new com.google.android.material.tabs.TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(com.google.android.material.tabs.TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 0: currentTabFilter = "recent"; break;
+                    case 1: currentTabFilter = "is_purchased=eq.true"; break;
+                    case 2: currentTabFilter = "is_favorite=eq.true"; break;
+                    case 3: currentTabFilter = "is_downloaded=eq.true"; break;
+                }
+                fetchLibraryData();
             }
-        }
+
+            @Override
+            public void onTabUnselected(com.google.android.material.tabs.TabLayout.Tab tab) {}
+            @Override
+            public void onTabReselected(com.google.android.material.tabs.TabLayout.Tab tab) {}
+        });
+
+        chipGroupFormat.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            if (id == R.id.chipAll) currentFormatFilter = "all";
+            else if (id == R.id.chipAudiobook) currentFormatFilter = "audiobook";
+            else if (id == R.id.chipEbook) currentFormatFilter = "ebook";
+            fetchLibraryData();
+        });
     }
 
-    private void fetchLibraryData(String filter) {
+    private void fetchLibraryData() {
         swipeRefresh.setRefreshing(true);
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
@@ -227,10 +222,10 @@ public class LibraryFragment extends Fragment {
             swipeRefresh.setRefreshing(false);
             return;
         }
-        String filterQuery = filter.equals("recent") ? "" : "&" + filter;
+        String filterQuery = currentTabFilter.equals("recent") ? "" : "&" + currentTabFilter;
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + 
-                     "&select=*,books(id,title,cover_url,is_premium_only,authors(name))" +
-                     (filter.equals("recent") ? "&order=last_accessed.desc" : "") + filterQuery;
+                     "&select=*,books(id,title,cover_url,is_premium_only,is_audiobook,is_ebook,authors(name))" +
+                     (currentTabFilter.equals("recent") ? "&order=last_accessed.desc" : "") + filterQuery;
 
         Request request = new Request.Builder()
                 .url(url)
@@ -254,6 +249,13 @@ public class LibraryFragment extends Fragment {
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject item = array.getJSONObject(i);
                             JSONObject bookObj = item.getJSONObject("books");
+                            
+                            boolean isAudiobook = bookObj.optBoolean("is_audiobook", false);
+                            boolean isEbook = bookObj.optBoolean("is_ebook", false);
+                            
+                            if (currentFormatFilter.equals("audiobook") && !isAudiobook) continue;
+                            if (currentFormatFilter.equals("ebook") && !isEbook) continue;
+
                             JSONObject authorObj = bookObj.optJSONObject("authors");
                             LibraryBook lb = new LibraryBook();
                             lb.setBookId(bookObj.getString("id"));

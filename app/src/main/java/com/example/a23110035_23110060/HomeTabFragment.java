@@ -129,7 +129,7 @@ public class HomeTabFragment extends Fragment {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                updateUI(books, new ArrayList<>());
+                fetchFeaturedReviews(books, new ArrayList<>());
             }
 
             @Override
@@ -152,12 +152,66 @@ public class HomeTabFragment extends Fragment {
                         }
                     } catch (Exception e) {}
                 }
-                updateUI(books, categories);
+                fetchFeaturedReviews(books, categories);
             }
         });
     }
 
-    private void updateUI(List<Book> books, List<Category> categories) {
+    private void fetchFeaturedReviews(List<Book> books, List<Category> categories) {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?select=*,profiles(full_name,avatar_url),books(id,title,cover_url,rating_avg,is_audiobook,authors(name))&order=rating.desc&limit=5";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + BuildConfig.SUPABASE_ANON_KEY)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                updateUI(books, categories, new ArrayList<>());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                List<FeaturedReview> featuredReviews = new ArrayList<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject obj = array.getJSONObject(i);
+                            JSONObject profile = obj.optJSONObject("profiles");
+                            JSONObject bookObj = obj.optJSONObject("books");
+                            JSONObject authorObj = bookObj != null ? bookObj.optJSONObject("authors") : null;
+
+                            String reviewerName = profile != null ? profile.optString("full_name", "Ẩn danh") : "Ẩn danh";
+                            String avatarUrl = profile != null ? profile.optString("avatar_url") : null;
+                            
+                            String bookId = bookObj != null ? bookObj.optString("id") : "";
+                            String bookTitle = bookObj != null ? bookObj.optString("title") : "";
+                            String bookCoverUrl = bookObj != null ? bookObj.optString("cover_url") : "";
+                            double bookRating = bookObj != null ? bookObj.optDouble("rating_avg", 0.0) : 0.0;
+                            boolean isAudiobook = bookObj != null && bookObj.optBoolean("is_audiobook", false);
+                            String bookType = isAudiobook ? "SÁCH NÓI" : "EBOOK";
+                            String bookAuthor = authorObj != null ? authorObj.optString("name") : "Unknown";
+
+                            FeaturedReview fr = new FeaturedReview(
+                                    obj.getString("id"), reviewerName, avatarUrl,
+                                    obj.optString("comment"), obj.optInt("rating", 5), obj.optString("created_at"),
+                                    bookId, bookTitle, bookAuthor, bookCoverUrl, bookType, bookRating
+                            );
+                            featuredReviews.add(fr);
+                        }
+                    } catch (Exception e) {
+                        Log.e("HomeTab", "Error parsing reviews", e);
+                    }
+                }
+                updateUI(books, categories, featuredReviews);
+            }
+        });
+    }
+
+    private void updateUI(List<Book> books, List<Category> categories, List<FeaturedReview> featuredReviews) {
         String type = getArguments() != null ? getArguments().getString("type") : "audio";
         String filter = type.equals("audio") ? "is_audiobook=eq.true" : "is_ebook=eq.true";
         
@@ -170,6 +224,9 @@ public class HomeTabFragment extends Fragment {
                 sections.add(new Section("BANNER", (List<Book>)null, Section.TYPE_BANNER));
                 if (!categories.isEmpty()) {
                     sections.add(new Section("DANH MỤC", categories, Section.TYPE_CATEGORIES, true));
+                }
+                if (!featuredReviews.isEmpty()) {
+                    sections.add(new Section("ĐÁNH GIÁ NỔI BẬT", featuredReviews, Section.TYPE_FEATURED_REVIEWS, 0));
                 }
                 if (!books.isEmpty()) {
                     // Create a reversed copy to simulate a different list for 'Mới xuất bản'
