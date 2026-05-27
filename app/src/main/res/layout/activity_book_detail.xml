@@ -190,6 +190,134 @@
                 android:textColor="?attr/colorPrimary"
                 android:textStyle="bold" />
 
+            <!-- Reviews & Ratings -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="Nhận Xét &amp; Đánh Giá"
+                android:textAppearance="?attr/textAppearanceTitleLarge"
+                android:textStyle="bold" />
+
+            <!-- Rating Overview Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_star"
+                        app:tint="#FFC107" />
+
+                    <TextView
+                        android:id="@+id/tv_overall_rating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="4.5"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_overall_rating_count"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="/5.0 (0 đánh giá)"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <ImageView
+                        android:id="@+id/iv_rating_book_cover"
+                        android:layout_width="48dp"
+                        android:layout_height="72dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.RoundedSmall"
+                        tools:src="@drawable/bacl" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_reviews"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:nestedScrollingEnabled="false" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_view_all_reviews"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Xem tất cả đánh giá"
+                app:cornerRadius="24dp" />
+
+            <!-- Write Review Section -->
+            <LinearLayout
+                android:id="@+id/layout_write_review"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/iv_user_avatar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"
+                    android:src="@drawable/bacl" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btn_write_review"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="12dp"
+                    app:strokeColor="#FFAB91"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Viết đánh giá của bạn..."
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_edit"
+                            app:tint="#FFAB91" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
             <!-- Similar Books -->
             <TextView
                 android:layout_width="wrap_content"

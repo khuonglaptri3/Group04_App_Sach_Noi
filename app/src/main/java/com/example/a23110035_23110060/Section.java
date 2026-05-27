@@ -6,10 +6,12 @@ public class Section {
     public static final int TYPE_CAROUSEL = 0;
     public static final int TYPE_BANNER = 1;
     public static final int TYPE_CATEGORIES = 2;
+    public static final int TYPE_FEATURED_REVIEWS = 3;
 
     private String title;
     private List<Book> books;
     private List<Category> categories;
+    private List<FeaturedReview> featuredReviews;
     private int type;
     private String filter; // e.g., "is_audiobook=eq.true"
 
@@ -32,9 +34,16 @@ public class Section {
         this.type = type;
     }
 
+    public Section(String title, List<FeaturedReview> featuredReviews, int type, int dummy) {
+        this.title = title;
+        this.featuredReviews = featuredReviews;
+        this.type = type;
+    }
+
     public String getTitle() { return title; }
     public List<Book> getBooks() { return books; }
     public List<Category> getCategories() { return categories; }
+    public List<FeaturedReview> getFeaturedReviews() { return featuredReviews; }
     public int getType() { return type; }
     public String getFilter() { return filter; }
 }

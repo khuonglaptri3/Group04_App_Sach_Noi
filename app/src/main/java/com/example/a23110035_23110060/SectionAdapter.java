@@ -31,6 +31,8 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             return new BannerViewHolder(inflater.inflate(R.layout.item_section_banner, parent, false));
         } else if (viewType == Section.TYPE_CATEGORIES) {
             return new CategoriesViewHolder(inflater.inflate(R.layout.item_section_categories, parent, false));
+        } else if (viewType == Section.TYPE_FEATURED_REVIEWS) {
+            return new FeaturedReviewsViewHolder(inflater.inflate(R.layout.item_section_carousel, parent, false));
         } else {
             return new CarouselViewHolder(inflater.inflate(R.layout.item_section_carousel, parent, false));
         }
@@ -60,6 +62,12 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             h.itemView.findViewById(R.id.cardBanner).setOnClickListener(v -> {
                 Toast.makeText(v.getContext(), "Nhận quà", Toast.LENGTH_SHORT).show();
             });
+        } else if (holder instanceof FeaturedReviewsViewHolder) {
+            FeaturedReviewsViewHolder h = (FeaturedReviewsViewHolder) holder;
+            h.tvTitle.setText(section.getTitle());
+            h.rvCarousel.setAdapter(new FeaturedReviewAdapter(section.getFeaturedReviews()));
+            h.rvCarousel.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
+            h.tvSeeAll.setVisibility(View.GONE);
         }
     }
 
@@ -88,6 +96,17 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         public CategoriesViewHolder(@NonNull View itemView) {
             super(itemView);
             rvCategories = itemView.findViewById(R.id.rvCategories);
+        }
+    }
+
+    static class FeaturedReviewsViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvSeeAll;
+        RecyclerView rvCarousel;
+        public FeaturedReviewsViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvTitle = itemView.findViewById(R.id.tvSectionTitle);
+            tvSeeAll = itemView.findViewById(R.id.tvSeeAll);
+            rvCarousel = itemView.findViewById(R.id.rvCarousel);
         }
     }
 }
