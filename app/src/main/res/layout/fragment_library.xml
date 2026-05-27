@@ -58,53 +58,66 @@
                 </LinearLayout>
             </RelativeLayout>
 
-            <!-- Filter Chips (Cuộn ngang) -->
-            <HorizontalScrollView
+            <!-- TabLayout for Library Categories -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayoutLibrary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginBottom="16dp">
-                <LinearLayout
+                android:layout_marginBottom="8dp"
+                app:tabMode="scrollable"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?attr/colorOnSurfaceVariant">
+
+                <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:text="Gần đây" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Đã mua" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Yêu thích" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Đã tải" />
+            </com.google.android.material.tabs.TabLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFilterRecent"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gần đây"
-                        app:cornerRadius="24dp"
-                        android:layout_marginEnd="8dp" />
+            <!-- ChipGroup for Format Filter -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFormat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFilterPurchased"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Đã mua"
-                        app:cornerRadius="24dp"
-                        android:layout_marginEnd="8dp" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAll"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Tất cả" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFilterDownloaded"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Đã tải"
-                        app:cornerRadius="24dp"
-                        android:layout_marginEnd="8dp" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAudiobook"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sách nói" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFilterFavorite"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Yêu thích"
-                        app:cornerRadius="24dp"
-                        android:layout_marginEnd="8dp" />
-                </LinearLayout>
-            </HorizontalScrollView>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipEbook"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ebook" />
+            </com.google.android.material.chip.ChipGroup>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvLibraryBooks"

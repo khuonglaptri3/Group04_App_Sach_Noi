@@ -67,12 +67,16 @@ public class ProfileContentFragment extends Fragment {
 
         View llEditProfile = view.findViewById(R.id.ll_edit_profile);
         if (llEditProfile != null) {
-            llEditProfile.setOnClickListener(v -> showEditProfileDialog());
+            llEditProfile.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), EditProfileActivity.class));
+            });
         }
 
         View llSecurity = view.findViewById(R.id.ll_security);
         if (llSecurity != null) {
-            llSecurity.setOnClickListener(v -> showChangePasswordDialog());
+            llSecurity.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), SecurityPrivacyActivity.class));
+            });
         }
     }
 
@@ -132,121 +136,6 @@ public class ProfileContentFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e("ProfileContent", "Error parsing summary", e);
                     }
-                }
-            }
-        });
-    }
-
-    private void showEditProfileDialog() {
-        android.widget.EditText input = new android.widget.EditText(requireContext());
-        input.setHint("Nhập họ tên mới");
-        input.setText(sessionManager.getUserName());
-        input.setPadding(48, 32, 48, 32);
-
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Chỉnh sửa thông tin")
-                .setView(input)
-                .setPositiveButton("Lưu", (dialog, which) -> {
-                    String newName = input.getText().toString().trim();
-                    if (!newName.isEmpty()) {
-                        updateProfileName(newName);
-                    }
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private void updateProfileName(String newName) {
-        String userId = sessionManager.getUserId();
-        String token = sessionManager.getAccessToken();
-        if (userId == null || token == null) return;
-
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId;
-        JSONObject json = new JSONObject();
-        try {
-            json.put("full_name", newName);
-        } catch (Exception e) {}
-
-        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + token)
-                .patch(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    sessionManager.setUserName(newName);
-                    if (isAdded()) {
-                        requireActivity().runOnUiThread(() -> {
-                            tvProfileName.setText(newName);
-                            android.widget.Toast.makeText(getContext(), "Cập nhật thành công", android.widget.Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                }
-            }
-        });
-    }
-
-    private void showChangePasswordDialog() {
-        android.widget.EditText input = new android.widget.EditText(requireContext());
-        input.setHint("Nhập mật khẩu mới (ít nhất 6 ký tự)");
-        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        input.setPadding(48, 32, 48, 32);
-
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Đổi mật khẩu")
-                .setView(input)
-                .setPositiveButton("Đổi mật khẩu", (dialog, which) -> {
-                    String newPassword = input.getText().toString();
-                    if (newPassword.length() >= 6) {
-                        changePassword(newPassword);
-                    } else {
-                        android.widget.Toast.makeText(getContext(), "Mật khẩu quá ngắn", android.widget.Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
-    }
-
-    private void changePassword(String newPassword) {
-        String token = sessionManager.getAccessToken();
-        if (token == null) return;
-
-        String url = BuildConfig.SUPABASE_URL + "/auth/v1/user";
-        JSONObject json = new JSONObject();
-        try {
-            json.put("password", newPassword);
-        } catch (Exception e) {}
-
-        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + token)
-                .put(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (isAdded()) {
-                    requireActivity().runOnUiThread(() -> {
-                        if (response.isSuccessful()) {
-                            android.widget.Toast.makeText(getContext(), "Đổi mật khẩu thành công", android.widget.Toast.LENGTH_SHORT).show();
-                        } else {
-                            android.widget.Toast.makeText(getContext(), "Đổi mật khẩu thất bại", android.widget.Toast.LENGTH_SHORT).show();
-                        }
-                    });
                 }
             }
         });
