@@ -2,7 +2,7 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">MyApp</string>
+    <string name="app_name">KTD Book</string>
     <string name="sign_in">Đăng nhập</string>
     <string name="email">Email</string>
     <string name="email_hint">demo@email.com</string>
