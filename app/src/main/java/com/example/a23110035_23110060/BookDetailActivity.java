@@ -10,6 +10,8 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -60,6 +62,15 @@ public class BookDetailActivity extends AppCompatActivity {
     private ImageView ivRatingBookCover, ivUserAvatar;
     private MaterialButton btnViewAllReviews;
     private int currentReviewCount = 0;
+
+    private final ActivityResultLauncher<Intent> writeReviewLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    fetchReviews();
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,54 +150,15 @@ public class BookDetailActivity extends AppCompatActivity {
     }
 
     private void writeReview() {
-        android.widget.EditText input = new android.widget.EditText(this);
-        input.setHint("Nhập nhận xét của bạn...");
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Viết đánh giá")
-            .setView(input)
-            .setPositiveButton("Gửi", (dialog, which) -> submitReview(input.getText().toString(), 5))
-            .setNegativeButton("Hủy", null)
-            .show();
+        if (currentBook == null) return;
+        Intent intent = new Intent(this, WriteReviewActivity.class);
+        intent.putExtra("bookId", bookId);
+        intent.putExtra("bookCoverUrl", currentBook.getCoverUrl());
+        intent.putExtra("bookType", currentBook.isAudiobook() ? "audio" : "ebook");
+        writeReviewLauncher.launch(intent);
     }
 
-    private void submitReview(String comment, int rating) {
-        String userId = sessionManager.getUserId();
-        String token = sessionManager.getAccessToken();
-        if (userId == null || token == null) return;
-
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews";
-        JSONObject json = new JSONObject();
-        try {
-            json.put("user_id", userId);
-            json.put("book_id", bookId);
-            json.put("rating", rating);
-            json.put("comment", comment);
-        } catch (Exception e) {}
-
-        RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .addHeader("Authorization", "Bearer " + token)
-                .addHeader("Prefer", "resolution=merge-duplicates")
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(BookDetailActivity.this, "Đã gửi đánh giá", Toast.LENGTH_SHORT).show();
-                        fetchReviews();
-                    });
-                }
-            }
-        });
-    }
+    // submitReview removed as it is now handled by WriteReviewActivity
 
     private void checkUserPremiumStatus() {
         String userId = sessionManager.getUserId();
@@ -502,11 +474,14 @@ public class BookDetailActivity extends AppCompatActivity {
 
     private void fetchReviews() {
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
-        Request request = new Request.Builder()
+        String token = sessionManager.getAccessToken();
+        Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
-                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                .get()
-                .build();
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY);
+        if (token != null) {
+            requestBuilder.addHeader("Authorization", "Bearer " + token);
+        }
+        Request request = requestBuilder.get().build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}
