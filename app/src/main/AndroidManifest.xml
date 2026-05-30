@@ -27,6 +27,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".WriteReviewActivity"
+            android:exported="false" />
+            
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
