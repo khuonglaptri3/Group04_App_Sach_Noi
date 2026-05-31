@@ -27,7 +27,7 @@ public class HomeTabFragment extends Fragment {
 
     private RecyclerView rvSections;
     private SwipeRefreshLayout swipeRefresh;
-    private OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client;
     private List<Section> sections = new ArrayList<>();
     private SectionAdapter adapter;
 
@@ -49,6 +49,7 @@ public class HomeTabFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         
+        client = NetworkClient.getClient(requireContext());
         rvSections = view.findViewById(R.id.rvSections);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
         

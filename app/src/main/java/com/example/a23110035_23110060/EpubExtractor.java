@@ -115,12 +115,49 @@ public class EpubExtractor {
                         byte[] htmlData = files.get(filePath);
                         if (htmlData != null) {
                             String htmlString = new String(htmlData, "UTF-8");
-                            String plainText = Html.fromHtml(htmlString).toString().trim();
                             
-                            if (!plainText.isEmpty()) {
+                            // Clean HTML: Remove style and script tags before converting to text
+                            String cleanHtml = htmlString.replaceAll("(?s)<style.*?>.*?</style>", "")
+                                                         .replaceAll("(?s)<script.*?>.*?</script>", "");
+                            
+                            String plainText;
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                plainText = Html.fromHtml(cleanHtml, Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                            } else {
+                                plainText = Html.fromHtml(cleanHtml).toString().trim();
+                            }
+                            
+                            // Try to extract a better title from the HTML content
+                            String title = "Chương " + (i + 1);
+                            
+                            // 1. Try to find H1 or H2 tags first (they usually have the real chapter name)
+                            java.util.regex.Pattern headerPattern = java.util.regex.Pattern.compile("<h[12][^>]*>(.*?)</h[12]>", java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.DOTALL);
+                            java.util.regex.Matcher mHeader = headerPattern.matcher(htmlString);
+                            if (mHeader.find()) {
+                                String hText = Html.fromHtml(mHeader.group(1)).toString().trim();
+                                if (!hText.isEmpty() && hText.length() < 100) {
+                                    title = hText;
+                                }
+                            } else {
+                                // 2. Fallback to <title> tag but filter out generic ones like "index"
+                                java.util.regex.Matcher m = java.util.regex.Pattern.compile("<title>(.*?)</title>", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(htmlString);
+                                if (m.find()) {
+                                    String extractedTitle = m.group(1);
+                                    if (extractedTitle != null) {
+                                        String t = extractedTitle.trim();
+                                        if (!t.isEmpty() && !t.equalsIgnoreCase("index") && !t.equalsIgnoreCase("untitled") && !t.toLowerCase().contains(".html")) {
+                                            title = t;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Filter out pages that are too short or likely just metadata (like Cover images)
+                            // Usually, meaningful text content is longer than 30 characters
+                            if (!plainText.isEmpty() && plainText.length() > 30) {
                                 Chapter chapter = new Chapter();
                                 chapter.setChapterNumber(i + 1);
-                                chapter.setTitle("Chương " + (i + 1));
+                                chapter.setTitle(title);
                                 chapter.setTextContent(plainText);
                                 chapters.add(chapter);
                             }

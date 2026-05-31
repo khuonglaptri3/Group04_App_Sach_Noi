@@ -98,6 +98,7 @@
             tools:text="Mong là nên có chức năng highlight, để note lại và tra cứu lại kiến thức nhanh chóng." />
 
         <LinearLayout
+            android:id="@+id/ll_like_review"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -105,22 +106,25 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp">
+            android:paddingVertical="6dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
+                android:id="@+id/iv_like_heart"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@drawable/ic_heart"
-                app:tint="?attr/colorOnSurfaceVariant"
-                tools:ignore="UseAppTint" />
+                app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
+                android:id="@+id/tv_like_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:textSize="12sp"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:text="21" />
+                tools:text="21" />
         </LinearLayout>
 
     </LinearLayout>

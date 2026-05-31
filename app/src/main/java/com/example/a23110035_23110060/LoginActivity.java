@@ -173,6 +173,7 @@ public class LoginActivity extends AppCompatActivity {
                     try {
                         JSONObject jsonResponse = new JSONObject(responseData);
                         String accessToken = jsonResponse.optString("access_token");
+                        String refreshToken = jsonResponse.optString("refresh_token");
                         JSONObject userJson = jsonResponse.getJSONObject("user");
                         String userId = userJson.getString("id");
                         String userEmail = userJson.optString("email", email);
@@ -200,7 +201,7 @@ public class LoginActivity extends AppCompatActivity {
                         client.newCall(profileRequest).enqueue(new Callback() {
                             @Override
                             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                handleLoginSuccess(userId, finalMetaName, accessToken);
+                                handleLoginSuccess(userId, finalMetaName, accessToken, refreshToken);
                             }
 
                             @Override
@@ -227,7 +228,7 @@ public class LoginActivity extends AppCompatActivity {
                                     upsertProfile(userId, userEmail, resolvedName, accessToken);
                                 }
 
-                                handleLoginSuccess(userId, resolvedName, accessToken);
+                                handleLoginSuccess(userId, resolvedName, accessToken, refreshToken);
                             }
                         });
                     } catch (JSONException e) {
@@ -291,13 +292,14 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void handleLoginSuccess(String userId, String name, String token) {
+    private void handleLoginSuccess(String userId, String name, String token, String refreshToken) {
         runOnUiThread(() -> {
             btnSignIn.setEnabled(true);
             SessionManager session = new SessionManager(LoginActivity.this);
             session.setUserId(userId);
             session.setUserName(name);
             session.setAccessToken(token);
+            session.setRefreshToken(refreshToken);
 
             Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);

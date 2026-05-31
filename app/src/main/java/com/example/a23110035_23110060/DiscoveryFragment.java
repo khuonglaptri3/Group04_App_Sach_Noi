@@ -21,7 +21,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
+import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,7 +53,7 @@ public class DiscoveryFragment extends Fragment {
     private EditText etSearch;
     private ImageView btnClearSearch, ivSearchAction;
     private MaterialCardView cardSuggestions, cardFeaturedCollection;
-    private OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client;
     private List<Book> suggestionList = new ArrayList<>();
     private SuggestionAdapter suggestionAdapter;
     private Handler searchHandler = new Handler(Looper.getMainLooper());
@@ -68,6 +70,7 @@ public class DiscoveryFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        client = NetworkClient.getClient(requireContext());
         rvDiscoveryCategories = view.findViewById(R.id.rvDiscoveryCategories);
         rvSuggestions = view.findViewById(R.id.rvSuggestions);
         etSearch = view.findViewById(R.id.etSearch);
@@ -95,8 +98,77 @@ public class DiscoveryFragment extends Fragment {
             intent.putExtra("filter", "rating_avg=gte.4.5"); // Ví dụ: lọc các sách đánh giá cao
             startActivity(intent);
         });
+
+        loadFeaturedImages(view.findViewById(R.id.vfFeaturedFlipper), view.findViewById(R.id.ivFeaturedBg));
         
         setupMiniPlayer(view);
+    }
+
+    private void loadFeaturedImages(android.widget.ViewFlipper flipper, ImageView ivBg) {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/books?rating_avg=gte.4.5&select=cover_url&limit=5";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> {
+                                flipper.removeAllViews();
+                                for (int i = 0; i < array.length(); i++) {
+                                    String coverUrl = array.optJSONObject(i).optString("cover_url");
+                                    if (!coverUrl.isEmpty()) {
+                                        if (i == 0) {
+                                            Glide.with(DiscoveryFragment.this).load(coverUrl).into(ivBg);
+                                            updateFeaturedPalette(coverUrl);
+                                        }
+                                        ImageView iv = new ImageView(getContext());
+                                        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                                        Glide.with(DiscoveryFragment.this)
+                                                .load(coverUrl)
+                                                .placeholder(R.drawable.bacl)
+                                                .into(iv);
+                                        flipper.addView(iv);
+                                    }
+                                }
+                                if (flipper.getChildCount() > 1) {
+                                    flipper.startFlipping();
+                                }
+                            });
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        });
+    }
+
+    private void updateFeaturedPalette(String url) {
+        Glide.with(this)
+                .asBitmap()
+                .load(url)
+                .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull android.graphics.Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.Bitmap> transition) {
+                        Palette.from(resource).generate(palette -> {
+                            if (palette != null && isAdded()) {
+                                int color = palette.getDarkVibrantColor(palette.getDominantColor(android.graphics.Color.parseColor("#6750A4")));
+                                int finalColor = ColorUtils.blendARGB(color, android.graphics.Color.BLACK, 0.2f);
+                                cardFeaturedCollection.setCardBackgroundColor(android.content.res.ColorStateList.valueOf(finalColor));
+                            }
+                        });
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {}
+                });
     }
 
     @Override
