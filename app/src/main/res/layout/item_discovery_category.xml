@@ -3,49 +3,123 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardCategory"
     android:layout_width="match_parent"
-    android:layout_height="160dp"
+    android:layout_height="130dp"
     android:layout_margin="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="4dp"
     app:strokeWidth="0dp">
 
     <RelativeLayout
-        android:id="@+id/rlBackground"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp"
-        tools:background="@drawable/bg_grad_audiobook">
-        <TextView
-            android:id="@+id/tvCategoryCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#33FFFFFF"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:textColor="@android:color/white"
-            android:textSize="11sp"
-            tools:text="1.2k+ đầu sách" />
-        <TextView
-            android:id="@+id/tvCategoryName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            tools:text="Thiền &amp; Chữa lành" />
-        <TextView
-            android:id="@+id/tvCategoryBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:background="#33FFFFFF"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:textColor="@android:color/white"
-            android:textSize="11sp"
-            tools:text="Hot" />
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:baselineAligned="false">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvCategoryBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:background="@drawable/bg_pill_white"
+                    android:backgroundTint="#33FFFFFF"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    tools:text="Hot"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tvCategoryName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    tools:text="Văn học Việt Nam &amp; Thế giới" />
+
+                <TextView
+                    android:id="@+id/tvCategoryCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="12sp"
+                    tools:text="156 cuốn sách" />
+            </LinearLayout>
+
+            <!-- Book Covers Stack with Rotation -->
+            <FrameLayout
+                android:layout_width="65dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="45dp"
+                    android:layout_height="65dp"
+                    android:layout_gravity="center|end"
+                    android:layout_marginEnd="10dp"
+                    android:rotation="15"
+                    app:cardCornerRadius="4dp"
+                    app:cardElevation="2dp">
+                    <ImageView
+                        android:id="@+id/ivCoverBg"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/bacl"
+                        android:contentDescription="Book background cover" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="50dp"
+                    android:layout_height="70dp"
+                    android:layout_gravity="center|end"
+                    android:rotation="-5"
+                    app:cardCornerRadius="4dp"
+                    app:cardElevation="6dp">
+                    <ViewFlipper
+                        android:id="@+id/vfCategoryImages"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:autoStart="true"
+                        android:flipInterval="3500"
+                        android:inAnimation="@android:anim/fade_in"
+                        android:outAnimation="@android:anim/fade_out" />
+                </com.google.android.material.card.MaterialCardView>
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Dynamic Overlay to ensure text visibility if background is too light -->
+        <View
+            android:id="@+id/viewGradient"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.2"
+            android:background="@android:color/black"
+            android:visibility="gone" />
 
     </RelativeLayout>
 

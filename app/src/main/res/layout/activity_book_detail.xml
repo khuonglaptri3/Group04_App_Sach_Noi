@@ -92,10 +92,14 @@
 
                     <TextView
                         android:id="@+id/tv_author_name"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textColor="?attr/colorPrimary"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="2dp"
                         tools:text="Ryan Holiday" />
 
                     <LinearLayout

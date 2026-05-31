@@ -1,0 +1,1616 @@
+-- =========================================================
+-- BOOKS HUB DATABASE SCHEMA - COMPLETE PRODUCTION VERSION
+-- Audiobooks + Ebooks + Highlights + Notes + Sync
+-- PostgreSQL / Supabase
+-- Bao gồm: Tạo bảng + RLS đầy đủ + Triggers + Functions
+-- =========================================================
+
+-- Enable UUID Extension
+create extension if not exists "uuid-ossp";
+
+
+-- =========================================================
+-- 1. USER PROFILES
+-- =========================================================
+
+create table public.profiles (
+    id uuid primary key references auth.users(id) on delete cascade,
+
+    email text,
+    full_name text,
+    avatar_url text,
+    bio text,
+
+    is_premium boolean default false,
+
+    books_read_count integer default 0,
+    listening_hours decimal default 0,
+
+    created_at timestamp with time zone
+        default timezone('utc', now()),
+
+    updated_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 2. AUTHORS
+-- =========================================================
+
+create table public.authors (
+    id uuid primary key default uuid_generate_v4(),
+
+    name text not null,
+    biography text,
+    avatar_url text,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 3. CATEGORIES
+-- =========================================================
+
+create table public.categories (
+    id uuid primary key default uuid_generate_v4(),
+
+    name_vi text not null,
+    name_en text not null,
+
+    icon_url text,
+
+    gradient_colors text[],
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 4. BOOKS
+-- =========================================================
+
+create table public.books (
+    id uuid primary key default uuid_generate_v4(),
+
+    title text not null,
+    description text,
+
+    cover_url text,
+    banner_url text,
+
+    language text default 'vi',
+
+    rating_avg decimal default 0,
+    rating_count integer default 0,
+
+    price decimal default 0,
+
+    is_audiobook boolean default true,
+    is_ebook boolean default true,
+
+    is_premium_only boolean default false,
+
+    duration_seconds integer,
+    page_count integer,
+
+    published_year integer,
+
+    author_id uuid
+        references public.authors(id),
+
+    category_id uuid
+        references public.categories(id),
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 5. BOOK FILES
+-- =========================================================
+
+create table public.book_files (
+    id uuid primary key default uuid_generate_v4(),
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    file_type text not null,
+    -- epub / pdf / mp3 / m4b
+
+    file_url text not null,
+
+    file_size_mb decimal,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 6. BOOK CHAPTERS
+-- =========================================================
+
+create table public.book_chapters (
+    id uuid primary key default uuid_generate_v4(),
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    chapter_index integer not null,
+
+    title text,
+
+    start_time_seconds integer,
+    end_time_seconds integer,
+
+    start_page integer,
+    end_page integer,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 7. USER LIBRARY
+-- =========================================================
+
+create table public.user_library (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    is_purchased boolean default false,
+    is_downloaded boolean default false,
+    is_favorite boolean default false,
+
+    purchased_at timestamp with time zone,
+
+    last_accessed timestamp with time zone
+        default timezone('utc', now()),
+
+    unique(user_id, book_id)
+);
+
+-- =========================================================
+-- 8. READING / LISTENING PROGRESS
+-- =========================================================
+
+create table public.progress (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    percent_complete integer
+        default 0
+        check (percent_complete between 0 and 100),
+
+    current_chapter_id uuid
+        references public.book_chapters(id),
+
+    -- audiobook
+    last_position_seconds integer default 0,
+
+    -- ebook
+    last_page_number integer default 0,
+
+    -- epub support
+    epub_cfi text,
+
+    updated_at timestamp with time zone
+        default timezone('utc', now()),
+
+    unique(user_id, book_id)
+);
+
+-- =========================================================
+-- 9. BOOKMARKS
+-- =========================================================
+
+create table public.bookmarks (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    chapter_id uuid
+        references public.book_chapters(id)
+        on delete cascade,
+
+    page_number integer,
+    position_seconds integer,
+    note text,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 10. HIGHLIGHTS
+-- =========================================================
+
+create table public.book_highlights (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    chapter_id uuid
+        references public.book_chapters(id)
+        on delete cascade,
+
+    highlighted_text text not null,
+
+    color text default 'yellow',
+
+    start_offset integer not null,
+    end_offset integer not null,
+
+    page_number integer,
+    epub_cfi text,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 11. NOTES
+-- =========================================================
+
+create table public.book_notes (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    highlight_id uuid
+        references public.book_highlights(id)
+        on delete cascade,
+
+    note text not null,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 12. REVIEWS
+-- =========================================================
+
+create table public.reviews (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    book_id uuid
+        references public.books(id)
+        on delete cascade,
+
+    rating integer
+        check (rating between 1 and 5),
+
+    comment text,
+
+    created_at timestamp with time zone
+        default timezone('utc', now()),
+
+    unique(user_id, book_id)
+);
+
+-- =========================================================
+-- 13. BADGES
+-- =========================================================
+
+create table public.badges (
+    id uuid primary key default uuid_generate_v4(),
+
+    name text not null,
+    description text,
+    icon_url text,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+-- =========================================================
+-- 14. USER BADGES
+-- =========================================================
+
+create table public.user_badges (
+    user_id uuid
+        references public.profiles(id)
+        on delete cascade,
+
+    badge_id uuid
+        references public.badges(id)
+        on delete cascade,
+
+    unlocked_at timestamp with time zone
+        default timezone('utc', now()),
+
+    primary key (user_id, badge_id)
+);
+
+-- =========================================================
+-- 15. READING STREAKS
+-- =========================================================
+
+create table public.reading_streaks (
+    user_id uuid primary key
+        references public.profiles(id)
+        on delete cascade,
+
+    current_streak integer default 0,
+    longest_streak integer default 0,
+
+    last_read_date date
+);
+
+-- =========================================================
+-- 16. SEARCH INDEX (Full-Text Search)
+-- =========================================================
+
+alter table public.books
+    add column search_vector tsvector;
+
+create index books_search_idx
+    on public.books
+    using gin(search_vector);
+
+
+-- =========================================================
+-- 17. PERFORMANCE INDEXES
+-- =========================================================
+
+create index idx_books_category    on public.books(category_id);
+create index idx_books_author      on public.books(author_id);
+create index idx_progress_user     on public.progress(user_id);
+create index idx_highlights_user   on public.book_highlights(user_id);
+create index idx_notes_user        on public.book_notes(user_id);
+create index idx_reviews_book      on public.reviews(book_id);
+create index idx_library_user      on public.user_library(user_id);
+create index idx_bookmarks_user    on public.bookmarks(user_id);
+
+
+-- =========================================================
+-- 18. ENABLE ROW LEVEL SECURITY (RLS)
+-- =========================================================
+-- Bảng public (không cần đăng nhập để xem)
+-- authors, categories, books, book_files, book_chapters, badges
+-- Bảng private (chỉ user của mình mới xem/sửa được)
+-- profiles, user_library, progress, bookmarks,
+-- book_highlights, book_notes, reviews, user_badges, reading_streaks
+
+-- Bật RLS cho tất cả các bảng
+alter table public.profiles         enable row level security;
+alter table public.authors          enable row level security;
+alter table public.categories       enable row level security;
+alter table public.books            enable row level security;
+alter table public.book_files       enable row level security;
+alter table public.book_chapters    enable row level security;
+alter table public.user_library     enable row level security;
+alter table public.progress         enable row level security;
+alter table public.bookmarks        enable row level security;
+alter table public.book_highlights  enable row level security;
+alter table public.book_notes       enable row level security;
+alter table public.reviews          enable row level security;
+alter table public.badges           enable row level security;
+alter table public.user_badges      enable row level security;
+alter table public.reading_streaks  enable row level security;
+
+
+-- =========================================================
+-- 19. RLS POLICIES - CHI TIẾT
+-- =========================================================
+
+-- ---------------------------------------------------------
+-- PROFILES
+-- Mỗi user chỉ đọc/sửa profile của chính mình.
+-- Tạo profile do trigger handle_new_user() đảm nhiệm (security definer).
+-- ---------------------------------------------------------
+
+create policy "profiles: user xem profile của mình"
+    on public.profiles for select
+    using (auth.uid() = id);
+
+create policy "profiles: user sửa profile của mình"
+    on public.profiles for update
+    using (auth.uid() = id)
+    with check (auth.uid() = id);
+
+-- ---------------------------------------------------------
+-- AUTHORS
+-- Mọi người (kể cả chưa đăng nhập) đều được xem tác giả.
+-- Chỉ admin (service_role) mới thêm/sửa/xóa.
+-- ---------------------------------------------------------
+
+create policy "authors: ai cũng có thể xem"
+    on public.authors for select
+    using (true);
+
+-- ---------------------------------------------------------
+-- CATEGORIES
+-- Mọi người đều được xem thể loại.
+-- Chỉ admin thêm/sửa/xóa.
+-- ---------------------------------------------------------
+
+create policy "categories: ai cũng có thể xem"
+    on public.categories for select
+    using (true);
+
+-- ---------------------------------------------------------
+-- BOOKS
+-- Mọi người đều xem được sách.
+-- Chỉ admin mới thêm/sửa/xóa (quản lý nội dung).
+-- is_premium_only: app tự lọc phía client theo profiles.is_premium.
+-- ---------------------------------------------------------
+
+create policy "books: ai cũng có thể xem"
+    on public.books for select
+    using (true);
+
+-- ---------------------------------------------------------
+-- BOOK FILES
+-- Chỉ user đã đăng nhập mới lấy được đường dẫn file.
+-- Với file premium: app phải kiểm tra is_premium phía client/function.
+-- ---------------------------------------------------------
+
+create policy "book_files: user đã đăng nhập mới xem"
+    on public.book_files for select
+    using (auth.uid() is not null);
+
+-- ---------------------------------------------------------
+-- BOOK CHAPTERS
+-- Mọi người đều xem được danh sách chương (mục lục).
+-- ---------------------------------------------------------
+
+create policy "book_chapters: ai cũng có thể xem"
+    on public.book_chapters for select
+    using (true);
+
+-- ---------------------------------------------------------
+-- USER LIBRARY
+-- Mỗi user chỉ thao tác với thư viện của chính mình.
+-- INSERT: chỉ chèn row với user_id = chính mình.
+-- UPDATE/DELETE: chỉ hàng của chính mình.
+-- ---------------------------------------------------------
+
+create policy "user_library: user xem thư viện của mình"
+    on public.user_library for select
+    using (auth.uid() = user_id);
+
+create policy "user_library: user thêm sách vào thư viện"
+    on public.user_library for insert
+    with check (auth.uid() = user_id);
+
+create policy "user_library: user cập nhật thư viện của mình"
+    on public.user_library for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "user_library: user xóa sách khỏi thư viện"
+    on public.user_library for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- PROGRESS
+-- Tiến độ đọc/nghe riêng tư của từng user.
+-- ---------------------------------------------------------
+
+create policy "progress: user xem tiến trình của mình"
+    on public.progress for select
+    using (auth.uid() = user_id);
+
+create policy "progress: user tạo tiến trình"
+    on public.progress for insert
+    with check (auth.uid() = user_id);
+
+create policy "progress: user cập nhật tiến trình của mình"
+    on public.progress for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "progress: user xóa tiến trình của mình"
+    on public.progress for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- BOOKMARKS
+-- Bookmark riêng tư của từng user.
+-- ---------------------------------------------------------
+
+create policy "bookmarks: user xem bookmark của mình"
+    on public.bookmarks for select
+    using (auth.uid() = user_id);
+
+create policy "bookmarks: user tạo bookmark"
+    on public.bookmarks for insert
+    with check (auth.uid() = user_id);
+
+create policy "bookmarks: user sửa bookmark của mình"
+    on public.bookmarks for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "bookmarks: user xóa bookmark của mình"
+    on public.bookmarks for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- BOOK HIGHLIGHTS
+-- Highlight riêng tư của từng user.
+-- ---------------------------------------------------------
+
+create policy "book_highlights: user xem highlight của mình"
+    on public.book_highlights for select
+    using (auth.uid() = user_id);
+
+create policy "book_highlights: user tạo highlight"
+    on public.book_highlights for insert
+    with check (auth.uid() = user_id);
+
+create policy "book_highlights: user sửa highlight của mình"
+    on public.book_highlights for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "book_highlights: user xóa highlight của mình"
+    on public.book_highlights for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- BOOK NOTES
+-- Ghi chú riêng tư, gắn với highlight của user.
+-- ---------------------------------------------------------
+
+create policy "book_notes: user xem ghi chú của mình"
+    on public.book_notes for select
+    using (auth.uid() = user_id);
+
+create policy "book_notes: user tạo ghi chú"
+    on public.book_notes for insert
+    with check (auth.uid() = user_id);
+
+create policy "book_notes: user sửa ghi chú của mình"
+    on public.book_notes for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "book_notes: user xóa ghi chú của mình"
+    on public.book_notes for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- REVIEWS
+-- User tự tạo/sửa/xóa review của mình.
+-- Tất cả user đã đăng nhập được đọc review (hiển thị công khai).
+-- ---------------------------------------------------------
+
+create policy "reviews: tất cả user đã đăng nhập được xem"
+    on public.reviews for select
+    using (auth.uid() is not null);
+
+create policy "reviews: user tạo review"
+    on public.reviews for insert
+    with check (auth.uid() = user_id);
+
+create policy "reviews: user sửa review của mình"
+    on public.reviews for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+create policy "reviews: user xóa review của mình"
+    on public.reviews for delete
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- BADGES (danh sách huy hiệu của hệ thống)
+-- Ai cũng được xem danh sách huy hiệu.
+-- Chỉ admin mới thêm/sửa/xóa huy hiệu.
+-- ---------------------------------------------------------
+
+create policy "badges: ai cũng có thể xem"
+    on public.badges for select
+    using (true);
+
+-- ---------------------------------------------------------
+-- USER BADGES
+-- Chỉ xem huy hiệu của chính mình.
+-- INSERT do trigger check_and_award_badges (security definer) đảm nhiệm.
+-- ---------------------------------------------------------
+
+create policy "user_badges: user xem huy hiệu của mình"
+    on public.user_badges for select
+    using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------
+-- READING STREAKS
+-- Chỉ xem streak của chính mình.
+-- Ghi/cập nhật do trigger handle_progress_update (security definer) đảm nhiệm.
+-- ---------------------------------------------------------
+
+create policy "reading_streaks: user xem streak của mình"
+    on public.reading_streaks for select
+    using (auth.uid() = user_id);
+
+
+-- =========================================================
+-- 20. SEED BADGES (DỮ LIỆU MẪU HUY HIỆU)
+-- =========================================================
+
+insert into public.badges (id, name, description, icon_url) values
+    ('b0000000-0000-0000-0000-000000000001', 'Độc giả Khởi đầu',  'Đã đọc hoàn thành cuốn sách đầu tiên',           'badge_first_book'),
+    ('b0000000-0000-0000-0000-000000000002', 'Mọt sách Chính hiệu','Đã đọc hoàn thành 5 cuốn sách',                 'badge_five_books'),
+    ('b0000000-0000-0000-0000-000000000003', 'Đại danh hào',       'Đã đọc hoàn thành 20 cuốn sách',                'badge_twenty_books'),
+    ('b0000000-0000-0000-0000-000000000004', 'Thính giả Chăm chỉ','Đạt tổng cộng 10 giờ nghe sách nói',             'badge_ten_hours'),
+    ('b0000000-0000-0000-0000-000000000005', 'Siêu cấp Thính giả','Đạt tổng cộng 50 giờ nghe sách nói',             'badge_fifty_hours'),
+    ('b0000000-0000-0000-0000-000000000006', 'Chiến thần Đọc sách','Duy trì chuỗi đọc sách liên tục 7 ngày',        'badge_seven_day_streak'),
+    ('b0000000-0000-0000-0000-000000000007', 'Bất khả chiến bại', 'Duy trì chuỗi đọc sách liên tục 30 ngày',        'badge_thirty_day_streak')
+on conflict (id) do nothing;
+
+
+-- =========================================================
+-- 21. TRIGGER FUNCTIONS (HÀM XỬ LÝ SỰ KIỆN)
+-- =========================================================
+
+-- A. Tự động tạo hồ sơ & streak khi người dùng mới đăng ký
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+    insert into public.profiles (id, email, full_name, avatar_url, is_premium)
+    values (
+        new.id,
+        new.email,
+        coalesce(
+            new.raw_user_meta_data->>'full_name',
+            new.raw_user_meta_data->>'name',
+            'User_' || substr(new.id::text, 1, 8)
+        ),
+        new.raw_user_meta_data->>'avatar_url',
+        false
+    );
+
+    insert into public.reading_streaks (user_id, current_streak, longest_streak, last_read_date)
+    values (new.id, 0, 0, null);
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+-- B. Tự động tính lại trung bình đánh giá của sách
+create or replace function public.update_book_ratings()
+returns trigger as $$
+declare
+    v_book_id uuid;
+    v_avg_rating decimal;
+    v_rating_count integer;
+begin
+    if (tg_op = 'DELETE') then
+        v_book_id := old.book_id;
+    else
+        v_book_id := new.book_id;
+    end if;
+
+    select count(*), coalesce(avg(rating), 0)
+    into v_rating_count, v_avg_rating
+    from public.reviews
+    where book_id = v_book_id;
+
+    update public.books
+    set rating_avg   = round(v_avg_rating, 2),
+        rating_count = v_rating_count
+    where id = v_book_id;
+
+    return null;
+end;
+$$ language plpgsql security definer;
+
+-- C. Tự động cập nhật chỉ mục tìm kiếm (search_vector)
+create or replace function public.sync_search_vector()
+returns trigger as $$
+begin
+    new.search_vector :=
+        to_tsvector('simple', coalesce(new.title, '')) ||
+        to_tsvector('simple', coalesce(new.description, ''));
+    return new;
+end;
+$$ language plpgsql;
+
+-- D. Cập nhật tiến độ đọc, chuỗi streak, giờ nghe, và thư viện
+create or replace function public.handle_progress_update()
+returns trigger as $$
+declare
+    v_today        date;
+    v_last_read    date;
+    v_curr_streak  int;
+    v_is_audiobook boolean;
+    v_pos_diff     integer;
+begin
+    v_today := (timezone('utc', now()))::date;
+
+    -- 1. Cập nhật Streak đọc sách
+    select last_read_date, current_streak
+    into v_last_read, v_curr_streak
+    from public.reading_streaks
+    where user_id = new.user_id;
+
+    if not found then
+        insert into public.reading_streaks (user_id, current_streak, longest_streak, last_read_date)
+        values (new.user_id, 1, 1, v_today);
+    else
+        if v_last_read is null then
+            update public.reading_streaks
+            set current_streak = 1,
+                longest_streak = greatest(longest_streak, 1),
+                last_read_date = v_today
+            where user_id = new.user_id;
+        elsif v_last_read = v_today - 1 then
+            update public.reading_streaks
+            set current_streak = current_streak + 1,
+                longest_streak = greatest(longest_streak, current_streak + 1),
+                last_read_date = v_today
+            where user_id = new.user_id;
+        elsif v_last_read < v_today - 1 then
+            update public.reading_streaks
+            set current_streak = 1,
+                longest_streak = greatest(longest_streak, 1),
+                last_read_date = v_today
+            where user_id = new.user_id;
+        end if;
+        -- Nếu v_last_read = v_today thì bỏ qua (đã đọc hôm nay rồi)
+    end if;
+
+    -- 2. Tăng books_read_count khi hoàn thành (100%)
+    if new.percent_complete = 100
+       and (tg_op = 'INSERT' or (tg_op = 'UPDATE' and old.percent_complete < 100))
+    then
+        update public.profiles
+        set books_read_count = books_read_count + 1
+        where id = new.user_id;
+    end if;
+
+    -- 3. Tích lũy số giờ nghe đối với audiobook
+    select is_audiobook into v_is_audiobook
+    from public.books
+    where id = new.book_id;
+
+    if v_is_audiobook = true then
+        v_pos_diff := 0;
+        if tg_op = 'UPDATE' then
+            if new.last_position_seconds > old.last_position_seconds then
+                v_pos_diff := new.last_position_seconds - old.last_position_seconds;
+            end if;
+        elsif tg_op = 'INSERT' then
+            v_pos_diff := new.last_position_seconds;
+        end if;
+
+        if v_pos_diff > 0 then
+            update public.profiles
+            set listening_hours = listening_hours + (v_pos_diff::decimal / 3600.0)
+            where id = new.user_id;
+        end if;
+    end if;
+
+    -- 4. Cập nhật last_accessed trong user_library
+    insert into public.user_library (user_id, book_id, last_accessed)
+    values (new.user_id, new.book_id, timezone('utc', now()))
+    on conflict (user_id, book_id) do update
+    set last_accessed = timezone('utc', now());
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+-- E. Tự động mở khóa Huy hiệu dựa trên thông số Đọc/Nghe
+create or replace function public.check_and_award_badges()
+returns trigger as $$
+declare
+    v_has_badge boolean;
+begin
+    -- Huy hiệu 1: Độc giả Khởi đầu (>= 1 cuốn)
+    if new.books_read_count >= 1 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.id
+              and badge_id = 'b0000000-0000-0000-0000-000000000001'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.id, 'b0000000-0000-0000-0000-000000000001', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    -- Huy hiệu 2: Mọt sách Chính hiệu (>= 5 cuốn)
+    if new.books_read_count >= 5 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.id
+              and badge_id = 'b0000000-0000-0000-0000-000000000002'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.id, 'b0000000-0000-0000-0000-000000000002', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    -- Huy hiệu 3: Đại danh hào (>= 20 cuốn)
+    if new.books_read_count >= 20 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.id
+              and badge_id = 'b0000000-0000-0000-0000-000000000003'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.id, 'b0000000-0000-0000-0000-000000000003', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    -- Huy hiệu 4: Thính giả Chăm chỉ (>= 10 giờ)
+    if new.listening_hours >= 10 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.id
+              and badge_id = 'b0000000-0000-0000-0000-000000000004'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.id, 'b0000000-0000-0000-0000-000000000004', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    -- Huy hiệu 5: Siêu cấp Thính giả (>= 50 giờ)
+    if new.listening_hours >= 50 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.id
+              and badge_id = 'b0000000-0000-0000-0000-000000000005'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.id, 'b0000000-0000-0000-0000-000000000005', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+-- F. Tự động mở khóa Huy hiệu dựa trên Streak ngày liên tiếp
+create or replace function public.check_streak_badges()
+returns trigger as $$
+declare
+    v_has_badge boolean;
+begin
+    -- Huy hiệu 6: Chiến thần Đọc sách (streak >= 7 ngày)
+    if new.current_streak >= 7 or new.longest_streak >= 7 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.user_id
+              and badge_id = 'b0000000-0000-0000-0000-000000000006'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.user_id, 'b0000000-0000-0000-0000-000000000006', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    -- Huy hiệu 7: Bất khả chiến bại (streak >= 30 ngày)
+    if new.current_streak >= 30 or new.longest_streak >= 30 then
+        select exists(
+            select 1 from public.user_badges
+            where user_id = new.user_id
+              and badge_id = 'b0000000-0000-0000-0000-000000000007'
+        ) into v_has_badge;
+        if not v_has_badge then
+            insert into public.user_badges (user_id, badge_id, unlocked_at)
+            values (new.user_id, 'b0000000-0000-0000-0000-000000000007', timezone('utc', now()))
+            on conflict do nothing;
+        end if;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+
+-- =========================================================
+-- 22. REGISTER TRIGGERS (ĐĂNG KÝ CÁC EVENT TRIGGERS)
+-- =========================================================
+
+-- Tạo profile & streak khi user mới đăng ký
+create or replace trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute procedure public.handle_new_user();
+
+-- Tính lại rating khi có review mới / sửa / xóa
+create or replace trigger trg_reviews_changes
+    after insert or update or delete on public.reviews
+    for each row execute procedure public.update_book_ratings();
+
+-- Cập nhật search vector khi sách được thêm/sửa
+create or replace trigger trg_books_search_vector
+    before insert or update of title, description on public.books
+    for each row execute procedure public.sync_search_vector();
+
+-- Xử lý tiến trình đọc/nghe
+create or replace trigger trg_progress_update
+    after insert or update on public.progress
+    for each row execute procedure public.handle_progress_update();
+
+-- Trao huy hiệu dựa theo số sách đọc / giờ nghe
+create or replace trigger trg_profiles_badges
+    after update of books_read_count, listening_hours on public.profiles
+    for each row execute procedure public.check_and_award_badges();
+
+-- Trao huy hiệu dựa theo streak
+create or replace trigger trg_reading_streaks_badges
+    after update of current_streak, longest_streak on public.reading_streaks
+    for each row execute procedure public.check_streak_badges();
+
+
+-- =========================================================
+-- 23. BUSINESS QUERY FUNCTIONS (CÁC HÀM TRUY VẤN NGHIỆP VỤ)
+-- =========================================================
+
+-- 1. Tìm kiếm sách nâng cao (Full-Text Search + bộ lọc)
+create or replace function public.search_books(
+    query_text      text,
+    category_filter uuid    default null,
+    author_filter   uuid    default null,
+    limit_val       integer default 20,
+    offset_val      integer default 0
+)
+returns table (
+    id               uuid,
+    title            text,
+    description      text,
+    cover_url        text,
+    banner_url       text,
+    language         text,
+    rating_avg       decimal,
+    rating_count     integer,
+    price            decimal,
+    is_audiobook     boolean,
+    is_ebook         boolean,
+    is_premium_only  boolean,
+    duration_seconds integer,
+    page_count       integer,
+    published_year   integer,
+    author_id        uuid,
+    author_name      text,
+    category_id      uuid,
+    category_name_vi text,
+    category_name_en text,
+    similarity_rank  real
+) as $$
+    select
+        b.id,
+        b.title,
+        b.description,
+        b.cover_url,
+        b.banner_url,
+        b.language,
+        b.rating_avg,
+        b.rating_count,
+        b.price,
+        b.is_audiobook,
+        b.is_ebook,
+        b.is_premium_only,
+        b.duration_seconds,
+        b.page_count,
+        b.published_year,
+        b.author_id,
+        a.name            as author_name,
+        b.category_id,
+        c.name_vi         as category_name_vi,
+        c.name_en         as category_name_en,
+        case
+            when query_text is not null and query_text <> ''
+            then ts_rank(b.search_vector, plainto_tsquery('simple', query_text))
+            else 1.0::real
+        end               as similarity_rank
+    from public.books b
+    left join public.authors    a on b.author_id   = a.id
+    left join public.categories c on b.category_id = c.id
+    where
+        (category_filter is null or b.category_id = category_filter)
+        and (author_filter is null or b.author_id = author_filter)
+        and (
+            query_text is null or query_text = '' or
+            b.search_vector @@ plainto_tsquery('simple', query_text) or
+            b.title ilike '%' || query_text || '%'
+        )
+    order by
+        case when query_text is not null and query_text <> '' then 1 else 0 end desc,
+        similarity_rank desc,
+        b.rating_avg desc,
+        b.rating_count desc
+    limit limit_val
+    offset offset_val;
+$$ language sql stable;
+
+-- 2. Gợi ý sách tương tự (cùng thể loại hoặc tác giả)
+create or replace function public.get_similar_books(
+    target_book_id uuid,
+    limit_val      integer default 5
+)
+returns table (
+    id              uuid,
+    title           text,
+    cover_url       text,
+    rating_avg      decimal,
+    rating_count    integer,
+    is_audiobook    boolean,
+    is_ebook        boolean,
+    is_premium_only boolean,
+    price           decimal,
+    author_name     text
+) as $$
+    select
+        b.id,
+        b.title,
+        b.cover_url,
+        b.rating_avg,
+        b.rating_count,
+        b.is_audiobook,
+        b.is_ebook,
+        b.is_premium_only,
+        b.price,
+        a.name as author_name
+    from public.books b
+    left join public.authors a on b.author_id = a.id
+    cross join (
+        select category_id, author_id
+        from public.books
+        where id = target_book_id
+    ) target
+    where b.id <> target_book_id
+      and (b.category_id = target.category_id or b.author_id = target.author_id)
+    order by
+        case when b.author_id   = target.author_id   then 2 else 0 end +
+        case when b.category_id = target.category_id then 1 else 0 end desc,
+        b.rating_avg desc,
+        b.rating_count desc
+    limit limit_val;
+$$ language sql stable;
+
+-- 3. Tổng hợp thống kê đọc + huy hiệu (dạng JSON) cho màn hình Profile
+create or replace function public.get_user_reading_summary(
+    target_user_id uuid
+)
+returns json as $$
+declare
+    v_books_read      integer;
+    v_listening_hours decimal;
+    v_current_streak  integer;
+    v_longest_streak  integer;
+    v_total_badges    integer;
+    v_reading_count   integer;
+    v_purchased_count integer;
+    v_result          json;
+begin
+    select books_read_count, listening_hours
+    into v_books_read, v_listening_hours
+    from public.profiles
+    where id = target_user_id;
+
+    select current_streak, longest_streak
+    into v_current_streak, v_longest_streak
+    from public.reading_streaks
+    where user_id = target_user_id;
+
+    select count(*) into v_total_badges
+    from public.user_badges
+    where user_id = target_user_id;
+
+    select count(*) into v_reading_count
+    from public.progress
+    where user_id = target_user_id
+      and percent_complete > 0
+      and percent_complete < 100;
+
+    select count(*) into v_purchased_count
+    from public.user_library
+    where user_id = target_user_id
+      and is_purchased = true;
+
+    v_result := json_build_object(
+        'books_read_count',       coalesce(v_books_read, 0),
+        'listening_hours',        coalesce(v_listening_hours, 0.0),
+        'current_streak',         coalesce(v_current_streak, 0),
+        'longest_streak',         coalesce(v_longest_streak, 0),
+        'total_badges_unlocked',  coalesce(v_total_badges, 0),
+        'books_currently_reading',coalesce(v_reading_count, 0),
+        'books_purchased',        coalesce(v_purchased_count, 0)
+    );
+
+    return v_result;
+end;
+$$ language plpgsql stable security definer;
+
+-- 4. Bật/Tắt yêu thích một cuốn sách
+create or replace function public.toggle_favorite_book(
+    user_uuid uuid,
+    book_uuid uuid
+)
+returns boolean as $$
+declare
+    v_current_fav boolean;
+begin
+    select is_favorite into v_current_fav
+    from public.user_library
+    where user_id = user_uuid and book_id = book_uuid;
+
+    if not found then
+        insert into public.user_library (user_id, book_id, is_favorite, last_accessed)
+        values (user_uuid, book_uuid, true, timezone('utc', now()));
+        return true;
+    else
+        update public.user_library
+        set is_favorite  = not v_current_fav,
+            last_accessed = timezone('utc', now())
+        where user_id = user_uuid and book_id = book_uuid;
+        return not v_current_fav;
+    end if;
+end;
+$$ language plpgsql security definer;
+
+-- 5. Đăng hoặc cập nhật đánh giá sách
+create or replace function public.add_book_review(
+    user_uuid   uuid,
+    book_uuid   uuid,
+    rating_val  integer,
+    comment_val text
+)
+returns void as $$
+begin
+    insert into public.reviews (user_id, book_id, rating, comment, created_at)
+    values (user_uuid, book_uuid, rating_val, comment_val, timezone('utc', now()))
+    on conflict (user_id, book_id) do update
+    set rating     = rating_val,
+        comment    = comment_val,
+        created_at = timezone('utc', now());
+end;
+$$ language plpgsql security definer;
+
+-- 6. Thực hiện mua sách
+create or replace function public.purchase_book(
+    user_uuid uuid,
+    book_uuid uuid
+)
+returns void as $$
+begin
+    insert into public.user_library (user_id, book_id, is_purchased, purchased_at, last_accessed)
+    values (user_uuid, book_uuid, true, timezone('utc', now()), timezone('utc', now()))
+    on conflict (user_id, book_id) do update
+    set is_purchased  = true,
+        purchased_at  = coalesce(user_library.purchased_at, timezone('utc', now())),
+        last_accessed = timezone('utc', now());
+end;
+$$ language plpgsql security definer;
+
+-- =========================================================
+-- 24. PAYMENTS / INVOICES / NOTIFICATIONS
+-- =========================================================
+
+create table public.payments (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid not null
+        references public.profiles(id)
+        on delete cascade,
+
+    payment_type text not null
+        check (payment_type in (
+            'book_purchase',
+            'premium_subscription'
+        )),
+
+    book_id uuid
+        references public.books(id)
+        on delete set null,
+
+    provider text not null default 'manual',
+    -- momo / vnpay / stripe / paypal
+
+    provider_payment_id text,
+
+    amount decimal not null
+        check (amount >= 0),
+
+    currency text not null default 'VND',
+
+    status text not null default 'pending'
+        check (status in (
+            'pending',
+            'paid',
+            'failed',
+            'cancelled',
+            'refunded'
+        )),
+
+    payment_method text,
+    -- e_wallet / bank_transfer / card
+
+    paid_at timestamp with time zone,
+
+    created_at timestamp with time zone
+        default timezone('utc', now()),
+
+    updated_at timestamp with time zone
+        default timezone('utc', now()),
+
+    check (
+        (
+            payment_type = 'book_purchase'
+            and book_id is not null
+        )
+        or
+        (
+            payment_type = 'premium_subscription'
+            and book_id is null
+        )
+    )
+);
+
+
+create table public.invoices (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid not null
+        references public.profiles(id)
+        on delete cascade,
+
+    payment_id uuid unique
+        references public.payments(id)
+        on delete set null,
+
+    invoice_number text not null unique,
+
+    invoice_type text not null
+        check (invoice_type in (
+            'book_purchase',
+            'premium_subscription'
+        )),
+
+    book_id uuid
+        references public.books(id)
+        on delete set null,
+
+    amount decimal not null
+        check (amount >= 0),
+
+    currency text not null default 'VND',
+
+    status text not null default 'issued'
+        check (status in (
+            'issued',
+            'paid',
+            'cancelled',
+            'refunded'
+        )),
+
+    issued_at timestamp with time zone
+        default timezone('utc', now()),
+
+    paid_at timestamp with time zone,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+
+create table public.notifications (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid not null
+        references public.profiles(id)
+        on delete cascade,
+
+    type text not null
+        check (type in (
+            'payment_success',
+            'payment_failed',
+            'premium_activated',
+            'book_unlocked',
+            'system',
+            'reminder'
+        )),
+
+    data jsonb default '{}'::jsonb,
+
+    is_read boolean default false,
+
+    read_at timestamp with time zone,
+
+    created_at timestamp with time zone
+        default timezone('utc', now())
+);
+
+
+-- =========================================================
+-- 25. INDEXES
+-- =========================================================
+
+create index idx_payments_user
+    on public.payments(user_id);
+
+create index idx_payments_status
+    on public.payments(status);
+
+create index idx_payments_type
+    on public.payments(payment_type);
+
+create index idx_payments_book
+    on public.payments(book_id);
+
+
+create index idx_invoices_user
+    on public.invoices(user_id);
+
+create index idx_invoices_payment
+    on public.invoices(payment_id);
+
+create index idx_invoices_type
+    on public.invoices(invoice_type);
+
+create index idx_invoices_book
+    on public.invoices(book_id);
+
+
+create index idx_notifications_user
+    on public.notifications(user_id);
+
+create index idx_notifications_unread
+    on public.notifications(user_id, is_read);
+
+
+-- =========================================================
+-- 26. ENABLE RLS
+-- =========================================================
+
+alter table public.payments
+    enable row level security;
+
+alter table public.invoices
+    enable row level security;
+
+alter table public.notifications
+    enable row level security;
+
+
+-- =========================================================
+-- 27. RLS POLICIES
+-- =========================================================
+
+create policy "payments: user xem payment của mình"
+    on public.payments
+    for select
+    using (auth.uid() = user_id);
+
+
+create policy "invoices: user xem invoice của mình"
+    on public.invoices
+    for select
+    using (auth.uid() = user_id);
+
+
+create policy "notifications: user xem notification của mình"
+    on public.notifications
+    for select
+    using (auth.uid() = user_id);
+
+
+create policy "notifications: user cập nhật notification của mình"
+    on public.notifications
+    for update
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+
+-- =========================================================
+-- 28. BUSINESS FUNCTIONS
+-- =========================================================
+
+create or replace function public.mark_notification_as_read(
+    notification_uuid uuid
+)
+returns void as $$
+begin
+    update public.notifications
+    set
+        is_read = true,
+        read_at = timezone('utc', now())
+    where id = notification_uuid
+      and user_id = auth.uid();
+end;
+$$ language plpgsql security definer;
+
+
+create or replace function public.mark_all_notifications_as_read()
+returns void as $$
+begin
+    update public.notifications
+    set
+        is_read = true,
+        read_at = timezone('utc', now())
+    where user_id = auth.uid()
+      and is_read = false;
+end;
+$$ language plpgsql security definer;
+
+
+create or replace function public.complete_payment(
+    payment_uuid uuid
+)
+returns void as $$
+declare
+    v_user_id uuid;
+    v_book_id uuid;
+    v_payment_type text;
+begin
+
+    select
+        user_id,
+        book_id,
+        payment_type
+    into
+        v_user_id,
+        v_book_id,
+        v_payment_type
+    from public.payments
+    where id = payment_uuid;
+
+    if not found then
+        raise exception 'Payment not found';
+    end if;
+
+
+    update public.payments
+    set
+        status = 'paid',
+        paid_at = timezone('utc', now()),
+        updated_at = timezone('utc', now())
+    where id = payment_uuid;
+
+
+    update public.invoices
+    set
+        status = 'paid',
+        paid_at = timezone('utc', now())
+    where payment_id = payment_uuid;
+
+
+    if v_payment_type = 'book_purchase' then
+
+        perform public.purchase_book(
+            v_user_id,
+            v_book_id
+        );
+
+        insert into public.notifications (
+            user_id,
+            type,
+            data
+        )
+        values (
+            v_user_id,
+            'book_unlocked',
+            jsonb_build_object(
+                'book_id', v_book_id,
+                'payment_id', payment_uuid
+            )
+        );
+
+    elsif v_payment_type = 'premium_subscription' then
+
+        update public.profiles
+        set
+            is_premium = true,
+            updated_at = timezone('utc', now())
+        where id = v_user_id;
+
+        insert into public.notifications (
+            user_id,
+            type,
+            data
+        )
+        values (
+            v_user_id,
+            'premium_activated',
+            jsonb_build_object(
+                'payment_id', payment_uuid
+            )
+        );
+
+    end if;
+
+end;
+$$ language plpgsql security definer;
+
+-- =========================================================
+-- END OF SCHEMA
+-- =========================================================
+
+
+
+-- 1. Function tự tính lại rating_avg và rating_count
+create or replace function public.update_book_ratings()
+returns trigger as $$
+declare
+    v_book_id uuid;
+    v_avg_rating numeric;
+    v_rating_count integer;
+begin
+    if tg_op = 'DELETE' then
+        v_book_id := old.book_id;
+    else
+        v_book_id := new.book_id;
+    end if;
+
+    select
+        count(*),
+        coalesce(avg(rating)::numeric, 0)
+    into
+        v_rating_count,
+        v_avg_rating
+    from public.reviews
+    where book_id = v_book_id;
+
+    update public.books
+    set
+        rating_avg = round(v_avg_rating, 2),
+        rating_count = v_rating_count
+    where id = v_book_id;
+
+    return null;
+end;
+$$ language plpgsql security definer;
+
+
+-- 2. Trigger gọi function khi reviews thay đổi
+drop trigger if exists trg_reviews_changes on public.reviews;
+
+create trigger trg_reviews_changes
+after insert or update or delete
+on public.reviews
+for each row
+execute function public.update_book_ratings();

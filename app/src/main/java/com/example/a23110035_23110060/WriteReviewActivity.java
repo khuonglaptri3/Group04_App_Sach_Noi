@@ -85,12 +85,9 @@ public class WriteReviewActivity extends AppCompatActivity {
             if (rating > 0) {
                 btnSubmit.setEnabled(true);
                 btnSubmit.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0288D1")));
-                // Update star colors
-                ratingBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#F59E0B"))); // amber-500
             } else {
                 btnSubmit.setEnabled(false);
                 btnSubmit.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E2E8F0")));
-                ratingBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#94A3B8")));
             }
         });
 
@@ -125,13 +122,14 @@ public class WriteReviewActivity extends AppCompatActivity {
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Đang gửi...");
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews";
+        // USE RPC FUNCTION FOR UPSERT SUPPORT (AS DEFINED IN DB SCHEMA)
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/rpc/add_book_review";
         JSONObject json = new JSONObject();
         try {
-            json.put("user_id", userId);
-            json.put("book_id", bookId);
-            json.put("rating", rating);
-            json.put("comment", comment);
+            json.put("user_uuid", userId);
+            json.put("book_uuid", bookId);
+            json.put("rating_val", rating);
+            json.put("comment_val", comment);
         } catch (Exception e) {}
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.parse("application/json"));
@@ -139,7 +137,6 @@ public class WriteReviewActivity extends AppCompatActivity {
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
                 .addHeader("Authorization", "Bearer " + token)
-                .addHeader("Prefer", "resolution=merge-duplicates")
                 .post(body)
                 .build();
 

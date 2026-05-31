@@ -53,6 +53,13 @@
         <activity
             android:name=".SecurityPrivacyActivity"
             android:exported="false" />
+        <activity
+            android:name=".PremiumActivity"
+            android:exported="false"
+            android:theme="@style/Theme._23110035_23110060" />
+        <activity
+            android:name=".AllReviewsActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

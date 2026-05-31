@@ -26,6 +26,7 @@ public class ProfileContentFragment extends Fragment {
     private SessionManager sessionManager;
     private OkHttpClient client = new OkHttpClient();
     private TextView tvProfileName, tvBooksReadCount, tvListeningHours, tvBadgesCount;
+    private View cardPremiumUpgrade;
     
     @Nullable
     @Override
@@ -42,6 +43,7 @@ public class ProfileContentFragment extends Fragment {
         tvBooksReadCount = view.findViewById(R.id.tvBooksReadCount);
         tvListeningHours = view.findViewById(R.id.tvListeningHours);
         tvBadgesCount = view.findViewById(R.id.tvBadgesCount);
+        cardPremiumUpgrade = view.findViewById(R.id.cardPremiumUpgrade);
 
         // Bind user name from SessionManager
         if (tvProfileName != null) {
@@ -50,6 +52,15 @@ public class ProfileContentFragment extends Fragment {
 
         // Fetch user statistics from Supabase RPC
         fetchUserSummary();
+        checkUserPremiumStatus();
+
+        // Bind Upgrade Button
+        View btnUpgrade = view.findViewById(R.id.btnUpgradeProfile);
+        if (btnUpgrade != null) {
+            btnUpgrade.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), PremiumActivity.class));
+            });
+        }
 
         // Bind Logout Button
         View btnLogout = view.findViewById(R.id.btnLogout);
@@ -136,6 +147,44 @@ public class ProfileContentFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e("ProfileContent", "Error parsing summary", e);
                     }
+                }
+            }
+        });
+    }
+
+    private void checkUserPremiumStatus() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=is_premium";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        org.json.JSONArray array = new org.json.JSONArray(response.body().string());
+                        if (array.length() > 0) {
+                            boolean isPremium = array.getJSONObject(0).optBoolean("is_premium", false);
+                            if (isAdded()) {
+                                requireActivity().runOnUiThread(() -> {
+                                    if (cardPremiumUpgrade != null) {
+                                        cardPremiumUpgrade.setVisibility(isPremium ? View.GONE : View.VISIBLE);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (Exception e) {}
                 }
             }
         });

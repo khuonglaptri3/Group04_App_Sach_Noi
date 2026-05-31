@@ -63,7 +63,7 @@
 
             <RatingBar
                 android:id="@+id/rb_review"
-                style="@style/Widget.AppCompat.RatingBar.Indicator"
+                style="@style/Widget.AppCompat.RatingBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -71,9 +71,9 @@
                 android:numStars="5"
                 android:rating="0"
                 android:stepSize="1"
-                android:progressTint="#94A3B8"
-                android:secondaryProgressTint="#94A3B8"
-                android:progressBackgroundTint="#E2E8F0" />
+                android:progressTint="@color/star_active"
+                android:secondaryProgressTint="@color/star_active"
+                android:progressBackgroundTint="@color/star_inactive" />
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chip_group_tags"

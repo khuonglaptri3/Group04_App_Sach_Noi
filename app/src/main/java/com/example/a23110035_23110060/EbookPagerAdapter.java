@@ -14,6 +14,7 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
 
     private List<CharSequence> pages;
     private float currentTextSize = 18f;
+    private int currentTextColor = 0xFF1D1B20;
     private android.view.ActionMode.Callback customSelectionCallback;
 
     public EbookPagerAdapter(List<CharSequence> pages) {
@@ -27,6 +28,11 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
 
     public void setTextSize(float textSize) {
         this.currentTextSize = textSize;
+        notifyDataSetChanged();
+    }
+
+    public void setTextColor(int color) {
+        this.currentTextColor = color;
         notifyDataSetChanged();
     }
 
@@ -45,6 +51,12 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
     public void onBindViewHolder(@NonNull PageViewHolder holder, int position) {
         holder.tvPageContent.setText(pages.get(position));
         holder.tvPageContent.setTextSize(currentTextSize);
+        holder.tvPageContent.setTextColor(currentTextColor);
+
+        // Đảm bảo TextView luôn có thể chọn được sau khi bị recycle
+        holder.tvPageContent.setTextIsSelectable(true);
+        holder.tvPageContent.setFocusable(true);
+        holder.tvPageContent.setFocusableInTouchMode(true);
 
         if (customSelectionCallback != null) {
             holder.tvPageContent.setCustomSelectionActionModeCallback(customSelectionCallback);

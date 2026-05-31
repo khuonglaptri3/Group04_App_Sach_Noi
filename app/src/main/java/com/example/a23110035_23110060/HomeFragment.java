@@ -34,7 +34,7 @@ public class HomeFragment extends Fragment {
     private String[] titles = new String[]{"Sách nói", "Sách điện tử"};
     private SessionManager sessionManager;
     private TextView tvGreeting;
-    private OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client;
     private Handler progressHandler = new Handler();
     private Runnable progressRunnable;
     private ObjectAnimator rotateAnimator;
@@ -52,6 +52,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         sessionManager = new SessionManager(requireContext());
+        client = NetworkClient.getClient(requireContext());
         tvGreeting = view.findViewById(R.id.tvGreetingSub);
         
         updateGreeting(sessionManager.getUserName());

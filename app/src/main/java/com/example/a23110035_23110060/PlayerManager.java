@@ -58,6 +58,11 @@ public class PlayerManager {
         try {
             this.currentBook = book;
             isPrepared = false;
+            isPlaying = false;
+            if (callback != null) {
+                callback.onProgress(0, 0);
+                callback.onStateChange(false);
+            }
             mediaPlayer.reset();
             mediaPlayer.setDataSource(book.getAudioUrl());
             mediaPlayer.prepareAsync();
@@ -133,11 +138,17 @@ public class PlayerManager {
         if (currentBook != null && chapter.getAudioUrl().equals(currentBook.getAudioUrl())) {
              if (isPrepared) {
                  mediaPlayer.seekTo(chapter.getStartTime());
+                 if (callback != null) callback.onProgress(chapter.getStartTime(), mediaPlayer.getDuration());
                  if (!isPlaying) togglePlayPause();
              }
         } else {
              try {
                  isPrepared = false;
+                 isPlaying = false;
+                 if (callback != null) {
+                     callback.onProgress(chapter.getStartTime(), 0);
+                     callback.onStateChange(false);
+                 }
                  mediaPlayer.reset();
                  mediaPlayer.setDataSource(chapter.getAudioUrl());
                  mediaPlayer.prepareAsync();

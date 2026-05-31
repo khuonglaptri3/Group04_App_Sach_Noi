@@ -195,9 +195,32 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                     .error(R.drawable.bacl)
                     .into(ivArtwork);
             }
+
+            // Sync progress immediately on resume or update
+            try {
+                int current = playerManager.getCurrentPosition();
+                int total = playerManager.getDuration();
+                if (total > 0) {
+                    seekBar.setMax(total);
+                    seekBar.setProgress(current);
+                    tvCurrentTime.setText(formatTime(current));
+                    tvTotalTime.setText("-" + formatTime(total - current));
+                } else {
+                    seekBar.setProgress(0);
+                    tvCurrentTime.setText("00:00");
+                    tvTotalTime.setText("00:00");
+                }
+            } catch (Exception e) {
+                seekBar.setProgress(0);
+                tvCurrentTime.setText("00:00");
+                tvTotalTime.setText("00:00");
+            }
         } else {
             tvTitle.setText("Chưa có sách nào");
             tvAuthor.setText("-");
+            seekBar.setProgress(0);
+            tvCurrentTime.setText("00:00");
+            tvTotalTime.setText("00:00");
         }
         fabPlay.setImageResource(playerManager.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
     }

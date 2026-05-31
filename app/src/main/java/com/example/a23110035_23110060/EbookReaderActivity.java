@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
+import androidx.core.graphics.ColorUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,7 +48,7 @@ public class EbookReaderActivity extends AppCompatActivity {
 
     private String bookId;
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client;
 
     private View selectionPopup, brightnessOverlay;
     private LinearLayout bottomContainer;
@@ -56,13 +57,16 @@ public class EbookReaderActivity extends AppCompatActivity {
     private EbookPagerAdapter pagerAdapter;
 
     private float currentTextSize = 18f;
+    private int currentTextColor = 0xFF1D1B20;
     private boolean isNightMode = false;
 
     private List<CharSequence> pages = new ArrayList<>();
     private List<Integer> chapterStartPages = new ArrayList<>();
     private List<String> chapterTitles = new ArrayList<>();
     private JSONArray cachedChapters = new JSONArray();
+    private List<JSONObject> bookHighlights = new ArrayList<>();
     private java.util.Set<Integer> bookmarkedPages = new java.util.HashSet<>();
+    private Thread paginationThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +85,7 @@ public class EbookReaderActivity extends AppCompatActivity {
         });
 
         sessionManager = new SessionManager(this);
+        client = NetworkClient.getClient(this);
         bookId = getIntent().getStringExtra("bookId");
 
         initViews();
@@ -97,7 +102,9 @@ public class EbookReaderActivity extends AppCompatActivity {
         tvToolbarChapter = findViewById(R.id.tv_toolbar_chapter);
         
         vpEbook = findViewById(R.id.vp_ebook);
+        vpEbook.setOffscreenPageLimit(1);
         pagerAdapter = new EbookPagerAdapter(pages);
+        pagerAdapter.setTextColor(currentTextColor);
         vpEbook.setAdapter(pagerAdapter);
 
         vpEbook.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -206,6 +213,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                                         cachedChapters = jsonChapters;
                                         paginateText(jsonChapters);
                                         fetchBookmarks();
+                                        fetchHighlights();
                                         fetchLastProgress();
                                     } catch (Exception ex) {
                                         fetchLegacyDescription();
@@ -273,75 +281,88 @@ public class EbookReaderActivity extends AppCompatActivity {
     }
 
     private void paginateText(JSONArray chaptersArray) {
+        if (paginationThread != null && paginationThread.isAlive()) {
+            paginationThread.interrupt();
+        }
+
         vpEbook.post(() -> {
-            new Thread(() -> {
-                TextPaint paint = new TextPaint();
-                paint.setTextSize(currentTextSize * getResources().getDisplayMetrics().scaledDensity);
-                paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+            paginationThread = new Thread(() -> {
+                try {
+                    TextPaint paint = new TextPaint();
+                    paint.setTextSize(currentTextSize * getResources().getDisplayMetrics().scaledDensity);
+                    paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+                    
+                    int width = vpEbook.getWidth() - dpToPx(48); // 24dp horizontal padding * 2
+                    int height = vpEbook.getHeight() - dpToPx(48); // 24dp vertical padding * 2
                 
-                int width = vpEbook.getWidth() - dpToPx(48); // 24dp horizontal padding * 2
-                int height = vpEbook.getHeight() - dpToPx(48); // 24dp vertical padding * 2
-            
-            if (width <= 0 || height <= 0) {
-                width = getResources().getDisplayMetrics().widthPixels - dpToPx(48);
-                height = getResources().getDisplayMetrics().heightPixels - dpToPx(200);
-            }
-            
-            List<CharSequence> newPages = new ArrayList<>();
-            List<Integer> newChapterStarts = new ArrayList<>();
-            List<String> newChapterTitles = new ArrayList<>();
-            
-            try {
-                for (int i = 0; i < chaptersArray.length(); i++) {
-                    JSONObject obj = chaptersArray.getJSONObject(i);
-                    String title = obj.optString("title", "Chương " + (i + 1));
-                    String text = obj.optString("text_content", "");
-                    String content = title.toUpperCase() + "\n\n" + text;
+                    if (width <= 0 || height <= 0) {
+                        width = getResources().getDisplayMetrics().widthPixels - dpToPx(48);
+                        height = getResources().getDisplayMetrics().heightPixels - dpToPx(200);
+                    }
                     
-                    newChapterStarts.add(newPages.size());
-                    newChapterTitles.add(title);
+                    List<CharSequence> newPages = new ArrayList<>();
+                    List<Integer> newChapterStarts = new ArrayList<>();
+                    List<String> newChapterTitles = new ArrayList<>();
                     
-                    StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, width)
-                            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                            .setLineSpacing(dpToPx(10), 1.0f)
-                            .setIncludePad(false)
-                            .build();
-                    
-                    int startOffset = 0;
-                    int lineCount = layout.getLineCount();
-                    int pageStartLine = 0;
-                    
-                    for (int line = 0; line < lineCount; line++) {
-                        int bottom = layout.getLineBottom(line);
-                        int top = layout.getLineTop(pageStartLine);
-                        if (bottom - top > height) {
-                            int endOffset = layout.getLineEnd(line - 1);
-                            newPages.add(content.substring(startOffset, endOffset));
-                            startOffset = endOffset;
-                            pageStartLine = line;
+                    for (int i = 0; i < chaptersArray.length(); i++) {
+                        if (Thread.interrupted()) return;
+                        JSONObject obj = chaptersArray.getJSONObject(i);
+                        String title = obj.optString("title", "Chương " + (i + 1));
+                        String text = obj.optString("text_content", "");
+                        String content = title.toUpperCase() + "\n\n" + text;
+                        
+                        newChapterStarts.add(newPages.size());
+                        newChapterTitles.add(title);
+                        
+                        StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, width)
+                                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                                .setLineSpacing(dpToPx(10), 1.0f)
+                                .setIncludePad(false)
+                                .build();
+                        
+                        int startOffset = 0;
+                        int lineCount = layout.getLineCount();
+                        int pageStartLine = 0;
+                        
+                        for (int line = 0; line < lineCount; line++) {
+                            int bottom = layout.getLineBottom(line);
+                            int top = layout.getLineTop(pageStartLine);
+                            if (bottom - top > height) {
+                                int safeLineIndex = Math.max(0, line - 1);
+                                if (line == pageStartLine) {
+                                    // Current line itself is taller than height, must include it to avoid infinite loop
+                                    safeLineIndex = line;
+                                }
+                                int endOffset = layout.getLineEnd(safeLineIndex);
+                                if (endOffset > startOffset) {
+                                    newPages.add(content.substring(startOffset, endOffset));
+                                    startOffset = endOffset;
+                                    pageStartLine = (line == pageStartLine) ? line + 1 : line;
+                                }
+                            }
+                        }
+                        if (startOffset < content.length()) {
+                            newPages.add(content.substring(startOffset));
                         }
                     }
-                    if (startOffset < content.length()) {
-                        newPages.add(content.substring(startOffset));
-                    }
-                }
-                
-                runOnUiThread(() -> {
-                    pages.clear();
-                    pages.addAll(newPages);
-                    chapterStartPages.clear();
-                    chapterStartPages.addAll(newChapterStarts);
-                    chapterTitles.clear();
-                    chapterTitles.addAll(newChapterTitles);
                     
-                    pagerAdapter.updatePages(pages);
-                    updateProgressUI(vpEbook.getCurrentItem());
-                });
-                
-            } catch (Exception e) {
-                Log.e("Pagination", "Error", e);
-            }
-            }).start();
+                    runOnUiThread(() -> {
+                        pages.clear();
+                        pages.addAll(newPages);
+                        chapterStartPages.clear();
+                        chapterStartPages.addAll(newChapterStarts);
+                        chapterTitles.clear();
+                        chapterTitles.addAll(newChapterTitles);
+                        
+                        pagerAdapter.updatePages(pages);
+                        applyHighlightsToPages();
+                        updateProgressUI(vpEbook.getCurrentItem());
+                    });
+                } catch (Exception e) {
+                    Log.e("Pagination", "Error", e);
+                }
+            });
+            paginationThread.start();
         });
     }
 
@@ -375,6 +396,77 @@ public class EbookReaderActivity extends AppCompatActivity {
             btnBookmark.setColorFilter(Color.parseColor("#FFC107"));
         } else {
             btnBookmark.clearColorFilter();
+        }
+    }
+
+    private void fetchHighlights() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_highlights?user_id=eq." + userId + "&book_id=eq." + bookId;
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("EbookReader", "Fetch highlights failed", e);
+            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        String responseData = response.body().string();
+                        JSONArray arr = new JSONArray(responseData);
+                        bookHighlights.clear();
+                        for (int i = 0; i < arr.length(); i++) {
+                            bookHighlights.add(arr.getJSONObject(i));
+                        }
+                        runOnUiThread(() -> applyHighlightsToPages());
+                    } catch (Exception e) {
+                        Log.e("EbookReader", "Parse highlights failed", e);
+                    }
+                }
+            }
+        });
+    }
+
+    private void applyHighlightsToPages() {
+        if (pages == null || pages.isEmpty()) return;
+        
+        for (JSONObject highlight : bookHighlights) {
+            try {
+                int pageNum = highlight.getInt("page_number") - 1;
+                if (pageNum >= 0 && pageNum < pages.size()) {
+                    int start = highlight.getInt("start_offset");
+                    int end = highlight.getInt("end_offset");
+                    String color = highlight.getString("color");
+                    
+                    CharSequence pageText = pages.get(pageNum);
+                    android.text.SpannableString spannable;
+                    if (pageText instanceof android.text.SpannableString) {
+                        spannable = (android.text.SpannableString) pageText;
+                    } else {
+                        spannable = new android.text.SpannableString(pageText);
+                        pages.set(pageNum, spannable);
+                    }
+                    
+                    if (start >= 0 && end <= spannable.length() && start < end) {
+                        spannable.setSpan(new android.text.style.BackgroundColorSpan(Color.parseColor(color)), 
+                                        start, end, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("EbookReader", "Error applying highlight", e);
+            }
+        }
+        if (pagerAdapter != null) {
+            pagerAdapter.notifyDataSetChanged();
         }
     }
 
@@ -606,15 +698,69 @@ public class EbookReaderActivity extends AppCompatActivity {
     private void applyTheme(String bgColor, String textColor) {
         int bgInt = Color.parseColor(bgColor);
         int textInt = Color.parseColor(textColor);
-        
+        currentTextColor = textInt;
+
+        findViewById(R.id.main_layout).setBackgroundColor(bgInt);
         vpEbook.setBackgroundColor(bgInt);
         findViewById(R.id.appbar).setBackgroundColor(bgInt);
         bottomContainer.setBackgroundColor(bgInt);
         
         tvToolbarTitle.setTextColor(textInt);
-        tvToolbarChapter.setTextColor(textInt);
         
+        // Muted text color for secondary info
+        int mutedTextInt = isDark(textInt) ? 0xFF49454F : 0xFFB0B0B0;
+        tvToolbarChapter.setTextColor(mutedTextInt);
+        
+        TextView tvPageInfo = findViewById(R.id.tv_page_info);
+        TextView tvPercentRead = findViewById(R.id.tv_percent_read);
+        if (tvPageInfo != null) tvPageInfo.setTextColor(mutedTextInt);
+        if (tvPercentRead != null) tvPercentRead.setTextColor(mutedTextInt);
+        
+        if (pagerAdapter != null) {
+            pagerAdapter.setTextColor(textInt);
+        }
+        
+        // Update icons based on brightness of textColor
+        int iconColor = isDark(textInt) ? 0xFF49454F : 0xFFE0E0E0;
+        ((android.widget.ImageButton)findViewById(R.id.btn_back)).setColorFilter(iconColor);
+        ((android.widget.ImageButton)findViewById(R.id.btn_search)).setColorFilter(iconColor);
+        ((android.widget.ImageButton)findViewById(R.id.btn_bookmark)).setColorFilter(iconColor);
+        ((android.widget.ImageButton)findViewById(R.id.btn_more)).setColorFilter(iconColor);
+
+        // Update bottom bar icons and text
+        int[] bottomButtons = {R.id.btn_contents, R.id.btn_night_mode, R.id.btn_settings, R.id.btn_notes};
+        for (int id : bottomButtons) {
+            LinearLayout btn = findViewById(id);
+            if (btn != null) {
+                for (int i = 0; i < btn.getChildCount(); i++) {
+                    View child = btn.getChildAt(i);
+                    if (child instanceof android.widget.ImageView) {
+                        ((android.widget.ImageView) child).setColorFilter(iconColor);
+                    } else if (child instanceof TextView) {
+                        ((TextView) child).setTextColor(iconColor);
+                    }
+                }
+            }
+        }
+
+        // Update Status Bar
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(bgInt);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                View decor = getWindow().getDecorView();
+                if (isDark(textInt)) { // Light theme
+                    decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                } else { // Dark theme
+                    decor.setSystemUiVisibility(0);
+                }
+            }
+        }
+
         Toast.makeText(this, "Đã đổi chủ đề", Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean isDark(int color) {
+        return ColorUtils.calculateLuminance(color) < 0.5;
     }
 
 
@@ -657,7 +803,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                         }
                     }
                 }
-                return false;
+                return true;
             }
 
             @Override
@@ -722,6 +868,17 @@ public class EbookReaderActivity extends AppCompatActivity {
                 pages.set(vpEbook.getCurrentItem(), spannable); // Save the span in memory
                 
                 saveHighlightToDb(color, selectedText, start, end);
+                
+                try {
+                    JSONObject h = new JSONObject();
+                    h.put("page_number", vpEbook.getCurrentItem() + 1);
+                    h.put("color", color);
+                    h.put("start_offset", start);
+                    h.put("end_offset", end);
+                    h.put("highlighted_text", selectedText);
+                    bookHighlights.add(h);
+                } catch (Exception e) {}
+
                 Toast.makeText(this, "Đã đánh dấu màu", Toast.LENGTH_SHORT).show();
             }
         }
@@ -783,6 +940,28 @@ public class EbookReaderActivity extends AppCompatActivity {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) return;
+
+        // Apply highlight locally immediately
+        runOnUiThread(() -> {
+            TextView tv = getCurrentTextView();
+            if (tv != null) {
+                android.text.SpannableString spannable = new android.text.SpannableString(tv.getText());
+                spannable.setSpan(new android.text.style.BackgroundColorSpan(Color.parseColor("#FFC107")), 
+                                 startOffset, endOffset, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                tv.setText(spannable);
+                pages.set(vpEbook.getCurrentItem(), spannable);
+            }
+            
+            try {
+                JSONObject h = new JSONObject();
+                h.put("page_number", vpEbook.getCurrentItem() + 1);
+                h.put("color", "#FFC107");
+                h.put("start_offset", startOffset);
+                h.put("end_offset", endOffset);
+                h.put("highlighted_text", highlightedText);
+                bookHighlights.add(h);
+            } catch (Exception e) {}
+        });
 
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_highlights";
         JSONObject json = new JSONObject();
