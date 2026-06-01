@@ -57,4 +57,13 @@ public class SessionManager {
         editor.clear();
         editor.apply();
     }
+
+    public void setLastPlayedBookId(String bookId) {
+        editor.putString("lastPlayedBookId", bookId);
+        editor.apply();
+    }
+
+    public String getLastPlayedBookId() {
+        return pref.getString("lastPlayedBookId", null);
+    }
 }

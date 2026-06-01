@@ -76,6 +76,21 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".service.QuickPlayTileService"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Tiếp tục nghe"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.CleanupService"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

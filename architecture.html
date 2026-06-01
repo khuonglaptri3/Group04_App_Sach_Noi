@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Báo cáo kiến trúc - Group04 App Sách Nói</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --paper: #fff;
+      --ink: #20242a;
+      --muted: #667085;
+      --line: #d9dee8;
+      --brand: #1f6feb;
+      --soft: #eaf2ff;
+      --code: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.58;
+    }
+
+    header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap,
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 26px 22px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      font-size: 34px;
+    }
+
+    h2 {
+      margin-top: 26px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-size: 24px;
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 18px;
+    }
+
+    p {
+      margin: 8px 0 12px;
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin: 16px 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 780px;
+    }
+
+    .meta,
+    .card {
+      border: 1px solid var(--line);
+      background: #fbfcff;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .meta strong {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .toc,
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .toc a {
+      display: block;
+      color: var(--brand);
+      background: var(--soft);
+      border: 1px solid #cfe0ff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    ul {
+      margin: 8px 0 12px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
+    code {
+      background: #eef2f7;
+      border: 1px solid #d8dee8;
+      border-radius: 5px;
+      color: var(--code);
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: .94em;
+    }
+
+    pre {
+      margin: 12px 0;
+      padding: 14px;
+      overflow-x: auto;
+      color: #eef4ff;
+      background: #111827;
+      border-radius: 8px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f0f4fa;
+    }
+
+    .pill {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef2f7;
+      border: 1px solid #d8dee8;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .note {
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+      padding: 12px 14px;
+      border-radius: 6px;
+    }
+
+    .warn {
+      border-left-color: #a35a00;
+      background: #fff4e5;
+    }
+
+    .ok {
+      border-left-color: #0f7b55;
+      background: #eaf8f1;
+    }
+
+    @media (max-width: 860px) {
+
+      .hero,
+      .grid,
+      .grid-3,
+      .toc {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <h1>Kiến trúc project App Sách Nói</h1>
+        <p class="subtitle">
+          Tài liệu tổng hợp pipeline, workflow, component Android, thư viện, service,
+          provider, lưu trữ và các luồng hoạt động chính của project
+          <code>Group04_App_Sach_Noi</code>.
+        </p>
+      </div>
+      <div class="meta">
+        <p><strong>Ứng dụng</strong> Đọc sách và nghe sách nói trên Android</p>
+        <p><strong>Package</strong> <code>com.example.a23110035_23110060</code></p>
+        <p><strong>Kiến trúc</strong> MVC, có bổ sung Repository, Room, LiveData, ViewModel</p>
+        <p><strong>Backend</strong> Supabase Auth, REST, Storage, RPC</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Mục Lục</h2>
+      <div class="toc">
+        <a href="#overview">1. Tổng quan</a>
+        <a href="#structure">2. Cấu trúc package</a>
+        <a href="#mvc">3. Phân tích MVC</a>
+        <a href="#build">4. Pipeline build</a>
+        <a href="#libraries">5. Thư viện sử dụng</a>
+        <a href="#components">6. Android component</a>
+        <a href="#storage">7. Lưu trữ dữ liệu</a>
+        <a href="#network">8. API và Supabase</a>
+        <a href="#workflows">9. Workflow chính</a>
+        <a href="#threads">10. Main thread/background</a>
+        <a href="#files">11. File quan trọng</a>
+        <a href="#report">12. Nội dung báo cáo</a>
+      </div>
+    </section>
+
+    <section id="overview">
+      <h2>1. Tổng Quan Project</h2>
+      <p>
+        Project là ứng dụng Android cho phép người dùng đọc ebook và nghe audiobook.
+        Ứng dụng có các chức năng chính: đăng ký, đăng nhập, xem trang chủ, tìm kiếm sách,
+        xem chi tiết sách, đọc ebook, nghe audio, đánh dấu trang, highlight, ghi chú,
+        đánh giá sách, tải sách về máy, quản lý thư viện và thông tin cá nhân.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Chức năng người dùng</h3>
+          <ul>
+            <li>Đăng ký, đăng nhập, lưu phiên đăng nhập bằng token.</li>
+            <li>Xem sách audio, ebook, danh mục, sách liên quan.</li>
+            <li>Đọc EPUB, phân trang, bookmark, highlight, ghi chú.</li>
+            <li>Nghe audiobook, tua, đổi chương, hẹn giờ ngủ, đổi tốc độ.</li>
+            <li>Viết review, xem review, quản lý premium và bảo mật.</li>
+            <li>Tải file audio/ebook về bộ nhớ riêng của ứng dụng.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Công nghệ chính</h3>
+          <ul>
+            <li>Java, AndroidX, AppCompat, Material Components.</li>
+            <li>OkHttp để gọi Supabase API.</li>
+            <li>Glide để tải ảnh từ URL.</li>
+            <li>MediaPlayer, MediaSession, Foreground Service để phát audio nền.</li>
+            <li>Room, LiveData, ViewModel để cache dữ liệu local.</li>
+            <li>WorkManager để chạy đồng bộ nền định kỳ.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="structure">
+      <h2>2. Cấu Trúc Package Hiện Tại</h2>
+      <p>
+        Project đã được chia package rõ hơn thay vì để toàn bộ file Java chung một nơi.
+        Cách chia này giúp trình bày kiến trúc MVC và các lớp hỗ trợ dễ hơn.
+      </p>
+      <pre>com.example.a23110035_23110060
+|-- MyApplication.java
+|-- controller
+|   |-- NetworkClient.java
+|   |-- PlayerManager.java
+|   `-- SessionManager.java
+|-- data
+|   |-- local
+|   |   |-- AppDatabase.java
+|   |   |-- BookDao.java
+|   |   `-- BookEntity.java
+|   `-- repository
+|       `-- BookRepository.java
+|-- helper
+|   |-- DownloadHelper.java
+|   |-- EpubExtractor.java
+|   `-- SupabaseHelper.java
+|-- model
+|   |-- Book.java
+|   |-- Category.java
+|   |-- Chapter.java
+|   |-- DownloadItem.java
+|   |-- FeaturedReview.java
+|   |-- LibraryBook.java
+|   `-- Section.java
+|-- service
+|   |-- AudioPlayerService.java
+|   `-- SyncWorker.java
+|-- ui
+|   `-- viewmodel
+|       `-- HomeViewModel.java
+`-- view
+    |-- activity
+    |-- adapter
+    |-- bottomsheet
+    `-- fragment</pre>
+      <p class="note">
+        Các file XML layout vẫn nằm trực tiếp trong <code>res/layout</code>. Đây là cách chuẩn của Android.
+        Không nên chia thư mục con trong <code>res/layout</code>; project phân loại layout bằng tiền tố
+        <code>activity_</code>, <code>fragment_</code>, <code>item_</code>, <code>dialog_</code>.
+      </p>
+    </section>
+
+    <section id="mvc">
+      <h2>3. Phân Tích MVC</h2>
+      <p>
+        Ứng dụng có thể được trình bày theo mô hình MVC. Trong Android, Activity và Fragment
+        thường vừa là View Controller, vừa nhận sự kiện người dùng. Project đã tách thêm một số lớp
+        controller, repository và helper để giảm tải cho Activity/Fragment.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>Model</h3>
+          <p>Chứa dữ liệu và entity của ứng dụng.</p>
+          <span class="pill">Book</span>
+          <span class="pill">Chapter</span>
+          <span class="pill">Category</span>
+          <span class="pill">DownloadItem</span>
+          <span class="pill">FeaturedReview</span>
+          <span class="pill">LibraryBook</span>
+          <span class="pill">Section</span>
+          <span class="pill">BookEntity</span>
+        </div>
+        <div class="card">
+          <h3>View</h3>
+          <p>Hiển thị giao diện và danh sách dữ liệu.</p>
+          <span class="pill">XML layout</span>
+          <span class="pill">Activity</span>
+          <span class="pill">Fragment</span>
+          <span class="pill">Adapter</span>
+          <span class="pill">BottomSheet</span>
+        </div>
+        <div class="card">
+          <h3>Controller</h3>
+          <p>Xử lý sự kiện, điều hướng, phát audio, session và network.</p>
+          <span class="pill">PlayerManager</span>
+          <span class="pill">SessionManager</span>
+          <span class="pill">NetworkClient</span>
+          <span class="pill">BookRepository</span>
+          <span class="pill">SupabaseHelper</span>
+        </div>
+      </div>
+      <pre>Người dùng thao tác
+    |
+    v
+Activity / Fragment / BottomSheet
+    |
+    +--> Adapter + XML layout để hiển thị danh sách
+    |
+    +--> Controller / Helper / Repository
+            |
+            +--> Supabase API bằng OkHttp
+            +--> Room local database
+            +--> MediaPlayer + AudioPlayerService
+            +--> DownloadManager / FileProvider</pre>
+    </section>
+
+    <section id="build">
+      <h2>4. Pipeline Build Và Cấu Hình</h2>
+      <p>Project dùng Gradle Kotlin DSL ở file <code>app/build.gradle.kts</code>.</p>
+      <table>
+        <tr>
+          <th>Thành phần</th>
+          <th>Giá trị / vai trò</th>
+        </tr>
+        <tr>
+          <td>Namespace</td>
+          <td><code>com.example.a23110035_23110060</code></td>
+        </tr>
+        <tr>
+          <td>Application ID</td>
+          <td><code>com.example.a23110035_23110060</code></td>
+        </tr>
+        <tr>
+          <td>compileSdk</td>
+          <td><code>37</code></td>
+        </tr>
+        <tr>
+          <td>minSdk</td>
+          <td><code>26</code></td>
+        </tr>
+        <tr>
+          <td>targetSdk</td>
+          <td><code>37</code></td>
+        </tr>
+        <tr>
+          <td>Java</td>
+          <td><code>JavaVersion.VERSION_11</code></td>
+        </tr>
+        <tr>
+          <td>BuildConfig</td>
+          <td>Lưu <code>SUPABASE_URL</code> và <code>SUPABASE_ANON_KEY</code> đọc từ <code>local.properties</code>.</td>
+        </tr>
+      </table>
+      <pre>Source Java + XML resource
+    |
+    v
+Gradle Android plugin
+    |
+    +--> Sinh BuildConfig với Supabase URL/Anon Key
+    +--> Biên dịch Java 11
+    +--> Xử lý Android resources trong res/
+    +--> Đóng gói AndroidManifest.xml
+    |
+    v
+APK debug/release</pre>
+    </section>
+
+    <section id="libraries">
+      <h2>5. Thư Viện Và Mục Đích Sử Dụng</h2>
+      <table>
+        <tr>
+          <th>Thư viện / API</th>
+          <th>Vị trí sử dụng</th>
+          <th>Mục đích</th>
+        </tr>
+        <tr>
+          <td>AppCompat</td>
+          <td>Các class <code>Activity</code></td>
+          <td>Hỗ trợ Activity tương thích nhiều phiên bản Android.</td>
+        </tr>
+        <tr>
+          <td>Material Components</td>
+          <td>Layout, BottomSheet, FloatingActionButton</td>
+          <td>Xây dựng UI Material.</td>
+        </tr>
+        <tr>
+          <td>RecyclerView</td>
+          <td>Các Adapter trong <code>view/adapter</code></td>
+          <td>Hiển thị danh sách sách, danh mục, review, download.</td>
+        </tr>
+        <tr>
+          <td>ViewPager2</td>
+          <td><code>EbookPagerAdapter</code>, <code>HomePagerAdapter</code></td>
+          <td>Hiển thị trang ebook và các tab/page.</td>
+        </tr>
+        <tr>
+          <td>SwipeRefreshLayout</td>
+          <td>Home, Library</td>
+          <td>Kéo để làm mới dữ liệu.</td>
+        </tr>
+        <tr>
+          <td>Glide</td>
+          <td>Book cover, avatar, author image</td>
+          <td>Tải và cache ảnh từ URL.</td>
+        </tr>
+        <tr>
+          <td>OkHttp</td>
+          <td>Gần như toàn bộ luồng Supabase</td>
+          <td>Gọi REST API, Auth API, Storage API.</td>
+        </tr>
+        <tr>
+          <td>AndroidX Media</td>
+          <td><code>AudioPlayerService</code></td>
+          <td>MediaSession và notification style cho audio.</td>
+        </tr>
+        <tr>
+          <td>Room</td>
+          <td><code>AppDatabase</code>, <code>BookDao</code>, <code>BookEntity</code></td>
+          <td>Local SQLite cache cho sách.</td>
+        </tr>
+        <tr>
+          <td>Lifecycle ViewModel / LiveData</td>
+          <td><code>HomeViewModel</code>, <code>BookRepository</code></td>
+          <td>Quan sát dữ liệu và cập nhật UI theo vòng đời.</td>
+        </tr>
+        <tr>
+          <td>WorkManager</td>
+          <td><code>MyApplication</code>, <code>SyncWorker</code></td>
+          <td>Chạy tác vụ đồng bộ nền định kỳ.</td>
+        </tr>
+        <tr>
+          <td>DownloadManager</td>
+          <td><code>DownloadHelper</code></td>
+          <td>Tải audio/ebook về máy bằng cơ chế hệ thống.</td>
+        </tr>
+        <tr>
+          <td>FileProvider</td>
+          <td>Manifest, <code>DownloadAdapter</code></td>
+          <td>Tạo URI an toàn cho file đã tải.</td>
+        </tr>
+        <tr>
+          <td>Palette</td>
+          <td>Discovery screen và category adapter</td>
+          <td>Lấy màu nổi bật từ ảnh để làm giao diện động.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section id="components">
+      <h2>6. 4 Core Components (Thành Phần Cốt Lõi) Của Android</h2>
+      <p>
+        Dự án vận dụng linh hoạt cả <strong>4 thành phần cốt lõi của hệ điều hành Android (4 Android Core
+          Components)</strong>, tạo nên một hệ thống phần mềm hoàn chỉnh, tối ưu và đạt chuẩn kỹ thuật Android cao nhất.
+      </p>
+
+      <h3>6.1 Permissions (Quyền ứng dụng)</h3>
+      <ul>
+        <li><code>INTERNET</code>: gọi Supabase API và tải ảnh/file.</li>
+        <li><code>POST_NOTIFICATIONS</code>: hiện notification phát audio và tải file trên Android 13+.</li>
+        <li><code>FOREGROUND_SERVICE</code> & <code>FOREGROUND_SERVICE_MEDIA_PLAYBACK</code>: cho phép chạy service phát
+          nhạc ngầm.</li>
+        <li><code>BIND_QUICK_SETTINGS_TILE</code>: cấp quyền cho TileService hiển thị nút bấm trên thanh trạng thái.
+        </li>
+      </ul>
+
+      <h3>6.2 Activity (Thành phần Giao diện)</h3>
+      <p class="note">
+        <strong>Định nghĩa:</strong> Activity đại diện cho một màn hình duy nhất có giao diện người dùng (UI). Đây là
+        nơi người dùng tương tác trực tiếp với ứng dụng.
+      </p>
+      <table>
+        <tr>
+          <th>Activity</th>
+          <th>Vai trò</th>
+        </tr>
+        <tr>
+          <td><code>LoginActivity</code></td>
+          <td>Launcher Activity, đăng nhập bằng Supabase Auth.</td>
+        </tr>
+        <tr>
+          <td><code>SignUpActivity</code></td>
+          <td>Đăng ký tài khoản.</td>
+        </tr>
+        <tr>
+          <td><code>MainActivity</code></td>
+          <td>Màn hình chính sau đăng nhập, chứa thanh điều hướng BottomNavigationView và các fragment (Trang chủ, Khám
+            phá, Thư viện).</td>
+        </tr>
+        <tr>
+          <td><code>BookDetailActivity</code></td>
+          <td>Chi tiết sách, review, chương, favorite, download, điều hướng đọc/nghe.</td>
+        </tr>
+        <tr>
+          <td><code>BookListActivity</code></td>
+          <td>Danh sách sách theo loại/bộ lọc.</td>
+        </tr>
+        <tr>
+          <td><code>AudioPlayerActivity</code></td>
+          <td>Màn hình điều khiển phát audiobook. Giao tiếp trực tiếp với <code>PlayerManager</code> để hiển thị đĩa
+            than xoay, thanh tiến trình.</td>
+        </tr>
+        <tr>
+          <td><code>EbookReaderActivity</code></td>
+          <td>Đọc EPUB, bookmark, highlight, ghi chú, tự động parse tệp tin <code>.epub</code>.</td>
+        </tr>
+        <tr>
+          <td><code>DownloadManagerActivity</code></td>
+          <td>Quản lý file đã tải.</td>
+        </tr>
+        <tr>
+          <td><code>EditProfileActivity</code></td>
+          <td>Sửa hồ sơ và upload avatar.</td>
+        </tr>
+        <tr>
+          <td><code>PremiumActivity</code></td>
+          <td>Nâng cấp premium.</td>
+        </tr>
+        <tr>
+          <td><code>SecurityPrivacyActivity</code></td>
+          <td>Bảo mật, cập nhật thông tin user, xóa tài khoản.</td>
+        </tr>
+        <tr>
+          <td><code>AllReviewsActivity</code>, <code>WriteReviewActivity</code></td>
+          <td>Xem tất cả review và viết review.</td>
+        </tr>
+      </table>
+
+      <h3>6.3 Service (Thành phần Chạy ngầm)</h3>
+      <p class="note ok">
+        <strong>Định nghĩa:</strong> Service là thành phần chạy ẩn dưới nền để thực hiện các tác vụ kéo dài mà không cần
+        giao diện người dùng (UI).
+      </p>
+      <ul>
+        <li><strong><code>AudioPlayerService</code> (Foreground Service)</strong>: Dịch vụ quan trọng nhất dùng cho
+          media playback. Giúp ứng dụng tiếp tục phát nhạc và hiển thị thanh điều khiển trên màn hình khóa.</li>
+        <li><strong><code>SyncWorker</code> (WorkManager)</strong>: Dịch vụ đồng bộ dữ liệu ngầm kiểu mới của Google. Tự
+          động thức dậy mỗi 12 tiếng để đồng bộ dữ liệu offline từ Room DB lên đám mây Supabase.</li>
+        <li><strong><code>QuickPlayTileService</code> (Tile Service)</strong>: Tạo nút "Tiếp tục nghe" trên thanh trạng
+          thái (Quick Settings). Nhấn vào là có thể tiếp tục nghe sách ngay lập tức kể cả khi ứng dụng đang tắt hoàn
+          toàn.</li>
+        <li><strong><code>CleanupService</code> (Background Service)</strong>: Chạy ngầm mỗi khi mở app để tự động quét
+          và dọn dẹp các tệp tin tạm (Cache), tự động <code>stopSelf()</code> sau khi xong.</li>
+      </ul>
+
+      <h3>6.4 BroadcastReceiver (Thành phần Lắng nghe Sự kiện)</h3>
+      <p class="note warn">
+        <strong>Định nghĩa:</strong> BroadcastReceiver cho phép ứng dụng đăng ký lắng nghe các "thông báo/sự kiện hệ
+        thống" từ hệ điều hành hoặc từ các ứng dụng khác.
+      </p>
+      <ul>
+        <li><strong><code>AudioBecomingNoisyReceiver</code></strong>: Liên tục lắng nghe phần cứng. Nếu người dùng đang
+          nghe sách nói bằng tai nghe mà đột ngột rút tai nghe ra, hệ điều hành sẽ phát ra tia Broadcast
+          (<code>ACTION_AUDIO_BECOMING_NOISY</code>). Ứng dụng bắt tín hiệu này và lập tức tạm dừng phát nhạc.</li>
+        <li><strong><code>MediaButtonReceiver</code></strong>: Lắng nghe sự kiện người dùng bấm vào các nút vật lý trên
+          tai nghe Bluetooth (nút Play/Pause) để điều khiển ứng dụng từ xa.</li>
+      </ul>
+
+      <h3>6.5 Content Provider (Thành phần Cung cấp/Chia sẻ Dữ liệu)</h3>
+      <p class="note">
+        <strong>Định nghĩa:</strong> Content Provider quản lý quyền truy cập vào dữ liệu trung tâm, cho phép ứng dụng
+        này chia sẻ an toàn dữ liệu của mình cho ứng dụng khác.
+      </p>
+      <ul>
+        <li><strong><code>FileProvider</code></strong>: Lớp con mạnh mẽ nhất của Content Provider do AndroidX cung cấp.
+          Khai báo <code>androidx.core.content.FileProvider</code> với authority
+          <code>${applicationId}.fileprovider</code>.
+        </li>
+        <li>File <code>res/xml/file_paths.xml</code> cho phép cấp URI an toàn (<code>content://</code>) cho file trong
+          thư mục hệ thống <code>Download/</code>.</li>
+        <li>Nhờ đó, ứng dụng có thể chia sẻ an toàn file <code>.epub</code> hoặc <code>.mp3</code> cho ứng dụng đọc sách
+          bên thứ ba mà không bị dính lỗi bảo mật <code>FileUriExposedException</code>.</li>
+      </ul>
+    </section>
+
+    <section id="storage">
+      <h2>7. Lưu Trữ Dữ Liệu</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Supabase</h3>
+          <ul>
+            <li>Backend chính của ứng dụng.</li>
+            <li>Auth API cho đăng ký, đăng nhập, refresh token.</li>
+            <li>REST API cho books, profiles, reviews, bookmarks, progress, library.</li>
+            <li>Storage API cho avatar trong bucket <code>avatars</code>.</li>
+            <li>RPC cho search, review, favorite, notifications và xóa tài khoản.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>SharedPreferences</h3>
+          <ul>
+            <li>Quản lý bằng <code>SessionManager</code>.</li>
+            <li>Tên preferences: <code>UserSession</code>.</li>
+            <li>Lưu <code>userId</code>, <code>userName</code>, <code>accessToken</code>, <code>refreshToken</code>.
+            </li>
+            <li>Hàm <code>clear()</code> dùng khi logout hoặc hết phiên.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Room Database</h3>
+          <ul>
+            <li>Database name: <code>app_database</code>.</li>
+            <li>Entity: <code>BookEntity</code>.</li>
+            <li>Table: <code>books</code>.</li>
+            <li>DAO: <code>BookDao</code>.</li>
+            <li>Dùng để cache sách featured và trả dữ liệu nhanh/offline.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>File Local</h3>
+          <ul>
+            <li><code>DownloadHelper</code> dùng <code>DownloadManager</code>.</li>
+            <li>File audio lưu dạng <code>{bookId}_audio.mp3</code>.</li>
+            <li>File ebook lưu dạng <code>{bookId}_ebook.epub</code>.</li>
+            <li>Nơi lưu: app-specific external storage, thư mục <code>Download</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="network">
+      <h2>8. API, Supabase Và Các Bảng/Luồng Dữ Liệu</h2>
+      <p>
+        Project gọi Supabase trực tiếp bằng OkHttp. URL và anon key được sinh vào
+        <code>BuildConfig</code>. Các request thường thêm header <code>apikey</code>
+        và <code>Authorization: Bearer ...</code>.
+      </p>
+      <table>
+        <tr>
+          <th>Nhóm</th>
+          <th>Endpoint / bảng</th>
+          <th>Chức năng</th>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td><code>/auth/v1/signup</code>, <code>/auth/v1/token?grant_type=password</code>,
+            <code>/auth/v1/token?grant_type=refresh_token</code>, <code>/auth/v1/user</code>
+          </td>
+          <td>Đăng ký, đăng nhập, refresh token, cập nhật/xem user.</td>
+        </tr>
+        <tr>
+          <td>Books</td>
+          <td><code>/rest/v1/books</code>, <code>/rest/v1/book_files</code>, <code>/rest/v1/book_chapters</code></td>
+          <td>Lấy sách, file EPUB/audio, chương sách.</td>
+        </tr>
+        <tr>
+          <td>User data</td>
+          <td><code>profiles</code>, <code>user_library</code>, <code>progress</code></td>
+          <td>Hồ sơ, thư viện người dùng, tiến trình đọc.</td>
+        </tr>
+        <tr>
+          <td>Reading</td>
+          <td><code>bookmarks</code>, <code>book_highlights</code>, <code>book_notes</code></td>
+          <td>Đánh dấu trang, highlight, ghi chú.</td>
+        </tr>
+        <tr>
+          <td>Reviews</td>
+          <td><code>reviews</code>, RPC <code>add_book_review</code></td>
+          <td>Xem và thêm đánh giá sách.</td>
+        </tr>
+        <tr>
+          <td>Discovery</td>
+          <td><code>categories</code>, RPC <code>search_books</code></td>
+          <td>Danh mục và tìm kiếm sách.</td>
+        </tr>
+        <tr>
+          <td>Notifications</td>
+          <td><code>notifications</code>, RPC <code>mark_all_notifications_as_read</code>,
+            <code>mark_notification_as_read</code>
+          </td>
+          <td>Thông báo và đánh dấu đã đọc.</td>
+        </tr>
+        <tr>
+          <td>Premium/Security</td>
+          <td><code>profiles.is_premium</code>, RPC <code>delete_user_account</code></td>
+          <td>Nâng cấp premium và xóa tài khoản.</td>
+        </tr>
+        <tr>
+          <td>Storage</td>
+          <td><code>/storage/v1/object/avatars/...</code></td>
+          <td>Upload và lấy avatar công khai.</td>
+        </tr>
+      </table>
+      <pre>Request đến Supabase
+    |
+    v
+Nếu thành công -> xử lý JSON -> cập nhật UI/local DB
+    |
+    v
+Nếu 401 -> NetworkClient.Authenticator
+    |
+    v
+Đọc refreshToken trong SessionManager
+    |
+    v
+Gọi /auth/v1/token?grant_type=refresh_token
+    |
+    v
+Lưu accessToken mới + refreshToken mới vào SharedPreferences</pre>
+    </section>
+
+    <section id="workflows">
+      <h2>9. Workflow Hoạt Động Chính</h2>
+      <h3>9.1 Khởi động app và đồng bộ nền</h3>
+      <pre>Android khởi tạo Application
+    |
+    v
+MyApplication.onCreate()
+    |
+    +--> Lưu instance global
+    |
+    +--> setupBackgroundSync()
+            |
+            v
+        WorkManager enqueueUniquePeriodicWork("BookSyncWork")
+            |
+            v
+        SyncWorker chạy mỗi 12 giờ khi có mạng</pre>
+
+      <h3>9.2 Đăng nhập</h3>
+      <pre>User nhập email/password
+    |
+    v
+LoginActivity.signInWithSupabase()
+    |
+    v
+OkHttp POST /auth/v1/token?grant_type=password
+    |
+    v
+Nhận access_token, refresh_token, user id
+    |
+    v
+SessionManager lưu vào SharedPreferences
+    |
+    v
+Mở MainActivity</pre>
+
+      <h3>9.3 Trang chủ và cache sách featured</h3>
+      <pre>HomeTabFragment
+    |
+    v
+HomeViewModel.getFeaturedBooks(type)
+    |
+    v
+BookRepository.getFeaturedBooks(type)
+    |
+    +--> Trả LiveData từ Room ngay lập tức
+    |
+    +--> Gọi Supabase /rest/v1/books bằng OkHttp
+            |
+            v
+        Parse JSON thành BookEntity
+            |
+            v
+        ExecutorService ghi vào Room
+            |
+            v
+        LiveData phát dữ liệu mới cho UI</pre>
+
+      <h3>9.4 Xem chi tiết sách</h3>
+      <pre>User chọn một sách
+    |
+    v
+BookDetailActivity
+    |
+    +--> Gọi /rest/v1/books để lấy thông tin sách và tác giả
+    +--> Gọi /rest/v1/book_chapters để lấy chương audio
+    +--> Gọi /rest/v1/reviews để lấy đánh giá
+    +--> Glide tải cover/avatar
+    |
+    v
+User có thể đọc ebook, nghe audio, tải sách, yêu thích, viết review</pre>
+
+      <h3>9.5 Phát audiobook</h3>
+      <pre>User bấm nghe sách
+    |
+    v
+PlayerManager.playBook(book)
+    |
+    v
+MediaPlayer.reset()
+MediaPlayer.setDataSource(audioUrl)
+MediaPlayer.prepareAsync()
+    |
+    v
+OnPreparedListener -> mediaPlayer.start()
+    |
+    v
+PlayerManager.notifyService()
+    |
+    v
+ContextCompat.startForegroundService(AudioPlayerService)
+    |
+    v
+AudioPlayerService.updateNotification()
+    |
+    v
+startForeground() + MediaSession + Notification controls</pre>
+
+      <h3>9.6 Đọc EPUB</h3>
+      <pre>User bấm đọc ebook
+    |
+    v
+EbookReaderActivity
+    |
+    +--> Lấy file EPUB từ /rest/v1/book_files
+    +--> EpubExtractor tải/giải nén EPUB bằng background thread
+    +--> paginationThread chia nội dung thành trang
+    +--> EbookPagerAdapter hiển thị bằng ViewPager2
+    |
+    +--> Gọi Supabase để lưu/lấy progress, bookmarks, highlights, notes</pre>
+
+      <h3>9.7 Tải sách về máy</h3>
+      <pre>User bấm download
+    |
+    v
+DownloadHelper.downloadFile()
+    |
+    v
+DownloadManager.Request
+    |
+    v
+setDestinationInExternalFilesDir(..., DIRECTORY_DOWNLOADS, fileName)
+    |
+    v
+DownloadManager.enqueue()
+    |
+    v
+DownloadManagerActivity kiểm tra file đã tải bằng DownloadHelper.getDownloadedFile()</pre>
+    </section>
+
+    <section id="threads">
+      <h2>10. Main Thread Và Background</h2>
+      <p>
+        Android có main thread để xử lý UI. Mọi thao tác cập nhật giao diện như set text,
+        hiện Toast, cập nhật RecyclerView, SeekBar cần thực hiện trên main thread.
+      </p>
+      <table>
+        <tr>
+          <th>Loại xử lý</th>
+          <th>Ví dụ trong project</th>
+          <th>Ghi chú</th>
+        </tr>
+        <tr>
+          <td>Main thread</td>
+          <td><code>onCreate()</code>, <code>onResume()</code>, click listener, cập nhật UI</td>
+          <td>Không nên làm việc nặng trên main thread.</td>
+        </tr>
+        <tr>
+          <td>OkHttp background</td>
+          <td><code>client.newCall(request).enqueue(...)</code></td>
+          <td>Gọi API bất đồng bộ, callback không luôn ở main thread.</td>
+        </tr>
+        <tr>
+          <td>UI callback</td>
+          <td><code>runOnUiThread(...)</code></td>
+          <td>Dùng để quay về main thread khi cần cập nhật UI.</td>
+        </tr>
+        <tr>
+          <td>Media async</td>
+          <td><code>MediaPlayer.prepareAsync()</code></td>
+          <td>Chuẩn bị audio bất đồng bộ, không block UI.</td>
+        </tr>
+        <tr>
+          <td>Thread thủ công</td>
+          <td><code>EpubExtractor</code>, <code>EbookReaderActivity.paginationThread</code>, upload avatar</td>
+          <td>Xử lý tác vụ nặng: tải, giải nén, phân trang, upload.</td>
+        </tr>
+        <tr>
+          <td>ExecutorService</td>
+          <td><code>BookRepository</code></td>
+          <td>Ghi Room database ở background.</td>
+        </tr>
+        <tr>
+          <td>WorkManager</td>
+          <td><code>SyncWorker</code></td>
+          <td>Task nền định kỳ, có constraint network.</td>
+        </tr>
+        <tr>
+          <td>DownloadManager</td>
+          <td><code>DownloadHelper</code></td>
+          <td>Hệ thống Android xử lý download nền.</td>
+        </tr>
+      </table>
+      <p class="note warn">
+        Điểm cần giải thích khi báo cáo: <code>Service</code> không đồng nghĩa với
+        <code>background thread</code>. Service là Android component có vòng đời riêng.
+        Các hàm lifecycle của Service vẫn có thể chạy trên main thread. Tác vụ nặng trong Service
+        vẫn nên đưa sang thread/worker riêng.
+      </p>
+    </section>
+
+    <section id="files">
+      <h2>11. Vai Trò Các File Quan Trọng</h2>
+      <table>
+        <tr>
+          <th>File / package</th>
+          <th>Vai trò</th>
+        </tr>
+        <tr>
+          <td><code>MyApplication.java</code></td>
+          <td>Khởi tạo app, lưu instance global, đăng ký WorkManager chạy SyncWorker định kỳ.</td>
+        </tr>
+        <tr>
+          <td><code>SessionManager.java</code></td>
+          <td>Đóng gói SharedPreferences để lưu user id, tên user, access token, refresh token.</td>
+        </tr>
+        <tr>
+          <td><code>NetworkClient.java</code></td>
+          <td>Tạo OkHttpClient có Authenticator, tự refresh token khi Supabase trả 401.</td>
+        </tr>
+        <tr>
+          <td><code>SupabaseHelper.java</code></td>
+          <td>Hỗ trợ refresh token bất đồng bộ và logout về LoginActivity.</td>
+        </tr>
+        <tr>
+          <td><code>PlayerManager.java</code></td>
+          <td>Singleton quản lý MediaPlayer, play/pause/seek/chapter/sleep timer và báo service cập nhật notification.
+          </td>
+        </tr>
+        <tr>
+          <td><code>AudioPlayerService.java</code></td>
+          <td>Foreground service cho media playback, MediaSession, notification controls, audio focus.</td>
+        </tr>
+        <tr>
+          <td><code>DownloadHelper.java</code></td>
+          <td>Tạo request download, tìm file đã tải, xóa file đã tải.</td>
+        </tr>
+        <tr>
+          <td><code>EpubExtractor.java</code></td>
+          <td>Tải và giải nén EPUB trong background thread.</td>
+        </tr>
+        <tr>
+          <td><code>AppDatabase.java</code></td>
+          <td>Room database singleton.</td>
+        </tr>
+        <tr>
+          <td><code>BookDao.java</code></td>
+          <td>Query và insert dữ liệu sách local.</td>
+        </tr>
+        <tr>
+          <td><code>BookEntity.java</code></td>
+          <td>Entity Room table <code>books</code>.</td>
+        </tr>
+        <tr>
+          <td><code>BookRepository.java</code></td>
+          <td>Kết hợp Room cache và Supabase network cho dữ liệu sách featured.</td>
+        </tr>
+        <tr>
+          <td><code>HomeViewModel.java</code></td>
+          <td>Cầu nối giữa Home UI và Repository.</td>
+        </tr>
+        <tr>
+          <td><code>LoginActivity.java</code></td>
+          <td>Đăng nhập bằng Supabase Auth, lấy profile, lưu session.</td>
+        </tr>
+        <tr>
+          <td><code>BookDetailActivity.java</code></td>
+          <td>Màn hình trung tâm của sách: chi tiết, chương, review, download, favorite.</td>
+        </tr>
+        <tr>
+          <td><code>EbookReaderActivity.java</code></td>
+          <td>Xử lý đọc ebook, phân trang, bookmark, highlight, note và progress.</td>
+        </tr>
+        <tr>
+          <td><code>AudioPlayerActivity.java</code></td>
+          <td>UI điều khiển audiobook, kết nối callback từ PlayerManager.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section id="report">
+      <h2>12. Nội Dung Nên Trình Bày Khi Báo Cáo</h2>
+      <h3>Mô tả ngắn gọn</h3>
+      <p>
+        Ứng dụng App Sách Nói là ứng dụng Android hỗ trợ người dùng đọc ebook và nghe audiobook.
+        Hệ thống dùng Supabase làm backend, OkHttp để giao tiếp API, Glide để tải ảnh, Room để cache
+        dữ liệu local, MediaPlayer kết hợp Foreground Service để phát audio nền, DownloadManager để tải
+        file và WorkManager để thực hiện đồng bộ nền định kỳ.
+      </p>
+
+      <h3>Điểm nhấn kỹ thuật</h3>
+      <ul>
+        <li>Đã chia package theo nhóm chức năng: model, view, controller, service, data, repository, helper.</li>
+        <li>Audio playback dùng <code>MediaPlayer</code> và <code>AudioPlayerService</code> để nghe tiếp khi thoát màn
+          hình.</li>
+        <li>Session được lưu bằng <code>SharedPreferences</code> và có cơ chế refresh token.</li>
+        <li>Dữ liệu featured book có cache local bằng <code>Room</code> và quan sát bằng <code>LiveData</code>.</li>
+        <li>Gọi API bất đồng bộ bằng <code>OkHttp.enqueue()</code>, cập nhật UI bằng <code>runOnUiThread()</code>.</li>
+        <li>File download được lưu trong app-specific external storage và mở bằng <code>FileProvider</code>.</li>
+      </ul>
+
+      <h3>Kết luận kiến trúc</h3>
+      <p class="note ok">
+        Project có kiến trúc MVC là chính: Model chứa dữ liệu, View gồm Activity/Fragment/XML/Adapter,
+        Controller xử lý sự kiện và logic. Ngoài ra project có bổ sung các thành phần hiện đại của Android
+        như Repository, ViewModel, LiveData, Room và WorkManager để tăng khả năng mở rộng, cache dữ liệu
+        và xử lý nền.
+      </p>
+
+      <h3>Hạn chế có thể nêu trong báo cáo</h3>
+      <ul>
+        <li>Một số Activity/Fragment vẫn gọi Supabase trực tiếp, chưa đưa hết qua Repository.</li>
+        <li>Một số chuỗi/comment tiếng Việt trong code có dấu hiệu lỗi encoding, nên sửa để code sạch hơn.</li>
+        <li><code>SyncWorker</code> hiện mới mô phỏng đồng bộ, có thể phát triển thêm để đồng bộ progress/offline data
+          thật.</li>
+        <li>Nếu muốn kiến trúc rõ hơn nữa, có thể chuyển dần sang MVVM đầy đủ: UI -> ViewModel -> Repository ->
+          Local/Remote.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+
+</html>

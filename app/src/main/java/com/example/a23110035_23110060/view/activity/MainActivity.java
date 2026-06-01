@@ -39,5 +39,19 @@ public class MainActivity extends AppCompatActivity {
                 bottomSheet.show(getSupportFragmentManager(), "Notifications");
             });
         }
+
+        // Start CleanupService
+        android.content.Intent cleanupIntent = new android.content.Intent(this, com.example.a23110035_23110060.service.CleanupService.class);
+        startService(cleanupIntent);
+
+        // Handle QuickPlayTileService Intent
+        if ("ACTION_RESUME_LAST_BOOK".equals(getIntent().getAction())) {
+            String lastBookId = new com.example.a23110035_23110060.controller.SessionManager(this).getLastPlayedBookId();
+            if (lastBookId != null) {
+                android.content.Intent bookIntent = new android.content.Intent(this, BookDetailActivity.class);
+                bookIntent.putExtra("bookId", lastBookId);
+                startActivity(bookIntent);
+            }
+        }
     }
 }

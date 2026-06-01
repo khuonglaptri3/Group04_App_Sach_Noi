@@ -74,6 +74,12 @@ public class PlayerManager {
 
         try {
             this.currentBook = book;
+            
+            // Save last played book ID
+            if (MyApplication.getInstance() != null) {
+                new SessionManager(MyApplication.getInstance()).setLastPlayedBookId(book.getId());
+            }
+
             isPrepared = false;
             isPlaying = false;
             if (callback != null) {
