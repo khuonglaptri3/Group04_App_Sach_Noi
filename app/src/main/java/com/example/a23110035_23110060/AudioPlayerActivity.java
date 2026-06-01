@@ -58,6 +58,12 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         setupListeners();
         updateUI();
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+
         playerManager.setCallback(new PlayerManager.PlayerCallback() {
             @Override
             public void onProgress(int currentMs, int totalMs) {

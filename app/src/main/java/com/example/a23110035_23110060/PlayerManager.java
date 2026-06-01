@@ -10,8 +10,19 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import android.content.Intent;
+import androidx.core.content.ContextCompat;
+
 public class PlayerManager {
     private static PlayerManager instance;
+
+    private void notifyService() {
+        if (MyApplication.getInstance() != null) {
+            Intent intent = new Intent(MyApplication.getInstance(), AudioPlayerService.class);
+            intent.setAction(AudioPlayerService.ACTION_UPDATE_NOTIFICATION);
+            ContextCompat.startForegroundService(MyApplication.getInstance(), intent);
+        }
+    }
     private MediaPlayer mediaPlayer;
     private Book currentBook;
     private boolean isPlaying = false;
@@ -76,6 +87,7 @@ public class PlayerManager {
                 isPlaying = true;
                 if (callback != null) callback.onStateChange(true);
                 startProgressUpdate();
+                notifyService();
             });
         } catch (IOException e) {
             Log.e("PlayerManager", "Error", e);
@@ -93,6 +105,7 @@ public class PlayerManager {
             startProgressUpdate();
         }
         if (callback != null) callback.onStateChange(isPlaying);
+        notifyService();
     }
 
     public void setPlaybackSpeed(float speed) {
@@ -160,6 +173,7 @@ public class PlayerManager {
                      isPlaying = true;
                      if (callback != null) callback.onStateChange(true);
                      startProgressUpdate();
+                     notifyService();
                  });
              } catch (IOException e) {
                  Log.e("PlayerManager", "Error playing chapter", e);
@@ -212,6 +226,11 @@ public class PlayerManager {
             mediaPlayer = null;
         }
         instance = null;
+        if (MyApplication.getInstance() != null) {
+            Intent intent = new Intent(MyApplication.getInstance(), AudioPlayerService.class);
+            intent.setAction(AudioPlayerService.ACTION_STOP);
+            MyApplication.getInstance().startService(intent);
+        }
     }
 
     public boolean isPlaying() { return isPlaying; }

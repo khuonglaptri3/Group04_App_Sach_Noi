@@ -60,6 +60,19 @@ dependencies {
     implementation(libs.navigation.ui.ktx)
     implementation(libs.palette)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.media:media:1.7.0")
+    
+    // Room components
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    
+    // Lifecycle components (ViewModel, LiveData)
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.0")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.8.0")
+    
+    // WorkManager
+    implementation("androidx.work:work-runtime:2.9.0")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)

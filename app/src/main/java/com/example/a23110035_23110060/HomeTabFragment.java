@@ -22,6 +22,9 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import androidx.lifecycle.ViewModelProvider;
+import com.example.a23110035_23110060.ui.viewmodel.HomeViewModel;
+import com.example.a23110035_23110060.data.local.BookEntity;
 
 public class HomeTabFragment extends Fragment {
 
@@ -30,6 +33,7 @@ public class HomeTabFragment extends Fragment {
     private OkHttpClient client;
     private List<Section> sections = new ArrayList<>();
     private SectionAdapter adapter;
+    private HomeViewModel viewModel;
 
     public static HomeTabFragment newInstance(String type) {
         HomeTabFragment fragment = new HomeTabFragment();
@@ -57,6 +61,8 @@ public class HomeTabFragment extends Fragment {
         adapter = new SectionAdapter(sections);
         rvSections.setAdapter(adapter);
         
+        viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        
         String type = getArguments() != null ? getArguments().getString("type") : "audio";
         
         swipeRefresh.setOnRefreshListener(() -> fetchDatabaseData(type));
@@ -66,53 +72,24 @@ public class HomeTabFragment extends Fragment {
 
     private void fetchDatabaseData(String type) {
         swipeRefresh.setRefreshing(true);
-        String supabaseUrl = BuildConfig.SUPABASE_URL;
-        String supabaseKey = BuildConfig.SUPABASE_ANON_KEY;
-        
-        String filter = type.equals("audio") ? "is_audiobook=eq.true" : "is_ebook=eq.true";
-        String url = supabaseUrl + "/rest/v1/books?select=*,authors(name)&" + filter + "&limit=10";
-
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("apikey", supabaseKey)
-                .addHeader("Authorization", "Bearer " + supabaseKey)
-                .get()
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+        viewModel.getFeaturedBooks(type).observe(getViewLifecycleOwner(), bookEntities -> {
+            if (bookEntities != null && !bookEntities.isEmpty()) {
+                List<Book> books = new ArrayList<>();
+                for (BookEntity entity : bookEntities) {
+                    books.add(new Book(
+                        entity.id,
+                        entity.title,
+                        entity.authorName,
+                        entity.coverUrl,
+                        false
+                    ));
+                }
+                fetchCategories(books);
+            } else {
+                // If it's empty, it might still be fetching from network
+                // We'll just stop the refreshing indicator for now after a short delay
                 if (isAdded()) {
                     requireActivity().runOnUiThread(() -> swipeRefresh.setRefreshing(false));
-                }
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        JSONArray jsonArray = new JSONArray(response.body().string());
-                        List<Book> books = new ArrayList<>();
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            JSONObject obj = jsonArray.getJSONObject(i);
-                            JSONObject authorObj = obj.optJSONObject("authors");
-                            String authorName = authorObj != null ? authorObj.optString("name") : "Unknown";
-                            
-                            books.add(new Book(
-                                obj.getString("id"),
-                                obj.getString("title"),
-                                authorName,
-                                obj.optString("cover_url"),
-                                obj.optBoolean("is_premium_only")
-                            ));
-                        }
-                        fetchCategories(books);
-                    } catch (Exception e) {
-                        Log.e("HomeTab", "Parsing error", e);
-                        if (isAdded()) requireActivity().runOnUiThread(() -> swipeRefresh.setRefreshing(false));
-                    }
-                } else {
-                    if (isAdded()) requireActivity().runOnUiThread(() -> swipeRefresh.setRefreshing(false));
                 }
             }
         });

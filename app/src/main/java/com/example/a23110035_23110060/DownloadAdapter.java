@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.io.File;
 import java.util.List;
 
 public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHolder> {
@@ -66,6 +67,23 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHo
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onDelete(item, holder.getAdapterPosition());
+            }
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            File file = DownloadHelper.getDownloadedFile(context, item.getBookId(), item.getFileType());
+            if (file != null && file.exists()) {
+                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileprovider", file);
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                intent.setDataAndType(uri, "audio".equals(item.getFileType()) ? "audio/*" : "application/epub+zip");
+                intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                try {
+                    context.startActivity(android.content.Intent.createChooser(intent, "Mở bằng"));
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(context, "Không tìm thấy ứng dụng để mở file này", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                android.widget.Toast.makeText(context, "File không tồn tại", android.widget.Toast.LENGTH_SHORT).show();
             }
         });
     }
