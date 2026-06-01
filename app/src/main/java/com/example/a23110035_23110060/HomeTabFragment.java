@@ -222,7 +222,6 @@ public class HomeTabFragment extends Fragment {
                 if (!books.isEmpty()) {
                     sections.add(new Section("THỊNH HÀNH HÔM NAY", books, Section.TYPE_CAROUSEL, filter));
                 }
-                sections.add(new Section("BANNER", (List<Book>)null, Section.TYPE_BANNER));
                 if (!categories.isEmpty()) {
                     sections.add(new Section("DANH MỤC", categories, Section.TYPE_CATEGORIES, true));
                 }

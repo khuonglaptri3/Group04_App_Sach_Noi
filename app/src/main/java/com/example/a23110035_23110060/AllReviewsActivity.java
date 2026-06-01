@@ -60,7 +60,7 @@ public class AllReviewsActivity extends AppCompatActivity {
         progressIndicator.setVisibility(View.VISIBLE);
         
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + 
-                     "&select=*,profiles:public_profiles(full_name,avatar_url)&order=created_at.desc";
+                     "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
         
         String token = sessionManager.getAccessToken();
         Request.Builder builder = new Request.Builder()

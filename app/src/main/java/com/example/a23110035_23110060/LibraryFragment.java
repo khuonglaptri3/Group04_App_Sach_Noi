@@ -82,6 +82,18 @@ public class LibraryFragment extends Fragment {
         swipeRefresh.setOnRefreshListener(() -> fetchLibraryData());
         fetchLibraryData();
 
+        View btnExploreNow = view.findViewById(R.id.btnExploreNow);
+        if (btnExploreNow != null) {
+            btnExploreNow.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    com.google.android.material.bottomnavigation.BottomNavigationView bottomNav = getActivity().findViewById(R.id.bottomNavigation);
+                    if (bottomNav != null) {
+                        bottomNav.setSelectedItemId(R.id.nav_discovery);
+                    }
+                }
+            });
+        }
+
         setupMiniPlayer(view);
     }
 

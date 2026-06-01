@@ -33,6 +33,13 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     app:icon="@drawable/ic_share" />
+                    
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_download"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:icon="@drawable/ic_download" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_favorite"

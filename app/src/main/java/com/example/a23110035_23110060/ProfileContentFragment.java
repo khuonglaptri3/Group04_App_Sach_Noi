@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -89,6 +90,78 @@ public class ProfileContentFragment extends Fragment {
                 startActivity(new Intent(requireContext(), SecurityPrivacyActivity.class));
             });
         }
+
+        View btnUpgradeProfile = view.findViewById(R.id.btnUpgradeProfile);
+        if (btnUpgradeProfile != null) {
+            btnUpgradeProfile.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), PremiumActivity.class));
+            });
+        }
+        
+        View llDownloads = view.findViewById(R.id.ll_downloads);
+        if (llDownloads != null) {
+            llDownloads.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), DownloadManagerActivity.class));
+            });
+        }
+
+        fetchProfileDetails();
+    }
+
+    private void fetchProfileDetails() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=is_premium,avatar_url";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) { }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        org.json.JSONArray array = new org.json.JSONArray(response.body().string());
+                        if (array.length() > 0) {
+                            JSONObject profile = array.getJSONObject(0);
+                            boolean isPremium = profile.optBoolean("is_premium", false);
+                            String avatarUrl = profile.optString("avatar_url", null);
+                            
+                            if (isAdded()) {
+                                requireActivity().runOnUiThread(() -> {
+                                    View cvPremiumBanner = getView() != null ? getView().findViewById(R.id.cardPremiumUpgrade) : null;
+                                    if (cvPremiumBanner != null) {
+                                        if (isPremium) {
+                                            cvPremiumBanner.setVisibility(View.GONE);
+                                        } else {
+                                            cvPremiumBanner.setVisibility(View.VISIBLE);
+                                        }
+                                    }
+                                    
+                                    ImageView ivAvatar = getView() != null ? getView().findViewById(R.id.ivAvatar) : null;
+                                    if (ivAvatar != null && avatarUrl != null && !avatarUrl.isEmpty()) {
+                                        com.bumptech.glide.Glide.with(ProfileContentFragment.this)
+                                                .load(avatarUrl)
+                                                .placeholder(R.drawable.bacl)
+                                                .into(ivAvatar);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("ProfileContent", "Parse profile error", e);
+                    }
+                }
+            }
+        });
     }
 
     private void fetchUserSummary() {

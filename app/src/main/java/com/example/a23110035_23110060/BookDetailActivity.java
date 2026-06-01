@@ -177,6 +177,11 @@ public class BookDetailActivity extends AppCompatActivity {
 
         btnFavorite.setOnClickListener(v -> toggleFavorite());
 
+        MaterialButton btnDownload = findViewById(R.id.btn_download);
+        if (btnDownload != null) {
+            btnDownload.setOnClickListener(v -> handleDownloadClick());
+        }
+
         findViewById(R.id.btn_write_review).setOnClickListener(v -> writeReview());
         
         btnViewAllReviews.setOnClickListener(v -> {
@@ -196,6 +201,85 @@ public class BookDetailActivity extends AppCompatActivity {
         intent.putExtra("bookCoverUrl", currentBook.getCoverUrl());
         intent.putExtra("bookType", currentBook.isAudiobook() ? "audio" : "ebook");
         writeReviewLauncher.launch(intent);
+    }
+    
+    private void handleDownloadClick() {
+        if (currentBook == null) return;
+        if (currentBook.isPremiumOnly() && !isUserPremium) {
+            Intent intent = new Intent(this, PremiumActivity.class);
+            premiumLauncher.launch(intent);
+            return;
+        }
+
+        boolean hasAudio = currentBook.getAudioUrl() != null && !currentBook.getAudioUrl().isEmpty();
+        boolean hasEbook = currentBook.getEpubUrl() != null && !currentBook.getEpubUrl().isEmpty();
+
+        if (hasAudio && hasEbook) {
+            String[] options = {"Tải Sách nói (Audio)", "Tải Sách điện tử (Ebook)"};
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Chọn định dạng tải xuống")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) startDownload("audio", currentBook.getAudioUrl());
+                    else startDownload("ebook", currentBook.getEpubUrl());
+                })
+                .show();
+        } else if (hasAudio) {
+            startDownload("audio", currentBook.getAudioUrl());
+        } else if (hasEbook) {
+            startDownload("ebook", currentBook.getEpubUrl());
+        } else {
+            Toast.makeText(this, "Sách này không có file để tải", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void startDownload(String type, String url) {
+        DownloadHelper.downloadFile(this, url, bookId, currentBook.getTitle(), type);
+        
+        // Update is_downloaded = true in Supabase
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        if (userId == null || token == null) return;
+
+        String dbUrl = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + "&book_id=eq." + bookId;
+        JSONObject body = new JSONObject();
+        try {
+            body.put("is_downloaded", true);
+            body.put("user_id", userId);
+            body.put("book_id", bookId);
+        } catch (Exception e) {}
+
+        okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(
+                body.toString(),
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        // Upsert if not exists
+        Request request = new Request.Builder()
+                .url(dbUrl)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .patch(requestBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override public void onResponse(@NonNull Call call, @NonNull Response r) throws IOException {
+                if (!r.isSuccessful() && r.code() == 404) {
+                    // Row might not exist, need to insert instead
+                    String insertUrl = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?on_conflict=user_id,book_id";
+                    Request insertReq = new Request.Builder()
+                        .url(insertUrl)
+                        .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                        .addHeader("Authorization", "Bearer " + token)
+                        .post(requestBody)
+                        .build();
+                    client.newCall(insertReq).enqueue(new Callback() {
+                        @Override public void onFailure(@NonNull Call c, @NonNull IOException ex) {}
+                        @Override public void onResponse(@NonNull Call c, @NonNull Response res) throws IOException {}
+                    });
+                }
+            }
+        });
     }
 
     // submitReview removed as it is now handled by WriteReviewActivity
@@ -283,14 +367,15 @@ public class BookDetailActivity extends AppCompatActivity {
                              currentBook.setCoverUrl(obj.optString("cover_url"));
                              currentBook.setPremiumOnly(obj.optBoolean("is_premium_only", false));
                             
-                            // TÌM FILE MP3 TRONG KẾT QUẢ TRẢ VỀ
+                            // TÌM FILE MP3 VÀ EPUB TRONG KẾT QUẢ TRẢ VỀ
                             JSONArray filesArray = obj.optJSONArray("book_files");
                             if (filesArray != null) {
                                 for (int i = 0; i < filesArray.length(); i++) {
                                     JSONObject file = filesArray.getJSONObject(i);
-                                    if (file.optString("file_type").equalsIgnoreCase("mp3")) {
+                                    if (file.optString("file_type").equalsIgnoreCase("mp3") || file.optString("file_type").equalsIgnoreCase("audio")) {
                                         currentBook.setAudioUrl(file.getString("file_url"));
-                                        break;
+                                    } else if (file.optString("file_type").equalsIgnoreCase("epub")) {
+                                        currentBook.setEpubUrl(file.getString("file_url"));
                                     }
                                 }
                             }
@@ -524,7 +609,7 @@ public class BookDetailActivity extends AppCompatActivity {
     }
 
     private void fetchReviews() {
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles:public_profiles(full_name,avatar_url)&order=created_at.desc";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
         String token = sessionManager.getAccessToken();
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -609,7 +694,7 @@ public class BookDetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
             return;
         }
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?on_conflict=user_id,book_id";
         JSONObject bodyJson = new JSONObject();
         try {
             bodyJson.put("user_id", userId);

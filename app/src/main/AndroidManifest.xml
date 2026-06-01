@@ -48,6 +48,9 @@
             android:exported="false"
             android:theme="@style/Theme._23110035_23110060" />
         <activity
+            android:name=".DownloadManagerActivity"
+            android:exported="false" />
+        <activity
             android:name=".EditProfileActivity"
             android:exported="false" />
         <activity

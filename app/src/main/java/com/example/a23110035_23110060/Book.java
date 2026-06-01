@@ -22,6 +22,7 @@ public class Book {
     private String categoryNameVi;
     private String categoryNameEn;
     private String audioUrl;
+    private String epubUrl;
 
     public Book() {}
 
@@ -54,6 +55,7 @@ public class Book {
     public String getCategoryNameVi() { return categoryNameVi; }
     public String getCategoryNameEn() { return categoryNameEn; }
     public String getAudioUrl() { return audioUrl; }
+    public String getEpubUrl() { return epubUrl; }
 
     public void setId(String id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
@@ -76,4 +78,5 @@ public class Book {
     public void setCategoryNameVi(String categoryNameVi) { this.categoryNameVi = categoryNameVi; }
     public void setCategoryNameEn(String categoryNameEn) { this.categoryNameEn = categoryNameEn; }
     public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
+    public void setEpubUrl(String epubUrl) { this.epubUrl = epubUrl; }
 }

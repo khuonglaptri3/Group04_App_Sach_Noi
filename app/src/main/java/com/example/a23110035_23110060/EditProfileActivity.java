@@ -173,16 +173,30 @@ public class EditProfileActivity extends AppCompatActivity {
                     String publicUrl = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + filename;
                     updateProfileInDb(newName, publicUrl);
                 } else {
+                    String errorBody = response.body() != null ? response.body().string() : "No error body";
+                    Log.e("EditProfile", "Upload failed: " + response.code() + " - " + errorBody);
                     runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                        Toast.makeText(EditProfileActivity.this, "Lỗi upload ảnh", Toast.LENGTH_SHORT).show();
+                        if (!isFinishing() && !isDestroyed()) {
+                            progressDialog.dismiss();
+                            new android.app.AlertDialog.Builder(EditProfileActivity.this)
+                                .setTitle("Lỗi Upload Supabase (" + response.code() + ")")
+                                .setMessage(errorBody)
+                                .setPositiveButton("OK", null)
+                                .show();
+                        }
                     });
                 }
             } catch (Exception e) {
                 Log.e("EditProfile", "Upload error", e);
                 runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(EditProfileActivity.this, "Lỗi đọc ảnh", Toast.LENGTH_SHORT).show();
+                    if (!isFinishing() && !isDestroyed()) {
+                        progressDialog.dismiss();
+                        new android.app.AlertDialog.Builder(EditProfileActivity.this)
+                            .setTitle("Lỗi đọc ảnh")
+                            .setMessage(e.getMessage())
+                            .setPositiveButton("OK", null)
+                            .show();
+                    }
                 });
             }
         }).start();
@@ -213,24 +227,36 @@ public class EditProfileActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(EditProfileActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                    if (!isFinishing() && !isDestroyed()) {
+                        progressDialog.dismiss();
+                        Toast.makeText(EditProfileActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    if (response.isSuccessful()) {
-                        sessionManager.setUserName(newName);
-                        Toast.makeText(EditProfileActivity.this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
-                        finish();
-                    } else {
-                        Toast.makeText(EditProfileActivity.this, "Lỗi cập nhật hồ sơ", Toast.LENGTH_SHORT).show();
+                    if (!isFinishing() && !isDestroyed()) {
+                        progressDialog.dismiss();
+                        if (response.isSuccessful()) {
+                            sessionManager.setUserName(newName);
+                            Toast.makeText(EditProfileActivity.this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
+                            finish();
+                        } else {
+                            Toast.makeText(EditProfileActivity.this, "Lỗi cập nhật hồ sơ", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
     }
 }
