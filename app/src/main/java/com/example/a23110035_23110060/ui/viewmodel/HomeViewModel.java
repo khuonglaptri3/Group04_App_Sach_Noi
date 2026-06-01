@@ -1,12 +1,14 @@
 package com.example.a23110035_23110060.ui.viewmodel;
 
+import com.example.a23110035_23110060.controller.NetworkClient;
+
 import android.app.Application;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
-import com.example.a23110035_23110060.NetworkClient;
+import com.example.a23110035_23110060.controller.NetworkClient;
 import com.example.a23110035_23110060.data.local.AppDatabase;
 import com.example.a23110035_23110060.data.local.BookDao;
 import com.example.a23110035_23110060.data.local.BookEntity;

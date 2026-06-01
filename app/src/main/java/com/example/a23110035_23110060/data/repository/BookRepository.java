@@ -1,11 +1,13 @@
 package com.example.a23110035_23110060.data.repository;
 
+import com.example.a23110035_23110060.model.Book;
+
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.a23110035_23110060.Book;
+import com.example.a23110035_23110060.model.Book;
 import com.example.a23110035_23110060.BuildConfig;
 import com.example.a23110035_23110060.data.local.BookDao;
 import com.example.a23110035_23110060.data.local.BookEntity;
