@@ -205,20 +205,6 @@
                         android:textColor="#212121" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvForgotPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:minWidth="48dp"
-                    android:minHeight="48dp"
-                    android:gravity="center"
-                    android:text="@string/forgot_password"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#B71C1C"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
             </LinearLayout>
 
             <Button
