@@ -7,25 +7,25 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.a23110035_23110060.HomeFragment"
+        android:name="com.example.a23110035_23110060.view.fragment.HomeFragment"
         android:label="Trang chủ"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/nav_discovery"
-        android:name="com.example.a23110035_23110060.DiscoveryFragment"
+        android:name="com.example.a23110035_23110060.view.fragment.DiscoveryFragment"
         android:label="Khám phá"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/nav_library"
-        android:name="com.example.a23110035_23110060.LibraryFragment"
+        android:name="com.example.a23110035_23110060.view.fragment.LibraryFragment"
         android:label="Thư viện"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/nav_profile"
-        android:name="com.example.a23110035_23110060.ProfileFragment"
+        android:name="com.example.a23110035_23110060.view.fragment.ProfileFragment"
         android:label="Hồ sơ"
         tools:layout="@layout/fragment_home" />
 

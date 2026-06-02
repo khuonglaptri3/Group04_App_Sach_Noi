@@ -3,9 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
-
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,10 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme._23110035_23110060">
         <activity
-            android:name=".SignUpActivity"
+            android:name=".view.activity.SignUpActivity"
             android:exported="false" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".view.activity.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,39 +30,76 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".WriteReviewActivity"
+            android:name=".view.activity.WriteReviewActivity"
             android:exported="false" />
             
         <activity
-            android:name=".MainActivity"
+            android:name=".view.activity.MainActivity"
             android:exported="false" />
         <activity
-            android:name=".BookDetailActivity"
+            android:name=".view.activity.BookDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".BookListActivity"
+            android:name=".view.activity.BookListActivity"
             android:exported="false" />
         <activity
-            android:name=".AudioPlayerActivity"
+            android:name=".view.activity.AudioPlayerActivity"
             android:exported="false"
             android:theme="@style/Theme._23110035_23110060" />
         <activity
-            android:name=".EbookReaderActivity"
+            android:name=".view.activity.EbookReaderActivity"
             android:exported="false"
             android:theme="@style/Theme._23110035_23110060" />
         <activity
-            android:name=".EditProfileActivity"
+            android:name=".view.activity.DownloadManagerActivity"
             android:exported="false" />
         <activity
-            android:name=".SecurityPrivacyActivity"
+            android:name=".view.activity.EditProfileActivity"
             android:exported="false" />
         <activity
-            android:name=".PremiumActivity"
+            android:name=".view.activity.SecurityPrivacyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.activity.PremiumActivity"
             android:exported="false"
             android:theme="@style/Theme._23110035_23110060" />
         <activity
-            android:name=".AllReviewsActivity"
+            android:name=".view.activity.AllReviewsActivity"
             android:exported="false" />
+            
+        <service
+            android:name=".service.AudioPlayerService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.QuickPlayTileService"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Tiếp tục nghe"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.CleanupService"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>
