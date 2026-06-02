@@ -8,11 +8,11 @@ public class Section {
     public static final int TYPE_CATEGORIES = 2;
     public static final int TYPE_FEATURED_REVIEWS = 3;
 
-    private String title;
+    private final String title;
     private List<Book> books;
     private List<Category> categories;
     private List<FeaturedReview> featuredReviews;
-    private int type;
+    private final int type;
     private String filter; // e.g., "is_audiobook=eq.true"
 
     public Section(String title, List<Book> books, int type) {

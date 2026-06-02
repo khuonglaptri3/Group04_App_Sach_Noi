@@ -2,7 +2,7 @@ package com.example.a23110035_23110060.view.adapter;
 
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.activity.BookDetailActivity;
+
 import com.example.a23110035_23110060.model.LibraryBook;
 
 import android.content.Intent;
@@ -21,8 +21,9 @@ import java.util.List;
 
 public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.LibraryViewHolder> {
 
-    private List<LibraryBook> bookList;
-    private OnItemDeleteListener deleteListener;
+    private final List<LibraryBook> bookList;
+    private final OnItemDeleteListener deleteListener;
+    private String preferredType = null;
 
     public interface OnItemDeleteListener {
         void onDelete(LibraryBook book, int position);
@@ -31,6 +32,10 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
     public LibraryBookAdapter(List<LibraryBook> bookList, OnItemDeleteListener deleteListener) {
         this.bookList = bookList;
         this.deleteListener = deleteListener;
+    }
+
+    public void setPreferredType(String preferredType) {
+        this.preferredType = preferredType;
     }
 
     @NonNull
@@ -65,7 +70,17 @@ public class LibraryBookAdapter extends RecyclerView.Adapter<LibraryBookAdapter.
         holder.pbProgress.setProgress(book.getProgress());
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            Class<?> activityClass;
+            if ("ebook".equals(preferredType)) {
+                activityClass = com.example.a23110035_23110060.view.activity.EbookDetailActivity.class;
+            } else if ("audiobook".equals(preferredType)) {
+                activityClass = com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class;
+            } else {
+                activityClass = book.isAudiobook() ? 
+                    com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class : 
+                    com.example.a23110035_23110060.view.activity.EbookDetailActivity.class;
+            }
+            Intent intent = new Intent(v.getContext(), activityClass);
             intent.putExtra("bookId", book.getBookId());
             v.getContext().startActivity(intent);
         });

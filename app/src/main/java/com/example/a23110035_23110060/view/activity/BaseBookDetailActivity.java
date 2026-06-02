@@ -53,32 +53,36 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class BookDetailActivity extends AppCompatActivity {
+public abstract class BaseBookDetailActivity extends AppCompatActivity {
 
-    private String bookId;
-    private Book currentBook;
-    private OkHttpClient client;
-    private SessionManager sessionManager;
+    protected String bookId;
+    protected Book currentBook;
+    protected OkHttpClient client;
+    protected SessionManager sessionManager;
 
-    private ImageView ivCover;
-    private TextView tvTitle, tvAuthor, tvRatingCount, tvDescription, btnReadMore;
-    private RatingBar rbBook;
-    private MaterialButton btnBuy, btnPreview, btnRead, btnFavorite;
-    private RecyclerView rvSimilarBooks;
+    protected ImageView ivCover;
+    protected TextView tvTitle, tvAuthor, tvRatingCount, tvDescription, btnReadMore;
+    protected RatingBar rbBook;
+    protected MaterialButton btnBuy, btnPreview, btnRead, btnFavorite;
+    protected RecyclerView rvSimilarBooks;
     
-    private boolean isDescriptionExpanded = false;
-    private boolean isFavorite = false;
-    private boolean isBookInLibrary = false;
-    private boolean isUserPremium = false;
-    private View layoutWriteReview;
-    private RecyclerView rvReviews;
-    private TextView tvOverallRating, tvOverallRatingCount;
-    private ImageView ivRatingBookCover, ivUserAvatar;
-    private MaterialButton btnViewAllReviews;
-    private int currentReviewCount = 0;
+    protected boolean isDescriptionExpanded = false;
+    protected boolean isFavorite = false;
+    protected boolean isBookInLibrary = false;
+    protected boolean isUserPremium = false;
+    protected View layoutWriteReview;
+    protected RecyclerView rvReviews;
+    protected TextView tvOverallRating, tvOverallRatingCount;
+    protected ImageView ivRatingBookCover, ivUserAvatar;
+    protected MaterialButton btnViewAllReviews;
+    protected int currentReviewCount = 0;
 
-    private String authorBio;
-    private String authorAvatar;
+    protected String authorBio;
+    protected String authorAvatar;
+
+    protected abstract int getLayoutResource();
+    protected abstract void setupAdditionalUI();
+    protected abstract void onBookLoaded(Book book);
 
     private final ActivityResultLauncher<Intent> writeReviewLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -101,7 +105,7 @@ public class BookDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_book_detail);
+        setContentView(getLayoutResource());
 
         sessionManager = new SessionManager(this);
         client = NetworkClient.getClient(this);
@@ -109,10 +113,11 @@ public class BookDetailActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
+        setupAdditionalUI();
         fetchBookDetails();
     }
 
-    private void initViews() {
+    protected void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
@@ -142,7 +147,7 @@ public class BookDetailActivity extends AppCompatActivity {
         rvReviews.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    private void setupListeners() {
+    protected void setupListeners() {
         findViewById(R.id.btn_share).setOnClickListener(v -> shareBook());
 
         tvAuthor.setOnClickListener(v -> {
@@ -208,7 +213,7 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void writeReview() {
+    protected void writeReview() {
         if (currentBook == null) return;
         Intent intent = new Intent(this, WriteReviewActivity.class);
         intent.putExtra("bookId", bookId);
@@ -217,7 +222,23 @@ public class BookDetailActivity extends AppCompatActivity {
         writeReviewLauncher.launch(intent);
     }
     
-    private void handleDownloadClick() {
+    protected void handleReadAction() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 102);
+            }
+        }
+        if (currentBook != null && currentBook.isPremiumOnly() && !isUserPremium) {
+            Intent intent = new Intent(this, PremiumActivity.class);
+            premiumLauncher.launch(intent);
+            return;
+        }
+        Intent intent = new Intent(this, EbookReaderActivity.class);
+        intent.putExtra("bookId", bookId);
+        startActivity(intent);
+    }
+    
+    protected void checkDownloadStatus(String bookId, MaterialButton btnDownload) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 102);
@@ -252,7 +273,7 @@ public class BookDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void startDownload(String type, String url) {
+    protected void startDownload(String type, String url) {
         DownloadHelper.downloadFile(this, url, bookId, currentBook.getTitle(), type);
         
         // Update is_downloaded = true in Supabase
@@ -304,7 +325,7 @@ public class BookDetailActivity extends AppCompatActivity {
 
     // submitReview removed as it is now handled by WriteReviewActivity
 
-    private void checkUserPremiumStatus() {
+    protected void checkLibraryStatus() {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) return;
@@ -336,7 +357,7 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchBookDetails() {
+    protected void fetchBookDetails() {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         
@@ -419,7 +440,11 @@ public class BookDetailActivity extends AppCompatActivity {
                                     String userId = sessionManager.getUserId();
                                     if (userId != null) {
                                         String url2 = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=avatar_url";
-                                        Request req = new Request.Builder().url(url2).addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY).build();
+                                        Request req = new Request.Builder()
+                                                .url(url2)
+                                                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                                                .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
+                                                .build();
                                         client.newCall(req).enqueue(new Callback() {
                                             @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {}
                                             @Override public void onResponse(@NonNull Call call, @NonNull Response r) throws IOException {
@@ -428,7 +453,15 @@ public class BookDetailActivity extends AppCompatActivity {
                                                         JSONArray arr = new JSONArray(r.body().string());
                                                         if(arr.length()>0) {
                                                             String avatar = arr.getJSONObject(0).optString("avatar_url");
-                                                            runOnUiThread(() -> Glide.with(BookDetailActivity.this).load(avatar).placeholder(R.drawable.bacl).into(ivUserAvatar));
+                                                            if (avatar != null && !avatar.isEmpty() && !avatar.startsWith("http")) {
+                                                                avatar = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + avatar;
+                                                            }
+                                                            final String finalAvatar = avatar;
+                                                            runOnUiThread(() -> Glide.with(BaseBookDetailActivity.this)
+                                                                    .load(finalAvatar)
+                                                                    .circleCrop()
+                                                                    .placeholder(R.drawable.bacl)
+                                                                    .into(ivUserAvatar));
                                                         }
                                                     } catch (Exception e){}
                                                 }
@@ -448,25 +481,31 @@ public class BookDetailActivity extends AppCompatActivity {
                                 
                                 tvOverallRating.setText(String.format(Locale.getDefault(), "%.1f", rating));
                                 tvOverallRatingCount.setText(String.format(Locale.getDefault(), "/5.0 (%d đánh giá)", ratingCount));
-                                Glide.with(BookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivRatingBookCover);
+                                Glide.with(BaseBookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivRatingBookCover);
 
-                                updateFavoriteUI();
-                                Glide.with(BookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
+                                updateUI(currentBook);
+                                onBookLoaded(currentBook);
+                                Glide.with(BaseBookDetailActivity.this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
                                 
-                                checkUserPremiumStatus();
-                                fetchSimilarBooks(obj.optString("category_id"));
+                                checkLibraryStatus();
+                                fetchSimilarBooks(obj.optString("category_id"), bookId);
                                 fetchReviews();
                             });
+                        } else {
+                            runOnUiThread(() -> Toast.makeText(BaseBookDetailActivity.this, "Không tìm thấy dữ liệu sách", Toast.LENGTH_SHORT).show());
                         }
                     } catch (Exception e) {
                         Log.e("BookDetail", "Parse error", e);
+                        runOnUiThread(() -> Toast.makeText(BaseBookDetailActivity.this, "Lỗi phân tích dữ liệu", Toast.LENGTH_SHORT).show());
                     }
+                } else {
+                    runOnUiThread(() -> Toast.makeText(BaseBookDetailActivity.this, "Lỗi kết nối cơ sở dữ liệu: " + response.code(), Toast.LENGTH_SHORT).show());
                 }
             }
         });
     }
 
-    private void fetchChaptersAndPlay() {
+    protected void fetchChaptersAndPlay() {
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_chapters?book_id=eq." + bookId + "&order=chapter_index.asc";
         Request request = new Request.Builder()
                 .url(url)
@@ -479,7 +518,7 @@ public class BookDetailActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
                     PlayerManager.getInstance().playBook(currentBook);
-                    startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                    startActivity(new Intent(BaseBookDetailActivity.this, AudioPlayerActivity.class));
                 });
             }
 
@@ -505,25 +544,25 @@ public class BookDetailActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             PlayerManager.getInstance().playBook(currentBook);
                             PlayerManager.getInstance().setChapters(chapters);
-                            startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                            startActivity(new Intent(BaseBookDetailActivity.this, AudioPlayerActivity.class));
                         });
                     } catch (Exception e) {
                         runOnUiThread(() -> {
                             PlayerManager.getInstance().playBook(currentBook);
-                            startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                            startActivity(new Intent(BaseBookDetailActivity.this, AudioPlayerActivity.class));
                         });
                     }
                 } else {
                     runOnUiThread(() -> {
                         PlayerManager.getInstance().playBook(currentBook);
-                        startActivity(new Intent(BookDetailActivity.this, AudioPlayerActivity.class));
+                        startActivity(new Intent(BaseBookDetailActivity.this, AudioPlayerActivity.class));
                     });
                 }
             }
         });
     }
 
-    private void updateFavoriteUI() {
+    protected void updateUI(Book book) {
         if (isFavorite) {
             btnFavorite.setIconTint(ColorStateList.valueOf(Color.RED));
         } else {
@@ -531,7 +570,7 @@ public class BookDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void toggleFavorite() {
+    protected void toggleFavorite() {
         String userId = sessionManager.getUserId();
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) {
@@ -557,7 +596,7 @@ public class BookDetailActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                runOnUiThread(() -> Toast.makeText(BookDetailActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(BaseBookDetailActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show());
             }
 
             @Override
@@ -576,8 +615,8 @@ public class BookDetailActivity extends AppCompatActivity {
                             isFavorite = result.trim().replace("\"", "").equalsIgnoreCase("true");
                         }
                         runOnUiThread(() -> {
-                            updateFavoriteUI();
-                            Toast.makeText(BookDetailActivity.this, isFavorite ? "Đã thêm vào yêu thích" : "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
+                            updateUI(currentBook);
+                            Toast.makeText(BaseBookDetailActivity.this, isFavorite ? "Đã thêm vào yêu thích" : "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
                         });
                     } catch (Exception e) {}
                 }
@@ -585,10 +624,10 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchSimilarBooks(String categoryId) {
+    protected void fetchSimilarBooks(String categoryId, String currentBookId) {
         if (categoryId == null || categoryId.isEmpty()) return;
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/books?category_id=eq." + categoryId + 
-                     "&id=neq." + bookId + "&select=*,authors(name)&limit=5";
+                     "&id=neq." + currentBookId + "&select=*,authors(name)&limit=5";
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
@@ -619,7 +658,7 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void shareBook() {
+    protected void showAuthorBottomSheet() {
         if (currentBook == null) return;
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
@@ -628,7 +667,7 @@ public class BookDetailActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(sendIntent, "Chia sẻ sách"));
     }
 
-    private void fetchReviews() {
+    protected void fetchReviews() {
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
         String token = sessionManager.getAccessToken();
         Request.Builder requestBuilder = new Request.Builder()
@@ -651,7 +690,13 @@ public class BookDetailActivity extends AppCompatActivity {
                             JSONObject obj = array.getJSONObject(i);
                             JSONObject profile = obj.optJSONObject("profiles");
                             String name = profile != null ? profile.optString("full_name", "Ẩn danh") : "Ẩn danh";
-                            String avatar = profile != null ? profile.optString("avatar_url") : null;
+                            String avatar = profile != null ? profile.optString("avatar_url", null) : null;
+                            if (avatar != null && avatar.equals("null")) {
+                                avatar = null;
+                            }
+                            if (avatar != null && !avatar.isEmpty() && !avatar.startsWith("http")) {
+                                avatar = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + avatar;
+                            }
                             reviews.add(new ReviewAdapter.Review(
                                     obj.getString("id"), name, avatar, obj.optString("comment"),
                                     obj.optInt("rating", 5), obj.optString("created_at")
@@ -660,17 +705,28 @@ public class BookDetailActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             currentReviewCount = reviews.size();
                             btnViewAllReviews.setText("Xem tất cả " + currentReviewCount + " đánh giá");
-                            ReviewAdapter adapter = new ReviewAdapter(reviews);
+                            
+                            // Chỉ lấy tối đa 3 đánh giá để hiển thị mặc định
+                            List<ReviewAdapter.Review> displayReviews = reviews.size() > 3 ? reviews.subList(0, 3) : reviews;
+                            
+                            ReviewAdapter adapter = new ReviewAdapter(displayReviews);
                             adapter.setListener(new ReviewAdapter.ReviewInteractionListener() {
                                 @Override
                                 public void onLikeClick(ReviewAdapter.Review review, int position) {
                                     review.isLiked = !review.isLiked;
                                     review.likeCount += review.isLiked ? 1 : -1;
                                     adapter.notifyItemChanged(position);
-                                    Toast.makeText(BookDetailActivity.this, review.isLiked ? "Đã thích" : "Đã bỏ thích", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(BaseBookDetailActivity.this, review.isLiked ? "Đã thích" : "Đã bỏ thích", Toast.LENGTH_SHORT).show();
                                 }
                             });
                             rvReviews.setAdapter(adapter);
+                            
+                            // Nếu có hơn 3 đánh giá thì hiện nút Xem tất cả, ngược lại ẩn
+                            if (currentReviewCount > 3) {
+                                btnViewAllReviews.setVisibility(View.VISIBLE);
+                            } else {
+                                btnViewAllReviews.setVisibility(View.GONE);
+                            }
                         });
                     } catch (Exception e) {}
                 }
@@ -678,30 +734,55 @@ public class BookDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void updatePurchaseButtonUI() {
+    protected void updatePurchaseButtonUI() {
         if (currentBook == null) return;
         
         if (isBookInLibrary) {
             btnBuy.setEnabled(false);
             btnBuy.setText(currentBook.isPremiumOnly() ? "Đã thêm vào thư viện" : "Đã lưu vào thư viện");
-            return;
-        }
-
-        if (currentBook.isPremiumOnly()) {
-            if (isUserPremium) {
-                btnBuy.setEnabled(true);
-                btnBuy.setText("Thêm vào thư viện");
+        } else {
+            if (currentBook.isPremiumOnly()) {
+                if (isUserPremium) {
+                    btnBuy.setEnabled(true);
+                    btnBuy.setText("Thêm vào thư viện");
+                } else {
+                    btnBuy.setEnabled(true);
+                    btnBuy.setText("Mua Premium");
+                }
             } else {
                 btnBuy.setEnabled(true);
-                btnBuy.setText("Mua Premium");
+                btnBuy.setText("Lưu vào thư viện");
             }
+        }
+        
+        if (currentBook.isPremiumOnly() && !isUserPremium) {
+            btnRead.setEnabled(false);
+            btnPreview.setEnabled(false);
+            btnRead.setText("Đọc sách");
+            btnPreview.setText("Nghe sách");
+            btnRead.setIcon(androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_lock));
+            btnPreview.setIcon(androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_lock));
+            btnRead.setAlpha(0.5f);
+            btnPreview.setAlpha(0.5f);
         } else {
-            btnBuy.setEnabled(true);
-            btnBuy.setText("Lưu vào thư viện");
+            btnRead.setEnabled(true);
+            btnPreview.setEnabled(true);
+            btnRead.setIcon(androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_menu_book));
+            btnPreview.setIcon(androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_play));
+            btnRead.setAlpha(1.0f);
+            btnPreview.setAlpha(1.0f);
+            
+            if (isBookInLibrary) {
+                btnRead.setText("Tiếp tục đọc");
+                btnPreview.setText("Tiếp tục nghe");
+            } else {
+                btnRead.setText("Đọc sách");
+                btnPreview.setText("Nghe thử");
+            }
         }
     }
 
-    private void performPurchase() {
+    protected void performPurchase() {
         if (currentBook != null && currentBook.isPremiumOnly() && !isUserPremium) {
             Intent intent = new Intent(this, PremiumActivity.class);
             premiumLauncher.launch(intent);
@@ -736,15 +817,59 @@ public class BookDetailActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 runOnUiThread(() -> {
                     if (response.isSuccessful()) {
-                        Toast.makeText(BookDetailActivity.this, currentBook.isPremiumOnly() ? "Đã thêm vào thư viện" : "Đã lưu vào thư viện", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(BaseBookDetailActivity.this, currentBook.isPremiumOnly() ? "Đã thêm vào thư viện" : "Đã lưu vào thư viện", Toast.LENGTH_SHORT).show();
                         isBookInLibrary = true;
                         updatePurchaseButtonUI();
                         layoutWriteReview.setVisibility(android.view.View.VISIBLE);
                     } else {
-                        Toast.makeText(BookDetailActivity.this, "Có lỗi xảy ra", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(BaseBookDetailActivity.this, "Có lỗi xảy ra", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
+    }
+
+    protected void shareBook() {
+        if (currentBook == null) return;
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, currentBook.getTitle() + " - " + currentBook.getAuthorName());
+        sendIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sendIntent, "Chia sẻ sách"));
+    }
+
+    protected void handleDownloadClick() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 102);
+            }
+        }
+
+        if (currentBook == null) return;
+        if (currentBook.isPremiumOnly() && !isUserPremium) {
+            Intent intent = new Intent(this, PremiumActivity.class);
+            premiumLauncher.launch(intent);
+            return;
+        }
+
+        boolean hasAudio = currentBook.getAudioUrl() != null && !currentBook.getAudioUrl().isEmpty();
+        boolean hasEbook = currentBook.getEpubUrl() != null && !currentBook.getEpubUrl().isEmpty();
+
+        if (hasAudio && hasEbook) {
+            String[] options = {"Tải Sách nói (Audio)", "Tải Sách điện tử (Ebook)"};
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Chọn định dạng tải xuống")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) startDownload("audio", currentBook.getAudioUrl());
+                    else startDownload("ebook", currentBook.getEpubUrl());
+                })
+                .show();
+        } else if (hasAudio) {
+            startDownload("audio", currentBook.getAudioUrl());
+        } else if (hasEbook) {
+            startDownload("ebook", currentBook.getEpubUrl());
+        } else {
+            Toast.makeText(this, "Sách này không có file để tải", Toast.LENGTH_SHORT).show();
+        }
     }
 }

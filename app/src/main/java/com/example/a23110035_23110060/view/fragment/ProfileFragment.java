@@ -27,7 +27,7 @@ import com.google.android.material.tabs.TabLayout;
 
 public class ProfileFragment extends Fragment {
 
-    private Handler progressHandler = new Handler();
+    private final Handler progressHandler = new Handler();
     private Runnable progressRunnable;
     private ObjectAnimator rotateAnimator;
 
@@ -89,10 +89,11 @@ public class ProfileFragment extends Fragment {
                 ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
                 Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
 
-                com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
+                android.widget.ImageButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
+                if (btnPlay != null) {
+                    btnPlay.setImageResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                }
                 boolean isPlaying = PlayerManager.getInstance().isPlaying();
-                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
-
                 handleRotation(ivCover, isPlaying);
             } else {
                 miniPlayer.setVisibility(View.GONE);

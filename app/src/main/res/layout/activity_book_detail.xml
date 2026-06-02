@@ -201,6 +201,13 @@
                 android:textColor="?attr/colorPrimary"
                 android:textStyle="bold" />
 
+            <!-- Table of Contents Container -->
+            <FrameLayout
+                android:id="@+id/container_toc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" />
+
             <!-- Reviews & Ratings -->
             <TextView
                 android:layout_width="wrap_content"
@@ -287,7 +294,7 @@
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_user_avatar"
                     android:layout_width="40dp"
                     android:layout_height="40dp"

@@ -20,7 +20,7 @@ import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
-    private List<Category> categories;
+    private final List<Category> categories;
 
     public CategoryAdapter(List<Category> categories) {
         this.categories = categories;

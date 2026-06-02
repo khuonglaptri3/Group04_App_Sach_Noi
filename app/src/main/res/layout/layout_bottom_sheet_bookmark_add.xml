@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_bottom_sheet"
+    android:gravity="center_horizontal">
+    
+    <!-- Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="24dp"/>
+        
+    <!-- Circle Icon -->
+    <ImageView
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:background="@drawable/bg_bookmark_circle"
+        android:src="@drawable/ic_bookmark_check"
+        android:padding="24dp"
+        android:layout_marginBottom="16dp"/>
+        
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Thêm 1 đánh dấu"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+        
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/tv_bookmark_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CHƯƠNG 1 - Trích đoạn 00:00"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"/>
+        
+    <!-- Note Input -->
+    <EditText
+        android:id="@+id/et_bookmark_note"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@drawable/bg_note_input"
+        android:hint="Thêm ghi chú..."
+        android:textColorHint="?attr/colorOnSurfaceVariant"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="16sp"
+        android:gravity="top|start"
+        android:padding="16dp"
+        android:layout_marginBottom="24dp"/>
+        
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        
+        <android.widget.Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_button_light_orange"
+            android:text="Hủy đánh dấu"
+            android:textColor="#FF8A65"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginEnd="8dp"
+            app:backgroundTint="@null"/>
+            
+        <android.widget.Button
+            android:id="@+id/btn_save"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_gradient_button"
+            android:text="Hoàn tất"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginStart="8dp"
+            app:backgroundTint="@null"/>
+    </LinearLayout>
+
+</LinearLayout>

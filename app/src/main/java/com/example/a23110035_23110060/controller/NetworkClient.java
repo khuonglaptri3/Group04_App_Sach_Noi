@@ -41,6 +41,12 @@ public class NetworkClient {
                                         .build();
                             }
                             
+                            // Logout if refresh fails
+                            session.clear();
+                            android.content.Intent intent = new android.content.Intent(context, com.example.a23110035_23110060.view.activity.LoginActivity.class);
+                            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            context.startActivity(intent);
+                            
                             return null;
                         }
                     })

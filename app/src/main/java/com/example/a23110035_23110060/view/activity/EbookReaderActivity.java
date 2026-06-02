@@ -225,6 +225,7 @@ public class EbookReaderActivity extends AppCompatActivity {
                                         }
                                         cachedChapters = jsonChapters;
                                         paginateText(jsonChapters);
+                                        fetchBookChaptersFromDB();
                                         fetchBookmarks();
                                         fetchHighlights();
                                         fetchLastProgress();
@@ -478,9 +479,74 @@ public class EbookReaderActivity extends AppCompatActivity {
                 Log.e("EbookReader", "Error applying highlight", e);
             }
         }
-        if (pagerAdapter != null) {
-            pagerAdapter.notifyDataSetChanged();
-        }
+        pagerAdapter.updatePages(pages);
+    }
+
+    private void fetchBookChaptersFromDB() {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_chapters?book_id=eq." + bookId + "&order=chapter_index.asc";
+        String token = sessionManager.getAccessToken();
+        String authHeader = (token != null) ? "Bearer " + token : "Bearer " + BuildConfig.SUPABASE_ANON_KEY;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", authHeader)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("EbookReader", "Fetch book_chapters failed", e);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray arr = new JSONArray(response.body().string());
+                        if (arr.length() > 0) {
+                            List<String> dbTitles = new ArrayList<>();
+                            List<Integer> dbStartPages = new ArrayList<>();
+                            for (int i = 0; i < arr.length(); i++) {
+                                JSONObject obj = arr.getJSONObject(i);
+                                String title = obj.optString("title", "Chương " + (i + 1));
+                                // Supabase page index could be 1-based, we subtract 1 for ViewPager index. Default to 0 if null.
+                                int startPage = obj.optInt("start_page", 1) - 1;
+                                if (startPage < 0) startPage = 0;
+                                
+                                dbTitles.add(title);
+                                dbStartPages.add(startPage);
+                            }
+                            
+                            // Ghi đè hoàn toàn mục lục từ DB
+                            runOnUiThread(() -> {
+                                chapterTitles.clear();
+                                chapterTitles.addAll(dbTitles);
+                                
+                                chapterStartPages.clear();
+                                chapterStartPages.addAll(dbStartPages);
+                                
+                                // Cập nhật lại UI Toolbar nếu cần
+                                updateProgressUI(vpEbook.getCurrentItem());
+                            });
+                        } else {
+                            // Nếu DB không có chapter nào, thì fallback về EPUB TOC (hoặc xóa luôn tùy ý)
+                            // Người dùng yêu cầu chỉ load từ table book_chapters, nên nếu DB trống thì hiện báo lỗi hoặc xóa
+                            runOnUiThread(() -> {
+                                chapterTitles.clear();
+                                chapterTitles.add("Chưa có dữ liệu mục lục");
+                                chapterStartPages.clear();
+                                chapterStartPages.add(0);
+                                updateProgressUI(vpEbook.getCurrentItem());
+                            });
+                        }
+                    } catch (Exception e) {
+                        Log.e("EbookReader", "Parse book_chapters failed", e);
+                    }
+                }
+            }
+        });
     }
 
     private void fetchBookmarks() {
@@ -582,6 +648,29 @@ public class EbookReaderActivity extends AppCompatActivity {
         }
     }
 
+    public void removeBookmarkFromUI(int pageNumber) {
+        if (bookmarkedPages.contains(pageNumber)) {
+            bookmarkedPages.remove(pageNumber);
+            runOnUiThread(() -> updateProgressUI(vpEbook.getCurrentItem()));
+        }
+    }
+
+    public String getChapterTitleForPage(int position) {
+        if (chapterStartPages == null || chapterStartPages.isEmpty()) return "Chương " + (position + 1);
+        int currentChapterIndex = 0;
+        for (int i = 0; i < chapterStartPages.size(); i++) {
+            if (position >= chapterStartPages.get(i)) {
+                currentChapterIndex = i;
+            } else {
+                break;
+            }
+        }
+        if (currentChapterIndex < chapterTitles.size()) {
+            return chapterTitles.get(currentChapterIndex);
+        }
+        return "Chương " + (position + 1);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -677,18 +766,20 @@ public class EbookReaderActivity extends AppCompatActivity {
             .setTitle("Tìm kiếm")
             .setView(input)
             .setPositiveButton("Tìm", (dialog, which) -> {
-                String query = input.getText().toString().toLowerCase();
+                String query = input.getText().toString().trim();
+                pagerAdapter.setSearchQuery(query);
                 if (query.isEmpty()) return;
                 
+                String queryLower = query.toLowerCase();
                 for (int i = vpEbook.getCurrentItem(); i < pages.size(); i++) {
-                    if (pages.get(i).toString().toLowerCase().contains(query)) {
+                    if (pages.get(i).toString().toLowerCase().contains(queryLower)) {
                         vpEbook.setCurrentItem(i, false);
                         Toast.makeText(this, "Đã tìm thấy ở trang " + (i + 1), Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
                 for (int i = 0; i < vpEbook.getCurrentItem(); i++) {
-                    if (pages.get(i).toString().toLowerCase().contains(query)) {
+                    if (pages.get(i).toString().toLowerCase().contains(queryLower)) {
                         vpEbook.setCurrentItem(i, false);
                         Toast.makeText(this, "Đã tìm thấy ở trang " + (i + 1), Toast.LENGTH_SHORT).show();
                         return;

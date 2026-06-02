@@ -2,7 +2,7 @@ package com.example.a23110035_23110060.view.adapter;
 
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.activity.BookDetailActivity;
+
 
 import com.example.a23110035_23110060.model.FeaturedReview;
 
@@ -26,7 +26,7 @@ import java.util.Locale;
 
 public class FeaturedReviewAdapter extends RecyclerView.Adapter<FeaturedReviewAdapter.ViewHolder> {
 
-    private List<FeaturedReview> reviewList;
+    private final List<FeaturedReview> reviewList;
 
     public FeaturedReviewAdapter(List<FeaturedReview> reviewList) {
         this.reviewList = reviewList;
@@ -73,7 +73,10 @@ public class FeaturedReviewAdapter extends RecyclerView.Adapter<FeaturedReviewAd
         Glide.with(holder.itemView.getContext()).load(review.bookCoverUrl).placeholder(R.drawable.bacl).into(holder.ivBookCover);
 
         holder.layoutBookInfo.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            Class<?> activityClass = "SÁCH ĐIỆN TỬ".equalsIgnoreCase(review.bookType) || "EBOOK".equalsIgnoreCase(review.bookType) ? 
+                com.example.a23110035_23110060.view.activity.EbookDetailActivity.class : 
+                com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class;
+            Intent intent = new Intent(v.getContext(), activityClass);
             intent.putExtra("bookId", review.bookId);
             v.getContext().startActivity(intent);
         });

@@ -23,8 +23,8 @@ public class EbookChaptersBottomSheet extends BottomSheetDialogFragment {
         void onChapterSelected(int index);
     }
 
-    private List<String> chapterTitles;
-    private ChapterListener listener;
+    private final List<String> chapterTitles;
+    private final ChapterListener listener;
     private int currentChapterIndex = -1;
 
     public EbookChaptersBottomSheet(List<String> chapterTitles, ChapterListener listener) {

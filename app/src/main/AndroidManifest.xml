@@ -37,7 +37,10 @@
             android:name=".view.activity.MainActivity"
             android:exported="false" />
         <activity
-            android:name=".view.activity.BookDetailActivity"
+            android:name=".view.activity.AudiobookDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.activity.EbookDetailActivity"
             android:exported="false" />
         <activity
             android:name=".view.activity.BookListActivity"

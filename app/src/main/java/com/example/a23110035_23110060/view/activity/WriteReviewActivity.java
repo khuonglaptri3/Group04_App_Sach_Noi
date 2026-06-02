@@ -40,7 +40,7 @@ public class WriteReviewActivity extends AppCompatActivity {
     private String bookCoverUrl;
     private String bookType;
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
 
     private ImageView ivBookCover;
     private TextView tvReviewType;

@@ -56,15 +56,15 @@ public class LibraryFragment extends Fragment {
     private RecyclerView rvLibraryBooks;
     private SwipeRefreshLayout swipeRefresh;
     private View layoutEmpty;
-    private OkHttpClient client = new OkHttpClient();
-    private List<LibraryBook> libraryBooks = new ArrayList<>();
+    private final OkHttpClient client = new OkHttpClient();
+    private final List<LibraryBook> libraryBooks = new ArrayList<>();
     private LibraryBookAdapter adapter;
     private SessionManager sessionManager;
     private String currentTabFilter = "recent";
     private String currentFormatFilter = "all";
     private com.google.android.material.tabs.TabLayout tabLayoutLibrary;
     private com.google.android.material.chip.ChipGroup chipGroupFormat;
-    private Handler progressHandler = new Handler();
+    private final Handler progressHandler = new Handler();
     private Runnable progressRunnable;
     private ObjectAnimator rotateAnimator;
 
@@ -134,11 +134,10 @@ public class LibraryFragment extends Fragment {
                 ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
                 Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
 
-                com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
-                boolean isPlaying = PlayerManager.getInstance().isPlaying();
-                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
-
-                handleRotation(ivCover, isPlaying);
+                android.widget.ImageButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
+                if (btnPlay != null) {
+                    btnPlay.setImageResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                }  handleRotation(ivCover, PlayerManager.getInstance().isPlaying());
             } else {
                 miniPlayer.setVisibility(View.GONE);
             }
@@ -231,9 +230,16 @@ public class LibraryFragment extends Fragment {
         chipGroupFormat.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int id = checkedIds.get(0);
-            if (id == R.id.chipAll) currentFormatFilter = "all";
-            else if (id == R.id.chipAudiobook) currentFormatFilter = "audiobook";
-            else if (id == R.id.chipEbook) currentFormatFilter = "ebook";
+            if (id == R.id.chipAll) {
+                currentFormatFilter = "all";
+                adapter.setPreferredType(null);
+            } else if (id == R.id.chipAudiobook) {
+                currentFormatFilter = "audiobook";
+                adapter.setPreferredType("audiobook");
+            } else if (id == R.id.chipEbook) {
+                currentFormatFilter = "ebook";
+                adapter.setPreferredType("ebook");
+            }
             fetchLibraryData();
         });
     }
@@ -287,6 +293,8 @@ public class LibraryFragment extends Fragment {
                             lb.setAuthor(authorObj != null ? authorObj.optString("name") : "Unknown");
                             lb.setCoverUrl(bookObj.optString("cover_url"));
                             lb.setPremium(bookObj.optBoolean("is_premium_only"));
+                            lb.setAudiobook(isAudiobook);
+                            lb.setEbook(isEbook);
                             lb.setProgress(item.optInt("progress", 0));
                             int timeRemaining = item.optInt("time_remaining_minutes", 0);
                             lb.setTimeRemaining(timeRemaining > 0 ? "Còn " + (timeRemaining/60) + "g" : "");

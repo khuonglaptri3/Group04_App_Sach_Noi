@@ -25,7 +25,7 @@ import okhttp3.Response;
 
 public class SupabaseHelper {
     private static final String TAG = "SupabaseHelper";
-    private static OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient client = new OkHttpClient();
 
     public interface RefreshCallback {
         void onSuccess(String newToken);

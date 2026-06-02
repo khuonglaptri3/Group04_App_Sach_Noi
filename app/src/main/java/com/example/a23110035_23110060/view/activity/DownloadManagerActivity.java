@@ -43,8 +43,8 @@ public class DownloadManagerActivity extends AppCompatActivity {
     private LinearLayout layoutEmptyDownloads;
     private ProgressBar progressBar;
     private DownloadAdapter adapter;
-    private List<DownloadItem> downloadList = new ArrayList<>();
-    private OkHttpClient client = new OkHttpClient();
+    private final List<DownloadItem> downloadList = new ArrayList<>();
+    private final OkHttpClient client = new OkHttpClient();
     private SessionManager sessionManager;
 
     @Override

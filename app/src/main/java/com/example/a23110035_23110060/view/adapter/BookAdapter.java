@@ -2,7 +2,7 @@ package com.example.a23110035_23110060.view.adapter;
 
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.activity.BookDetailActivity;
+
 
 import com.example.a23110035_23110060.model.Book;
 
@@ -18,11 +18,16 @@ import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder> {
-    private List<Book> books;
+    private final List<Book> books;
     private int layoutResId = R.layout.item_book_card; // Mặc định
+    private String preferredType = null;
 
     public BookAdapter(List<Book> books) {
         this.books = books;
+    }
+
+    public void setPreferredType(String preferredType) {
+        this.preferredType = preferredType;
     }
 
     public BookAdapter(List<Book> books, int layoutResId) {
@@ -52,7 +57,19 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder
         holder.badgePremium.setVisibility(book.isPremiumOnly() ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            Class<?> activityClass;
+            if ("ebook".equals(preferredType)) {
+                activityClass = com.example.a23110035_23110060.view.activity.EbookDetailActivity.class;
+            } else if ("audio".equals(preferredType)) {
+                activityClass = com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class;
+            } else {
+                // Mặc định ưu tiên audiobook nếu cả 2, hoặc tùy theo cờ
+                activityClass = book.isAudiobook() ? 
+                    com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class : 
+                    com.example.a23110035_23110060.view.activity.EbookDetailActivity.class;
+            }
+                
+            Intent intent = new Intent(v.getContext(), activityClass);
             intent.putExtra("bookId", book.getId());
             v.getContext().startActivity(intent);
         });

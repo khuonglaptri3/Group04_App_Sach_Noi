@@ -20,6 +20,8 @@ public class BookEntity {
     
     public long cachedAt; // To know when we fetched it last time
     public boolean isFeatured; // To quickly query featured books
+    public boolean isAudiobook;
+    public boolean isEbook;
 
     public BookEntity(@NonNull String id) {
         this.id = id;

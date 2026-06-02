@@ -3,7 +3,7 @@ package com.example.a23110035_23110060.view.bottomsheet;
 import com.example.a23110035_23110060.BuildConfig;
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.activity.BookDetailActivity;
+
 
 import com.example.a23110035_23110060.model.Book;
 import com.example.a23110035_23110060.controller.SessionManager;
@@ -57,8 +57,8 @@ public class AuthorDetailBottomSheet extends BottomSheetDialogFragment {
     private String authorAvatar;
 
     private boolean isBioExpanded = false;
-    private List<Book> allBooks = new ArrayList<>();
-    private List<Book> filteredBooks = new ArrayList<>();
+    private final List<Book> allBooks = new ArrayList<>();
+    private final List<Book> filteredBooks = new ArrayList<>();
     private AuthorBookAdapter adapter;
 
     private ProgressBar pbLoading;
@@ -185,13 +185,12 @@ public class AuthorDetailBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        // Fully expand the bottom sheet dialog by default
-        if (getDialog() instanceof BottomSheetDialog) {
-            BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
-            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (getDialog() instanceof com.google.android.material.bottomsheet.BottomSheetDialog) {
+            com.google.android.material.bottomsheet.BottomSheetDialog dialog = (com.google.android.material.bottomsheet.BottomSheetDialog) getDialog();
+            android.widget.FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
-                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                com.google.android.material.bottomsheet.BottomSheetBehavior<android.widget.FrameLayout> behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet);
+                behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
                 behavior.setSkipCollapsed(true);
             }
         }
@@ -374,7 +373,10 @@ public class AuthorDetailBottomSheet extends BottomSheetDialogFragment {
             // Navigation to detail
             View.OnClickListener clickListener = v -> {
                 Context context = v.getContext();
-                Intent intent = new Intent(context, BookDetailActivity.class);
+                Class<?> activityClass = book.isEbook() ? 
+                    com.example.a23110035_23110060.view.activity.EbookDetailActivity.class : 
+                    com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class;
+                Intent intent = new Intent(context, activityClass);
                 intent.putExtra("bookId", book.getId());
                 context.startActivity(intent);
                 dismiss(); // Dismiss bottom sheet when opening book

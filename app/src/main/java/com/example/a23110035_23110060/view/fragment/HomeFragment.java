@@ -42,11 +42,11 @@ import okhttp3.Response;
 
 public class HomeFragment extends Fragment {
 
-    private String[] titles = new String[]{"Sách nói", "Sách điện tử"};
+    private final String[] titles = new String[]{"Sách nói", "Sách điện tử"};
     private SessionManager sessionManager;
     private TextView tvGreeting;
     private OkHttpClient client;
-    private Handler progressHandler = new Handler();
+    private final Handler progressHandler = new Handler();
     private Runnable progressRunnable;
     private ObjectAnimator rotateAnimator;
 
@@ -106,11 +106,10 @@ public class HomeFragment extends Fragment {
                 ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
                 Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
 
-                com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
-                boolean isPlaying = PlayerManager.getInstance().isPlaying();
-                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
-
-                handleRotation(ivCover, isPlaying);
+                android.widget.ImageButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
+                if (btnPlay != null) {
+                    btnPlay.setImageResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                }  handleRotation(ivCover, PlayerManager.getInstance().isPlaying());
             } else {
                 miniPlayer.setVisibility(View.GONE);
             }

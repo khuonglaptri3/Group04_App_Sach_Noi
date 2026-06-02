@@ -26,9 +26,17 @@ import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.media.app.NotificationCompat.MediaStyle;
+
+import android.graphics.drawable.Drawable;
+import android.telephony.TelephonyManager;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 public class AudioPlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
 
@@ -45,6 +53,7 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
     private AudioManager audioManager;
     private AudioFocusRequest audioFocusRequest;
     private BroadcastReceiver noisyReceiver;
+    private BroadcastReceiver phoneStateReceiver;
 
     @Override
     public void onCreate() {
@@ -53,6 +62,7 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         initMediaSession();
         initAudioManager();
         registerNoisyReceiver();
+        registerPhoneStateReceiver();
     }
 
     private void createNotificationChannel() {
@@ -114,6 +124,24 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         registerReceiver(noisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
     }
 
+    private void registerPhoneStateReceiver() {
+        phoneStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (TelephonyManager.ACTION_PHONE_STATE_CHANGED.equals(intent.getAction())) {
+                    String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+                    if (TelephonyManager.EXTRA_STATE_RINGING.equals(state) ||
+                        TelephonyManager.EXTRA_STATE_OFFHOOK.equals(state)) {
+                        if (PlayerManager.getInstance().isPlaying()) {
+                            PlayerManager.getInstance().togglePlayPause();
+                        }
+                    }
+                }
+            }
+        };
+        registerReceiver(phoneStateReceiver, new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED));
+    }
+
     private boolean requestAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes playbackAttributes = new AudioAttributes.Builder()
@@ -146,6 +174,7 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_LOSS:
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 if (PlayerManager.getInstance().isPlaying()) {
                     PlayerManager.getInstance().togglePlayPause();
                 }
@@ -251,8 +280,27 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         builder.addAction(R.drawable.ic_skip_next, "Next", pendingNext);
         builder.addAction(R.drawable.ic_close, "Close", pendingStop);
 
-        Notification notification = builder.build();
-        startForeground(NOTIFICATION_ID, notification);
+        startForeground(NOTIFICATION_ID, builder.build());
+
+        // Load bitmap asynchronously for LargeIcon (blurred background in MediaStyle)
+        if (book.getCoverUrl() != null && !book.getCoverUrl().isEmpty()) {
+            Glide.with(this)
+                .asBitmap()
+                .load(book.getCoverUrl())
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        builder.setLargeIcon(resource);
+                        NotificationManager manager = getSystemService(NotificationManager.class);
+                        if (manager != null) {
+                            manager.notify(NOTIFICATION_ID, builder.build());
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
+        }
     }
 
     @Override
@@ -260,6 +308,9 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         super.onDestroy();
         if (noisyReceiver != null) {
             unregisterReceiver(noisyReceiver);
+        }
+        if (phoneStateReceiver != null) {
+            unregisterReceiver(phoneStateReceiver);
         }
         if (mediaSession != null) {
             mediaSession.release();

@@ -67,9 +67,9 @@ public class DiscoveryFragment extends Fragment {
     private ImageView btnClearSearch, ivSearchAction;
     private MaterialCardView cardSuggestions, cardFeaturedCollection;
     private OkHttpClient client;
-    private List<Book> suggestionList = new ArrayList<>();
+    private final List<Book> suggestionList = new ArrayList<>();
     private SuggestionAdapter suggestionAdapter;
-    private Handler searchHandler = new Handler(Looper.getMainLooper());
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable, progressRunnable;
     private ObjectAnimator rotateAnimator;
 
@@ -209,11 +209,12 @@ public class DiscoveryFragment extends Fragment {
                 ImageView ivCover = miniPlayer.findViewById(R.id.ivMiniCover);
                 Glide.with(this).load(currentBook.getCoverUrl()).placeholder(R.drawable.bacl).into(ivCover);
 
-                com.google.android.material.button.MaterialButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
-                boolean isPlaying = PlayerManager.getInstance().isPlaying();
-                btnPlay.setIconResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                android.widget.ImageButton btnPlay = miniPlayer.findViewById(R.id.btnMiniPlayPause);
+                if (btnPlay != null) {
+                    btnPlay.setImageResource(PlayerManager.getInstance().isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+                }
                 
-                handleRotation(ivCover, isPlaying);
+                handleRotation(ivCover, PlayerManager.getInstance().isPlaying());
             } else {
                 miniPlayer.setVisibility(View.GONE);
             }

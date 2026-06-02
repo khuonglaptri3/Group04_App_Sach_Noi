@@ -29,8 +29,8 @@ public class BookListActivity extends AppCompatActivity {
 
     private RecyclerView rvBookList;
     private BookAdapter adapter;
-    private List<Book> bookList = new ArrayList<>();
-    private OkHttpClient client = new OkHttpClient();
+    private final List<Book> bookList = new ArrayList<>();
+    private final OkHttpClient client = new OkHttpClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +47,13 @@ public class BookListActivity extends AppCompatActivity {
         rvBookList = findViewById(R.id.rvBookList);
         rvBookList.setLayoutManager(new GridLayoutManager(this, 2));
         adapter = new BookAdapter(bookList, R.layout.item_book_grid); // Sử dụng layout 2 cột mới
+        if (filter != null) {
+            if (filter.contains("is_ebook=eq.true")) {
+                adapter.setPreferredType("ebook");
+            } else if (filter.contains("is_audiobook=eq.true")) {
+                adapter.setPreferredType("audio");
+            }
+        }
         rvBookList.setAdapter(adapter);
 
         fetchBooks(filter);
@@ -83,13 +90,16 @@ public class BookListActivity extends AppCompatActivity {
                             JSONObject authorObj = obj.optJSONObject("authors");
                             String authorName = authorObj != null ? authorObj.optString("name") : "Unknown";
                             
-                            bookList.add(new Book(
+                            Book book = new Book(
                                 obj.getString("id"),
                                 obj.getString("title"),
                                 authorName,
                                 obj.optString("cover_url"),
                                 obj.optBoolean("is_premium_only")
-                            ));
+                            );
+                            book.setAudiobook(obj.optBoolean("is_audiobook", false));
+                            book.setEbook(obj.optBoolean("is_ebook", false));
+                            bookList.add(book);
                         }
                         runOnUiThread(() -> adapter.notifyDataSetChanged());
                     } catch (Exception e) {

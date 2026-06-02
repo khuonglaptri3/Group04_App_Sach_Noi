@@ -4,7 +4,6 @@ import com.example.a23110035_23110060.BuildConfig;
 import com.example.a23110035_23110060.R;
 
 import com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet;
-import com.example.a23110035_23110060.view.bottomsheet.AudioSettingsBottomSheet;
 
 import com.example.a23110035_23110060.model.Book;
 import com.example.a23110035_23110060.model.Chapter;
@@ -12,6 +11,7 @@ import com.example.a23110035_23110060.controller.PlayerManager;
 import com.example.a23110035_23110060.controller.SessionManager;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -34,7 +34,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
     private ImageView ivArtwork;
     
     private PlayerManager playerManager;
-    private float[] speeds = {0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
+    private final float[] speeds = {0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
     private int speedIndex = 1; // 1.0x
 
     @Override
@@ -42,25 +42,9 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
 
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_collapse), (v, windowInsets) -> {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, windowInsets) -> {
             androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
-            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.topMargin = insets.top + (int)(16 * getResources().getDisplayMetrics().density);
-            v.setLayoutParams(mlp);
-            return windowInsets;
-        });
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.btn_bookmark), (v, windowInsets) -> {
-            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
-            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.topMargin = insets.top + (int)(16 * getResources().getDisplayMetrics().density);
-            v.setLayoutParams(mlp);
-            return windowInsets;
-        });
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.ll_secondary_controls), (v, windowInsets) -> {
-            androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
-            android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.bottomMargin = insets.bottom + (int)(32 * getResources().getDisplayMetrics().density);
-            v.setLayoutParams(mlp);
+            v.setPadding(0, insets.top, 0, insets.bottom);
             return windowInsets;
         });
 
@@ -83,6 +67,12 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                     seekBar.setProgress(currentMs);
                     tvCurrentTime.setText(formatTime(currentMs));
                     tvTotalTime.setText("-" + formatTime(totalMs - currentMs));
+                    
+                    TextView tvHeader = findViewById(R.id.tv_header);
+                    if (tvHeader != null) {
+                        String title = playerManager.getCurrentChapterTitle();
+                        if (title != null) tvHeader.setText(title.toUpperCase());
+                    }
                 });
             }
 
@@ -113,7 +103,29 @@ public class  AudioPlayerActivity extends AppCompatActivity {
 
     private void setupListeners() {
         btnCollapse.setOnClickListener(v -> finish());
-        findViewById(R.id.btn_bookmark).setOnClickListener(v -> saveAudioBookmark());
+        
+        findViewById(R.id.btn_bookmark).setOnClickListener(v -> {
+            Book book = playerManager.getCurrentBook();
+            if (book != null) {
+                int positionSeconds = playerManager.getCurrentPosition() / 1000;
+                com.example.a23110035_23110060.view.bottomsheet.AudioBookmarkAddFragment.newInstance(book.getId(), positionSeconds)
+                    .show(getSupportFragmentManager(), "AudioBookmarkAdd");
+            }
+        });
+        
+        View btnBookmarks = findViewById(R.id.ll_bookmarks);
+        if (btnBookmarks != null) {
+            btnBookmarks.setOnClickListener(v -> {
+                Book book = playerManager.getCurrentBook();
+                if (book != null) {
+                    com.example.a23110035_23110060.view.bottomsheet.AudioBookmarkListFragment.newInstance(book.getId())
+                        .show(getSupportFragmentManager(), "AudioBookmarkList");
+                }
+            });
+        }
+        
+
+        
         fabPlay.setOnClickListener(v -> playerManager.togglePlayPause());
         btnReplay10.setOnClickListener(v -> playerManager.seekBack(10000));
         btnForward30.setOnClickListener(v -> playerManager.seekForward(30000));
@@ -123,7 +135,16 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) playerManager.seekTo(progress);
+                if (fromUser) {
+                    playerManager.seekTo(progress);
+                    tvCurrentTime.setText(formatTime(progress));
+                    tvTotalTime.setText("-" + formatTime(seekBar.getMax() - progress));
+                    TextView tvHeader = findViewById(R.id.tv_header);
+                    if (tvHeader != null) {
+                        String title = playerManager.getCurrentChapterTitle();
+                        if (title != null) tvHeader.setText(title.toUpperCase());
+                    }
+                }
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -133,34 +154,32 @@ public class  AudioPlayerActivity extends AppCompatActivity {
 
         findViewById(R.id.ll_speed).setOnClickListener(v -> {
             float currentSpeed = speeds[speedIndex];
-            AudioSettingsBottomSheet bottomSheet = new AudioSettingsBottomSheet(new AudioSettingsBottomSheet.AudioSettingsListener() {
-                @Override
-                public void onSpeedChanged(float speed) {
+            com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment bottomSheet = 
+                new com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment(currentSpeed, speed -> {
                     playerManager.setPlaybackSpeed(speed);
                     tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", speed));
-                    // Update index if it matches our presets
                     for (int i = 0; i < speeds.length; i++) {
                         if (Math.abs(speeds[i] - speed) < 0.01f) {
                             speedIndex = i;
                             break;
                         }
                     }
-                }
-
-                @Override
-                public void onTimerSet(int minutes) {
-                    if (minutes > 0) {
-                        playerManager.setSleepTimer(minutes);
-                    } else {
-                        playerManager.cancelSleepTimer();
-                    }
-                }
-            }, currentSpeed);
-            bottomSheet.show(getSupportFragmentManager(), "AudioSettings");
+                });
+            bottomSheet.show(getSupportFragmentManager(), "SpeedSettings");
         });
 
         findViewById(R.id.ll_timer).setOnClickListener(v -> {
-            findViewById(R.id.ll_speed).performClick(); // Same bottom sheet
+            com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment bottomSheet = 
+                new com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment(minutes -> {
+                    if (minutes > 0) {
+                        playerManager.setSleepTimer(minutes);
+                        Toast.makeText(this, "Sẽ tắt sau " + minutes + " phút", Toast.LENGTH_SHORT).show();
+                    } else {
+                        playerManager.cancelSleepTimer();
+                        Toast.makeText(this, "Đã tắt hẹn giờ", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            bottomSheet.show(getSupportFragmentManager(), "TimerSettings");
         });
 
         findViewById(R.id.ll_chapters).setOnClickListener(v -> {
@@ -211,6 +230,12 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                     .placeholder(R.drawable.bacl)
                     .error(R.drawable.bacl)
                     .into(ivArtwork);
+            }
+            
+            TextView tvHeader = findViewById(R.id.tv_header);
+            if (tvHeader != null) {
+                String chapterTitle = playerManager.getCurrentChapterTitle();
+                if (chapterTitle != null) tvHeader.setText(chapterTitle.toUpperCase());
             }
 
             // Sync progress immediately on resume or update
@@ -278,7 +303,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                 .post(body)
                 .build();
 
-        new okhttp3.OkHttpClient().newCall(request).enqueue(new okhttp3.Callback() {
+        com.example.a23110035_23110060.controller.NetworkClient.getClient(this).newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(@androidx.annotation.NonNull okhttp3.Call call, @androidx.annotation.NonNull java.io.IOException e) {}
             @Override
