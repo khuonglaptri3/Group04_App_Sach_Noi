@@ -41,17 +41,7 @@ public class AudiobookDetailActivity extends BaseBookDetailActivity {
 
     @Override
     protected void setupAdditionalUI() {
-        // Inflate TOC for Audiobook
-        FrameLayout containerToc = findViewById(R.id.container_toc);
-        if (containerToc != null) {
-            View tocView = LayoutInflater.from(this).inflate(R.layout.layout_toc_audiobook, containerToc, false);
-            containerToc.addView(tocView);
-            
-            llChaptersContainer = tocView.findViewById(R.id.ll_chapters_container);
-            btnViewAllChapters = tocView.findViewById(R.id.btn_view_all_chapters);
-            
-            btnViewAllChapters.setOnClickListener(v -> showAllChaptersBottomSheet());
-        }
+        // TOC removed from Book Detail
         
         // Hide Ebook button for purely audiobook
         View btnRead = findViewById(R.id.btn_read);

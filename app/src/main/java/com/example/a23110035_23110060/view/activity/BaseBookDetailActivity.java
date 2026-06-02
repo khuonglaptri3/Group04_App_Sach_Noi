@@ -506,10 +506,15 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
     }
 
     protected void fetchChaptersAndPlay() {
+        String userId = sessionManager.getUserId();
+        String token = sessionManager.getAccessToken();
+        String authHeader = (token != null) ? "Bearer " + token : "Bearer " + BuildConfig.SUPABASE_ANON_KEY;
+
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/book_chapters?book_id=eq." + bookId + "&order=chapter_index.asc";
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", authHeader)
                 .get()
                 .build();
                 

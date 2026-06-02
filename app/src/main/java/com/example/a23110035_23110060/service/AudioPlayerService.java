@@ -142,7 +142,10 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         registerReceiver(phoneStateReceiver, new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED));
     }
 
+    private boolean hasAudioFocus = false;
+
     private boolean requestAudioFocus() {
+        if (hasAudioFocus) return true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes playbackAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -154,20 +157,25 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
                     .setOnAudioFocusChangeListener(this)
                     .build();
             int res = audioManager.requestAudioFocus(audioFocusRequest);
-            return res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+            hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+            return hasAudioFocus;
         } else {
             int res = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-            return res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+            hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+            return hasAudioFocus;
         }
     }
 
     private void abandonAudioFocus() {
+        hasAudioFocus = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
             audioManager.abandonAudioFocusRequest(audioFocusRequest);
         } else {
             audioManager.abandonAudioFocus(this);
         }
     }
+
+    private boolean wasPlayingBeforeFocusLoss = false;
 
     @Override
     public void onAudioFocusChange(int focusChange) {
@@ -176,13 +184,15 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 if (PlayerManager.getInstance().isPlaying()) {
+                    wasPlayingBeforeFocusLoss = true;
                     PlayerManager.getInstance().togglePlayPause();
                 }
                 break;
             case AudioManager.AUDIOFOCUS_GAIN:
-                if (!PlayerManager.getInstance().isPlaying() && PlayerManager.getInstance().getCurrentBook() != null) {
+                if (wasPlayingBeforeFocusLoss && !PlayerManager.getInstance().isPlaying() && PlayerManager.getInstance().getCurrentBook() != null) {
                     PlayerManager.getInstance().togglePlayPause();
                 }
+                wasPlayingBeforeFocusLoss = false;
                 break;
         }
     }
@@ -316,6 +326,13 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
             mediaSession.release();
         }
         abandonAudioFocus();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        PlayerManager.getInstance().release();
+        stopSelf();
     }
 
     @Nullable

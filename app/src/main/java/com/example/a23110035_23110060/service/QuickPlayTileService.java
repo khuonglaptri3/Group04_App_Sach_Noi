@@ -39,7 +39,15 @@ public class QuickPlayTileService extends TileService {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.setAction("ACTION_RESUME_LAST_BOOK");
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivityAndCollapse(intent);
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
+                            this, 0, intent, 
+                            android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+                    startActivityAndCollapse(pendingIntent);
+                } else {
+                    startActivityAndCollapse(intent);
+                }
             }
         }
     }
