@@ -180,57 +180,63 @@ public class ProfileContentFragment extends Fragment {
         String token = sessionManager.getAccessToken();
         if (userId == null || token == null) return;
 
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/rpc/get_user_reading_summary";
-        JSONObject bodyJson = new JSONObject();
-        try {
-            bodyJson.put("target_user_id", userId);
-        } catch (Exception e) {
-            return;
-        }
-
-        RequestBody body = RequestBody.create(
-                bodyJson.toString(),
-                MediaType.parse("application/json; charset=utf-8")
-        );
-
-        Request request = new Request.Builder()
-                .url(url)
+        // Fetch books_read_count and listening_hours from profiles
+        String urlProfile = BuildConfig.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId + "&select=books_read_count,listening_hours";
+        Request reqProfile = new Request.Builder()
+                .url(urlProfile)
                 .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
                 .addHeader("Authorization", "Bearer " + token)
-                .post(body)
+                .get()
                 .build();
-
-        client.newCall(request).enqueue(new Callback() {
+                
+        client.newCall(reqProfile).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e("ProfileContent", "Failed to fetch summary", e);
-            }
-
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        JSONObject result = new JSONObject(response.body().string());
-                        int booksReadCount = result.optInt("books_read_count", 0);
-                        double listeningHours = result.optDouble("listening_hours", 0.0);
-                        int totalBadges = result.optInt("total_badges_unlocked", 0);
+                        org.json.JSONArray array = new org.json.JSONArray(response.body().string());
+                        if (array.length() > 0) {
+                            JSONObject profile = array.getJSONObject(0);
+                            int booksReadCount = profile.optInt("books_read_count", 0);
+                            double listeningHours = profile.optDouble("listening_hours", 0.0);
+                            if (isAdded()) {
+                                requireActivity().runOnUiThread(() -> {
+                                    if (tvBooksReadCount != null) tvBooksReadCount.setText(String.valueOf(booksReadCount));
+                                    if (tvListeningHours != null) tvListeningHours.setText(String.format(Locale.getDefault(), "%.1f", listeningHours));
+                                });
+                            }
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        });
 
+        // Fetch total badges
+        String urlBadges = BuildConfig.SUPABASE_URL + "/rest/v1/user_badges?user_id=eq." + userId + "&select=badge_id";
+        Request reqBadges = new Request.Builder()
+                .url(urlBadges)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+                
+        client.newCall(reqBadges).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        org.json.JSONArray array = new org.json.JSONArray(response.body().string());
+                        int totalBadges = array.length();
                         if (isAdded()) {
                             requireActivity().runOnUiThread(() -> {
-                                if (tvBooksReadCount != null) {
-                                    tvBooksReadCount.setText(String.valueOf(booksReadCount));
-                                }
-                                if (tvListeningHours != null) {
-                                    tvListeningHours.setText(String.format(Locale.getDefault(), "%.0f", listeningHours));
-                                }
-                                if (tvBadgesCount != null) {
-                                    tvBadgesCount.setText(String.valueOf(totalBadges));
-                                }
+                                if (tvBadgesCount != null) tvBadgesCount.setText(String.valueOf(totalBadges));
                             });
                         }
-                    } catch (Exception e) {
-                        Log.e("ProfileContent", "Error parsing summary", e);
-                    }
+                    } catch (Exception e) {}
                 }
             }
         });

@@ -363,10 +363,6 @@ public class EbookReaderActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         pages.clear();
                         pages.addAll(newPages);
-                        chapterStartPages.clear();
-                        chapterStartPages.addAll(newChapterStarts);
-                        chapterTitles.clear();
-                        chapterTitles.addAll(newChapterTitles);
                         
                         pagerAdapter.updatePages(pages);
                         applyHighlightsToPages();

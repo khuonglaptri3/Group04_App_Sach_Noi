@@ -52,7 +52,8 @@
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true"/>
+                android:focusable="true"
+                android:visibility="gone"/>
 
         </com.google.android.material.appbar.MaterialToolbar>
 

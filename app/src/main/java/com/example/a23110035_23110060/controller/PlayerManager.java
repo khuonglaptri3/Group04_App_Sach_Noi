@@ -68,6 +68,10 @@ public class PlayerManager {
     }
 
     public void playBook(Book book) {
+        playBook(book, -1);
+    }
+
+    public void playBook(Book book, int startPositionMs) {
         if (book == null || book.getAudioUrl() == null || book.getAudioUrl().isEmpty()) {
             return;
         }
@@ -92,7 +96,11 @@ public class PlayerManager {
             mediaPlayer.setOnPreparedListener(mp -> {
                 isPrepared = true;
                 setPlaybackSpeed(currentSpeed);
-                fetchLastProgressAndPlay();
+                if (startPositionMs >= 0) {
+                    startPlayingFrom(startPositionMs);
+                } else {
+                    fetchLastProgressAndPlay();
+                }
             });
         } catch (IOException e) {
             Log.e("PlayerManager", "Error", e);
@@ -154,11 +162,7 @@ public class PlayerManager {
 
     private void startPlayingFrom(int position) {
         handler.post(() -> {
-            if (currentChapterIndex >= 0 && chapters != null && !chapters.isEmpty()) {
-                mediaPlayer.seekTo(chapters.get(currentChapterIndex).getStartTime());
-            } else if (position > 0) {
-                mediaPlayer.seekTo(position);
-            }
+            mediaPlayer.seekTo(position);
             mediaPlayer.start();
             isPlaying = true;
             if (callback != null) callback.onStateChange(true);
@@ -179,7 +183,7 @@ public class PlayerManager {
         int total = mediaPlayer.getDuration();
         int percent = total > 0 ? (int) (((float) currentPos / total) * 100) : 0;
 
-        String url = com.example.a23110035_23110060.BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + userId + "&book_id=eq." + currentBook.getId();
+        String url = com.example.a23110035_23110060.BuildConfig.SUPABASE_URL + "/rest/v1/progress?on_conflict=user_id,book_id";
         org.json.JSONObject json = new org.json.JSONObject();
         try {
             json.put("user_id", userId);
@@ -243,10 +247,7 @@ public class PlayerManager {
 
     public void setChapters(List<Chapter> chapters) {
         this.chapters = chapters;
-        this.currentChapterIndex = 0;
-        if (chapters != null && !chapters.isEmpty()) {
-            playChapter(currentChapterIndex);
-        }
+        // Do not force playChapter(0) here, it overwrites the progress state
     }
 
     public List<Chapter> getChapters() { return chapters; }
@@ -368,6 +369,8 @@ public class PlayerManager {
         return "PLAYING FROM LIBRARY";
     }
 
+    private int progressSaveCounter = 0;
+
     private void startProgressUpdate() {
         handler.removeCallbacksAndMessages(null);
         handler.postDelayed(new Runnable() {
@@ -379,7 +382,13 @@ public class PlayerManager {
                         int total = mediaPlayer.getDuration();
                         if (callback != null) callback.onProgress(current, total);
                         
-                        if (currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
+                        progressSaveCounter++;
+                        if (progressSaveCounter >= 10) {
+                            autoSaveProgress();
+                            progressSaveCounter = 0;
+                        }
+
+                        if (chapters != null && currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
                             Chapter currentChapter = chapters.get(currentChapterIndex);
                             if (currentChapter.getEndTime() > 0 && current >= currentChapter.getEndTime()) {
                                 nextChapter();

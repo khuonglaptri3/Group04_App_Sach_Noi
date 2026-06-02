@@ -201,12 +201,6 @@
                 android:textColor="?attr/colorPrimary"
                 android:textStyle="bold" />
 
-            <!-- Table of Contents Container -->
-            <FrameLayout
-                android:id="@+id/container_toc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
 
             <!-- Reviews & Ratings -->
             <TextView
