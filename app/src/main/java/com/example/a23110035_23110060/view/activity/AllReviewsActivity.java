@@ -31,8 +31,8 @@ public class AllReviewsActivity extends AppCompatActivity {
 
     private RecyclerView rvAllReviews;
     private ReviewAdapter adapter;
-    private List<ReviewAdapter.Review> reviewList = new ArrayList<>();
-    private OkHttpClient client = new OkHttpClient();
+    private final List<ReviewAdapter.Review> reviewList = new ArrayList<>();
+    private final OkHttpClient client = new OkHttpClient();
     private String bookId;
     private LinearProgressIndicator progressIndicator;
     private SessionManager sessionManager;

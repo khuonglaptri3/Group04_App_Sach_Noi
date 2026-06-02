@@ -8,7 +8,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 public class HomePagerAdapter extends FragmentStateAdapter {
 
-    private String[] titles;
+    private final String[] titles;
 
     public HomePagerAdapter(@NonNull Fragment fragment, String[] titles) {
         super(fragment);

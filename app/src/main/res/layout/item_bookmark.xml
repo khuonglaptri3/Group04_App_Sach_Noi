@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="?attr/selectableItemBackground">
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="top">
+        
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_play_circle_orange"
+            android:layout_marginEnd="16dp"/>
+            
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            
+            <TextView
+                android:id="@+id/tv_chapter_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LỜI NÓI ĐẦU"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+                
+            <TextView
+                android:id="@+id/tv_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Trích đoạn 03:46"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp"/>
+                
+        </LinearLayout>
+        
+        <ImageView
+            android:id="@+id/btn_more"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_more_vert"
+            app:tint="#A0AABF"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+    </LinearLayout>
+    
+    <TextView
+        android:id="@+id/tv_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="56dp"
+        android:background="@drawable/bg_note_input"
+        android:text="Thêm ghi chú..."
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp"
+        android:padding="16dp"/>
+</LinearLayout>

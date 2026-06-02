@@ -1,11 +1,11 @@
 package com.example.a23110035_23110060.model;
 
 public class DownloadItem {
-    private String bookId;
-    private String title;
-    private String fileType; // "audio" or "ebook"
-    private String coverUrl;
-    private long sizeBytes;
+    private final String bookId;
+    private final String title;
+    private final String fileType; // "audio" or "ebook"
+    private final String coverUrl;
+    private final long sizeBytes;
 
     public DownloadItem(String bookId, String title, String fileType, String coverUrl, long sizeBytes) {
         this.bookId = bookId;

@@ -23,7 +23,7 @@ import org.json.JSONObject;
 public class PremiumActivity extends AppCompatActivity {
 
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

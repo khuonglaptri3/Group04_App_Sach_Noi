@@ -51,8 +51,9 @@
                     <TextView
                         android:id="@+id/tv_toolbar_title"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:textSize="22sp"
                         android:textColor="#1D1B20"
                         android:textStyle="bold"
                         android:maxLines="1"
@@ -62,9 +63,11 @@
                     <TextView
                         android:id="@+id/tv_toolbar_chapter"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:textSize="22sp"
                         android:textColor="#49454F"
+                        android:textStyle="bold"
                         android:maxLines="1"
                         android:ellipsize="end"
                         tools:text="Chương 1" />

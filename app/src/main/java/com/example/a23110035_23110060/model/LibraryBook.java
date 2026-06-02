@@ -14,6 +14,8 @@ public class LibraryBook {
     private boolean isPurchased;
     private boolean isDownloaded;
     private boolean isFavorite;
+    private boolean isAudiobook;
+    private boolean isEbook;
 
     public LibraryBook(String title, String author, int coverResId, boolean isPremium, int progress, String timeRemaining) {
         this.title = title;
@@ -57,4 +59,10 @@ public class LibraryBook {
 
     public boolean isFavorite() { return isFavorite; }
     public void setFavorite(boolean favorite) { isFavorite = favorite; }
+    
+    public boolean isAudiobook() { return isAudiobook; }
+    public void setAudiobook(boolean audiobook) { isAudiobook = audiobook; }
+    
+    public boolean isEbook() { return isEbook; }
+    public void setEbook(boolean ebook) { isEbook = ebook; }
 }

@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<Section> sections;
+    private final List<Section> sections;
 
     public SectionAdapter(List<Section> sections) {
         this.sections = sections;
@@ -50,7 +50,15 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (holder instanceof CarouselViewHolder) {
             CarouselViewHolder h = (CarouselViewHolder) holder;
             h.tvTitle.setText(section.getTitle());
-            h.rvCarousel.setAdapter(new BookAdapter(section.getBooks()));
+            BookAdapter adapter = new BookAdapter(section.getBooks());
+            if (section.getFilter() != null) {
+                if (section.getFilter().contains("is_ebook=eq.true")) {
+                    adapter.setPreferredType("ebook");
+                } else if (section.getFilter().contains("is_audiobook=eq.true")) {
+                    adapter.setPreferredType("audio");
+                }
+            }
+            h.rvCarousel.setAdapter(adapter);
             h.rvCarousel.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
             
             h.tvSeeAll.setOnClickListener(v -> {
@@ -59,15 +67,15 @@ public class SectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 intent.putExtra("filter", section.getFilter());
                 v.getContext().startActivity(intent);
             });
-        } else if (holder instanceof CategoriesViewHolder) {
-            CategoriesViewHolder h = (CategoriesViewHolder) holder;
-            h.rvCategories.setAdapter(new CategoryAdapter(section.getCategories()));
-            h.rvCategories.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
         } else if (holder instanceof BannerViewHolder) {
             BannerViewHolder h = (BannerViewHolder) holder;
             h.itemView.findViewById(R.id.cardBanner).setOnClickListener(v -> {
                 Toast.makeText(v.getContext(), "Nhận quà", Toast.LENGTH_SHORT).show();
             });
+        } else if (holder instanceof CategoriesViewHolder) {
+            CategoriesViewHolder h = (CategoriesViewHolder) holder;
+            h.rvCategories.setAdapter(new CategoryAdapter(section.getCategories()));
+            h.rvCategories.setLayoutManager(new LinearLayoutManager(h.itemView.getContext(), RecyclerView.HORIZONTAL, false));
         } else if (holder instanceof FeaturedReviewsViewHolder) {
             FeaturedReviewsViewHolder h = (FeaturedReviewsViewHolder) holder;
             h.tvTitle.setText(section.getTitle());

@@ -9,8 +9,8 @@ public class SessionManager {
     private static final String KEY_USER_NAME = "userName";
     private static final String KEY_ACCESS_TOKEN = "accessToken";
     private static final String KEY_REFRESH_TOKEN = "refreshToken";
-    private SharedPreferences pref;
-    private SharedPreferences.Editor editor;
+    private final SharedPreferences pref;
+    private final SharedPreferences.Editor editor;
 
     public SessionManager(Context context) {
         pref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);

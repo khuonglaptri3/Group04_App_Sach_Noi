@@ -47,7 +47,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private MaterialButton btnSave;
     
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     
     private Uri selectedImageUri;
     private String currentAvatarUrl;

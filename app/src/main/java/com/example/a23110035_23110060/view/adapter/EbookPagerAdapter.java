@@ -18,9 +18,15 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
     private float currentTextSize = 18f;
     private int currentTextColor = 0xFF1D1B20;
     private android.view.ActionMode.Callback customSelectionCallback;
+    private String searchQuery = "";
 
     public EbookPagerAdapter(List<CharSequence> pages) {
         this.pages = pages;
+    }
+
+    public void setSearchQuery(String query) {
+        this.searchQuery = query;
+        notifyDataSetChanged();
     }
 
     public void updatePages(List<CharSequence> newPages) {
@@ -51,7 +57,22 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
 
     @Override
     public void onBindViewHolder(@NonNull PageViewHolder holder, int position) {
-        holder.tvPageContent.setText(pages.get(position));
+        CharSequence pageContent = pages.get(position);
+        
+        if (searchQuery != null && !searchQuery.isEmpty()) {
+            android.text.SpannableString spannable = new android.text.SpannableString(pageContent);
+            String textLower = pageContent.toString().toLowerCase();
+            String queryLower = searchQuery.toLowerCase();
+            int index = textLower.indexOf(queryLower);
+            while (index >= 0) {
+                spannable.setSpan(new android.text.style.BackgroundColorSpan(0x80FFFF00), index, index + queryLower.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                index = textLower.indexOf(queryLower, index + queryLower.length());
+            }
+            holder.tvPageContent.setText(spannable);
+        } else {
+            holder.tvPageContent.setText(pageContent);
+        }
+        
         holder.tvPageContent.setTextSize(currentTextSize);
         holder.tvPageContent.setTextColor(currentTextColor);
 
@@ -63,6 +84,9 @@ public class EbookPagerAdapter extends RecyclerView.Adapter<EbookPagerAdapter.Pa
         if (customSelectionCallback != null) {
             holder.tvPageContent.setCustomSelectionActionModeCallback(customSelectionCallback);
         }
+        
+        // Ngăn View bị tái sử dụng để tránh lỗi kẹt SelectionActionMode của TextView
+        holder.setIsRecyclable(false);
     }
 
     @Override

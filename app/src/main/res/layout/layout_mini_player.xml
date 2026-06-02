@@ -69,24 +69,24 @@
                     tools:text="Dale Carnegie" />
 
             </LinearLayout>
-            <com.google.android.material.button.MaterialButton
+            <ImageButton
                 android:id="@+id/btnMiniPlayPause"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Phát / Tạm dừng"
-                app:icon="@drawable/ic_pause"
-                app:iconSize="22dp"
-                app:iconTint="?attr/colorPrimary" />
-            <com.google.android.material.button.MaterialButton
+                android:src="@drawable/ic_pause"
+                android:scaleType="centerInside"
+                app:tint="?attr/colorPrimary" />
+            <ImageButton
                 android:id="@+id/btnMiniNext"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Chương tiếp theo"
-                app:icon="@drawable/ic_skip_next"
-                app:iconSize="20dp"
-                app:iconTint="?attr/colorOnSurfaceVariant" />
+                android:src="@drawable/ic_skip_next"
+                android:scaleType="centerInside"
+                app:tint="?attr/colorOnSurfaceVariant" />
 
         </LinearLayout>
     </LinearLayout>

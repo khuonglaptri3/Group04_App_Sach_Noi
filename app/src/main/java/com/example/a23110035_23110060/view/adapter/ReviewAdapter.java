@@ -20,7 +20,7 @@ import java.util.Locale;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder> {
 
-    private List<Review> reviewList;
+    private final List<Review> reviewList;
 
     public interface ReviewInteractionListener {
         void onLikeClick(Review review, int position);
@@ -52,7 +52,15 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
         holder.tvLikeCount.setText(String.valueOf(review.likeCount));
 
         if (review.avatarUrl != null && !review.avatarUrl.isEmpty() && !review.avatarUrl.equals("null")) {
-            Glide.with(holder.itemView.getContext()).load(review.avatarUrl).placeholder(R.drawable.bacl).into(holder.ivAvatar);
+            String url = review.avatarUrl;
+            if (!url.startsWith("http")) {
+                url = com.example.a23110035_23110060.BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + url;
+            }
+            Glide.with(holder.itemView.getContext())
+                    .load(url)
+                    .circleCrop()
+                    .placeholder(R.drawable.bacl)
+                    .into(holder.ivAvatar);
         } else {
             holder.ivAvatar.setImageResource(R.drawable.bacl);
         }

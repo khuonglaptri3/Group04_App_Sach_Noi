@@ -37,7 +37,7 @@ public class SecurityPrivacyActivity extends AppCompatActivity {
     private MaterialButton btnDeleteAccount;
     
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     private ProgressDialog progressDialog;
 
     @Override

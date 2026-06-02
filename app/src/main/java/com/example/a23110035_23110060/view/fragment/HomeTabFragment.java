@@ -42,7 +42,7 @@ public class HomeTabFragment extends Fragment {
     private RecyclerView rvSections;
     private SwipeRefreshLayout swipeRefresh;
     private OkHttpClient client;
-    private List<Section> sections = new ArrayList<>();
+    private final List<Section> sections = new ArrayList<>();
     private SectionAdapter adapter;
     private HomeViewModel viewModel;
 
@@ -87,13 +87,16 @@ public class HomeTabFragment extends Fragment {
             if (bookEntities != null && !bookEntities.isEmpty()) {
                 List<Book> books = new ArrayList<>();
                 for (BookEntity entity : bookEntities) {
-                    books.add(new Book(
+                    Book book = new Book(
                         entity.id,
                         entity.title,
                         entity.authorName,
                         entity.coverUrl,
                         false
-                    ));
+                    );
+                    book.setAudiobook(entity.isAudiobook);
+                    book.setEbook(entity.isEbook);
+                    books.add(book);
                 }
                 fetchCategories(books);
             } else {
@@ -174,7 +177,13 @@ public class HomeTabFragment extends Fragment {
                             JSONObject authorObj = bookObj != null ? bookObj.optJSONObject("authors") : null;
 
                             String reviewerName = profile != null ? profile.optString("full_name", "Ẩn danh") : "Ẩn danh";
-                            String avatarUrl = profile != null ? profile.optString("avatar_url") : null;
+                            String avatarUrl = profile != null ? profile.optString("avatar_url", null) : null;
+                            if (avatarUrl != null && avatarUrl.equals("null")) {
+                                avatarUrl = null;
+                            }
+                            if (avatarUrl != null && !avatarUrl.isEmpty() && !avatarUrl.startsWith("http")) {
+                                avatarUrl = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + avatarUrl;
+                            }
                             
                             String bookId = bookObj != null ? bookObj.optString("id") : "";
                             String bookTitle = bookObj != null ? bookObj.optString("title") : "";

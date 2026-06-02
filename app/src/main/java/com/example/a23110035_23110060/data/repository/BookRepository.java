@@ -85,6 +85,8 @@ public class BookRepository {
                             entity.authorName = authorName;
                             entity.coverUrl = obj.optString("cover_url");
                             entity.isFeatured = true;
+                            entity.isAudiobook = obj.optBoolean("is_audiobook", false);
+                            entity.isEbook = obj.optBoolean("is_ebook", false);
                             entity.cachedAt = currentTime;
                             newBooks.add(entity);
                         }

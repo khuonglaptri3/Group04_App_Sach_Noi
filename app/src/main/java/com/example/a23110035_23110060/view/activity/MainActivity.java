@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         if ("ACTION_RESUME_LAST_BOOK".equals(getIntent().getAction())) {
             String lastBookId = new com.example.a23110035_23110060.controller.SessionManager(this).getLastPlayedBookId();
             if (lastBookId != null) {
-                android.content.Intent bookIntent = new android.content.Intent(this, BookDetailActivity.class);
+                android.content.Intent bookIntent = new android.content.Intent(this, AudiobookDetailActivity.class);
                 bookIntent.putExtra("bookId", lastBookId);
                 startActivity(bookIntent);
             }

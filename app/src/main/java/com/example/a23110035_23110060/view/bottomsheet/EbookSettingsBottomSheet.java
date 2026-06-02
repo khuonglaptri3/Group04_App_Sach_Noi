@@ -22,7 +22,7 @@ public class EbookSettingsBottomSheet extends BottomSheetDialogFragment {
         void onThemeChanged(String bgColor, String textColor);
     }
 
-    private SettingsListener listener;
+    private final SettingsListener listener;
     private float currentTextSize;
 
     public EbookSettingsBottomSheet(SettingsListener listener, float currentTextSize) {

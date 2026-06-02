@@ -38,7 +38,7 @@ import okhttp3.Response;
 
 public class DiscoveryCategoryAdapter extends RecyclerView.Adapter<DiscoveryCategoryAdapter.DiscoveryViewHolder> {
 
-    private List<Category> categories;
+    private final List<Category> categories;
     private OkHttpClient client;
 
     public DiscoveryCategoryAdapter(List<Category> categories) {

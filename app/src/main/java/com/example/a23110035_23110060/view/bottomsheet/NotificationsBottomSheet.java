@@ -40,11 +40,11 @@ import okhttp3.Response;
 
 public class NotificationsBottomSheet extends BottomSheetDialogFragment {
 
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     private SessionManager sessionManager;
     private RecyclerView rvNotifications;
     private NotificationsAdapter adapter;
-    private List<Notification> notifications = new ArrayList<>();
+    private final List<Notification> notifications = new ArrayList<>();
     private TextView tvEmpty;
     private ProgressBar progressBar;
 

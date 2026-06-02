@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_bottom_sheet">
+    
+    <!-- Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="24dp"/>
+    
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+        
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="16dp">
+            
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="bottom|start"
+                android:background="@drawable/bg_speed_icon"
+                android:src="@drawable/ic_play"
+                app:tint="#FFB74D"
+                android:padding="12dp"/>
+                
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:src="@drawable/ic_diamond"/>
+        </FrameLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_speed_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tốc độ phát 1.0x"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </LinearLayout>
+    
+    <!-- Slider -->
+    <com.google.android.material.slider.Slider
+        android:id="@+id/slider_speed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:valueFrom="0.5"
+        android:valueTo="3.0"
+        android:value="1.0"
+        android:stepSize="0.1"
+        app:thumbColor="#FF8A65"
+        app:trackColorActive="#FF8A65"
+        app:trackColorInactive="#F0F0F0"
+        app:tickVisible="false"/>
+        
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:layout_marginHorizontal="12dp">
+        
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0.5x"
+            android:textColor="#7A869A"
+            android:textSize="16sp"/>
+            
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1x"
+            android:gravity="center"
+            android:textColor="#7A869A"
+            android:textSize="16sp"/>
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2x"
+            android:layout_marginEnd="16dp"
+            android:textColor="#7A869A"
+            android:textSize="16sp"/>
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3x"
+            android:textColor="#7A869A"
+            android:textSize="16sp"/>
+    </LinearLayout>
+    
+
+</LinearLayout>

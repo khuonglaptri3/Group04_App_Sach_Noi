@@ -22,8 +22,8 @@ import java.io.File;
 import java.util.List;
 
 public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHolder> {
-    private List<DownloadItem> downloadList;
-    private OnDownloadDeleteListener listener;
+    private final List<DownloadItem> downloadList;
+    private final OnDownloadDeleteListener listener;
 
     public interface OnDownloadDeleteListener {
         void onDelete(DownloadItem item, int position);

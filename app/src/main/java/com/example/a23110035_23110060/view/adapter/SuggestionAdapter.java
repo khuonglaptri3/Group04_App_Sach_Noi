@@ -2,7 +2,7 @@ package com.example.a23110035_23110060.view.adapter;
 
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.activity.BookDetailActivity;
+
 
 import com.example.a23110035_23110060.model.Book;
 
@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.ViewHolder> {
-    private List<Book> suggestions;
+    private final List<Book> suggestions;
 
     public SuggestionAdapter(List<Book> suggestions) {
         this.suggestions = suggestions;
@@ -34,7 +34,11 @@ public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.Vi
         Book book = suggestions.get(position);
         holder.tvTitle.setText(book.getTitle());
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), BookDetailActivity.class);
+            // Using bookType to decide Activity
+            Class<?> activityClass = book.isEbook() ? 
+                com.example.a23110035_23110060.view.activity.EbookDetailActivity.class : 
+                com.example.a23110035_23110060.view.activity.AudiobookDetailActivity.class;
+            Intent intent = new Intent(v.getContext(), activityClass);
             intent.putExtra("bookId", book.getId());
             v.getContext().startActivity(intent);
         });

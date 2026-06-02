@@ -33,13 +33,13 @@ public class PlayerManager {
     private Book currentBook;
     private boolean isPlaying = false;
     private float currentSpeed = 1.0f;
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
     
     private List<Chapter> chapters = new ArrayList<>();
     private int currentChapterIndex = -1;
     private boolean isPrepared = false;
     
-    private Handler sleepTimerHandler = new Handler(Looper.getMainLooper());
+    private final Handler sleepTimerHandler = new Handler(Looper.getMainLooper());
     private Runnable sleepTimerRunnable;
     public interface PlayerCallback {
         void onProgress(int currentMs, int totalMs);
@@ -92,18 +92,115 @@ public class PlayerManager {
             mediaPlayer.setOnPreparedListener(mp -> {
                 isPrepared = true;
                 setPlaybackSpeed(currentSpeed);
-                if (currentChapterIndex >= 0 && chapters != null && !chapters.isEmpty()) {
-                    mediaPlayer.seekTo(chapters.get(currentChapterIndex).getStartTime());
-                }
-                mediaPlayer.start();
-                isPlaying = true;
-                if (callback != null) callback.onStateChange(true);
-                startProgressUpdate();
-                notifyService();
+                fetchLastProgressAndPlay();
             });
         } catch (IOException e) {
             Log.e("PlayerManager", "Error", e);
         }
+    }
+
+    private void fetchLastProgressAndPlay() {
+        if (currentBook == null || MyApplication.getInstance() == null) {
+            mediaPlayer.start();
+            isPlaying = true;
+            if (callback != null) callback.onStateChange(true);
+            startProgressUpdate();
+            notifyService();
+            return;
+        }
+
+        SessionManager session = new SessionManager(MyApplication.getInstance());
+        String userId = session.getUserId();
+        String token = session.getAccessToken();
+        if (userId == null || token == null) {
+            mediaPlayer.start();
+            isPlaying = true;
+            if (callback != null) callback.onStateChange(true);
+            startProgressUpdate();
+            notifyService();
+            return;
+        }
+
+        String url = com.example.a23110035_23110060.BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + userId + "&book_id=eq." + currentBook.getId() + "&select=last_page_number";
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .addHeader("apikey", com.example.a23110035_23110060.BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        NetworkClient.getClient(MyApplication.getInstance()).newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+                startPlayingFrom(0);
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        org.json.JSONArray arr = new org.json.JSONArray(response.body().string());
+                        if (arr.length() > 0) {
+                            int lastPosition = arr.getJSONObject(0).optInt("last_page_number", 0);
+                            startPlayingFrom(lastPosition);
+                            return;
+                        }
+                    } catch (Exception e) {}
+                }
+                startPlayingFrom(0);
+            }
+        });
+    }
+
+    private void startPlayingFrom(int position) {
+        handler.post(() -> {
+            if (currentChapterIndex >= 0 && chapters != null && !chapters.isEmpty()) {
+                mediaPlayer.seekTo(chapters.get(currentChapterIndex).getStartTime());
+            } else if (position > 0) {
+                mediaPlayer.seekTo(position);
+            }
+            mediaPlayer.start();
+            isPlaying = true;
+            if (callback != null) callback.onStateChange(true);
+            startProgressUpdate();
+            notifyService();
+        });
+    }
+
+    public void autoSaveProgress() {
+        if (currentBook == null || mediaPlayer == null || !isPrepared || MyApplication.getInstance() == null) return;
+        
+        SessionManager session = new SessionManager(MyApplication.getInstance());
+        String userId = session.getUserId();
+        String token = session.getAccessToken();
+        if (userId == null || token == null) return;
+
+        int currentPos = mediaPlayer.getCurrentPosition();
+        int total = mediaPlayer.getDuration();
+        int percent = total > 0 ? (int) (((float) currentPos / total) * 100) : 0;
+
+        String url = com.example.a23110035_23110060.BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + userId + "&book_id=eq." + currentBook.getId();
+        org.json.JSONObject json = new org.json.JSONObject();
+        try {
+            json.put("user_id", userId);
+            json.put("book_id", currentBook.getId());
+            json.put("last_page_number", currentPos); // use last_page_number as milliseconds for audio
+            json.put("percent_complete", percent);
+        } catch (Exception e) {}
+
+        okhttp3.RequestBody body = okhttp3.RequestBody.create(json.toString(), okhttp3.MediaType.parse("application/json"));
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .addHeader("apikey", com.example.a23110035_23110060.BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("Prefer", "resolution=merge-duplicates")
+                .post(body)
+                .build();
+
+        NetworkClient.getClient(MyApplication.getInstance()).newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(okhttp3.Call call, IOException e) {}
+            @Override public void onResponse(okhttp3.Call call, okhttp3.Response response) {}
+        });
     }
 
     public void togglePlayPause() {
@@ -111,6 +208,7 @@ public class PlayerManager {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
             isPlaying = false;
+            autoSaveProgress();
         } else {
             mediaPlayer.start();
             isPlaying = true;
@@ -231,6 +329,7 @@ public class PlayerManager {
 
     public void release() {
         cancelSleepTimer();
+        autoSaveProgress();
         handler.removeCallbacksAndMessages(null);
         if (mediaPlayer != null) {
             if (mediaPlayer.isPlaying()) mediaPlayer.stop();
@@ -247,8 +346,27 @@ public class PlayerManager {
 
     public boolean isPlaying() { return isPlaying; }
     public Book getCurrentBook() { return currentBook; }
-    public int getCurrentPosition() { return mediaPlayer.getCurrentPosition(); }
-    public int getDuration() { return mediaPlayer.getDuration(); }
+    public int getCurrentPosition() { return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0; }
+    public int getDuration() { return mediaPlayer != null ? mediaPlayer.getDuration() : 0; }
+    
+    public String getCurrentChapterTitle() {
+        if (chapters != null && !chapters.isEmpty()) {
+            int current = getCurrentPosition();
+            for (int i = 0; i < chapters.size(); i++) {
+                Chapter c = chapters.get(i);
+                if (current >= c.getStartTime() && (c.getEndTime() <= 0 || current < c.getEndTime())) {
+                    currentChapterIndex = i; // update internal index
+                    if (c.getTitle() != null && !c.getTitle().isEmpty()) return c.getTitle();
+                }
+            }
+            // fallback if out of bounds but index is valid
+            if (currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
+                String title = chapters.get(currentChapterIndex).getTitle();
+                if (title != null && !title.isEmpty()) return title;
+            }
+        }
+        return "PLAYING FROM LIBRARY";
+    }
 
     private void startProgressUpdate() {
         handler.removeCallbacksAndMessages(null);

@@ -36,7 +36,7 @@ import okhttp3.Response;
 public class ProfileContentFragment extends Fragment {
 
     private SessionManager sessionManager;
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     private TextView tvProfileName, tvBooksReadCount, tvListeningHours, tvBadgesCount;
     private View cardPremiumUpgrade;
     

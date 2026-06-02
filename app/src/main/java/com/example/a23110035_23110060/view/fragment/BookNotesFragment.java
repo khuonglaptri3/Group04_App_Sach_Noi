@@ -51,7 +51,7 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
     private MaterialButton btnSaveNote;
     private TextView tvEmptyNotes;
     
-    private List<BookNote> notesList = new ArrayList<>();
+    private List<NoteBookmarkItem> notesList = new ArrayList<>();
     private NotesAdapter adapter;
     
     private String editingNoteId = null;
@@ -122,7 +122,7 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
                         JSONArray array = new JSONArray(response.body().string());
-                        notesList.clear();
+                        List<NoteBookmarkItem> tempNotes = new ArrayList<>();
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject obj = array.getJSONObject(i);
                             String id = obj.getString("id");
@@ -137,21 +137,83 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
                                 highlightedText = highlightObj.optString("highlighted_text", "");
                             }
                             
-                            notesList.add(new BookNote(id, note, createdAt, page, highlightedText));
+                            tempNotes.add(new NoteBookmarkItem(false, id, note, createdAt, page, highlightedText, null));
                         }
-                        if (isAdded()) {
-                            requireActivity().runOnUiThread(() -> {
-                                adapter.notifyDataSetChanged();
-                                tvEmptyNotes.setVisibility(notesList.isEmpty() ? View.VISIBLE : View.GONE);
-                                rvNotes.setVisibility(notesList.isEmpty() ? View.GONE : View.VISIBLE);
-                            });
-                        }
+                        
+                        // Sau khi lấy Notes, tiếp tục lấy Bookmarks
+                        fetchBookmarks(userId, token, tempNotes);
                     } catch (Exception e) {
                         Log.e(TAG, "Parse notes failed", e);
                     }
                 }
             }
         });
+    }
+
+    private void fetchBookmarks(String userId, String token, List<NoteBookmarkItem> tempNotes) {
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?user_id=eq." + userId + 
+                     "&book_id=eq." + bookId + "&select=id,page_number,created_at&order=created_at.desc";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e(TAG, "Fetch bookmarks failed", e);
+                updateUIWithList(tempNotes);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONArray array = new JSONArray(response.body().string());
+                        for (int i = 0; i < array.length(); i++) {
+                            JSONObject obj = array.getJSONObject(i);
+                            String id = obj.getString("id");
+                            int pageNumber = obj.optInt("page_number", 1);
+                            String createdAt = obj.optString("created_at", "");
+                            
+                            String chapterTitle = "Chương " + pageNumber; // Fallback nếu không biết chapter
+                            if (getActivity() instanceof EbookReaderActivity) {
+                                chapterTitle = ((EbookReaderActivity) getActivity()).getChapterTitleForPage(pageNumber - 1);
+                            }
+                            
+                            tempNotes.add(new NoteBookmarkItem(true, id, null, createdAt, pageNumber, null, chapterTitle));
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Parse bookmarks failed", e);
+                    }
+                }
+                
+                // Sort by page number then created_at
+                tempNotes.sort((a, b) -> {
+                    if (a.pageNumber != b.pageNumber) {
+                        return Integer.compare(a.pageNumber, b.pageNumber);
+                    }
+                    return b.createdAt.compareTo(a.createdAt);
+                });
+                
+                updateUIWithList(tempNotes);
+            }
+        });
+    }
+
+    private void updateUIWithList(List<NoteBookmarkItem> newList) {
+        if (isAdded()) {
+            requireActivity().runOnUiThread(() -> {
+                notesList.clear();
+                notesList.addAll(newList);
+                adapter.notifyDataSetChanged();
+                tvEmptyNotes.setVisibility(notesList.isEmpty() ? View.VISIBLE : View.GONE);
+                rvNotes.setVisibility(notesList.isEmpty() ? View.GONE : View.VISIBLE);
+            });
+        }
     }
 
     private void performSaveNote() {
@@ -236,6 +298,45 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
         });
     }
 
+    private void deleteBookmark(String id, int pageIndex) {
+        String token = sessionManager.getAccessToken();
+        if (token == null) return;
+
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/bookmarks?id=eq." + id;
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer " + token)
+                .delete()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Xóa thất bại", Toast.LENGTH_SHORT).show());
+                }
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        if (response.isSuccessful()) {
+                            Toast.makeText(getContext(), "Đã xóa dấu trang", Toast.LENGTH_SHORT).show();
+                            if (getActivity() instanceof EbookReaderActivity) {
+                                ((EbookReaderActivity) getActivity()).removeBookmarkFromUI(pageIndex + 1);
+                            }
+                            fetchBookNotes();
+                        } else {
+                            Toast.makeText(getContext(), "Xóa thất bại", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     private void resetInputStateAndRefresh(boolean success, String message) {
         if (isAdded()) {
             requireActivity().runOnUiThread(() -> {
@@ -252,27 +353,31 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
     }
 
     // Static inner classes for representation
-    public static class BookNote {
+    public static class NoteBookmarkItem {
+        public boolean isBookmark;
         public String id;
         public String note;
         public String createdAt;
         public int pageNumber;
         public String highlightedText;
+        public String chapterTitle;
 
-        public BookNote(String id, String note, String createdAt, int pageNumber, String highlightedText) {
+        public NoteBookmarkItem(boolean isBookmark, String id, String note, String createdAt, int pageNumber, String highlightedText, String chapterTitle) {
+            this.isBookmark = isBookmark;
             this.id = id;
             this.note = note;
             this.createdAt = createdAt;
             this.pageNumber = pageNumber;
             this.highlightedText = highlightedText;
+            this.chapterTitle = chapterTitle;
         }
     }
 
     // RecyclerView Adapter
     private class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
-        private final List<BookNote> list;
+        private final List<NoteBookmarkItem> list;
 
-        public NotesAdapter(List<BookNote> list) {
+        public NotesAdapter(List<NoteBookmarkItem> list) {
             this.list = list;
         }
 
@@ -285,42 +390,65 @@ public class BookNotesFragment extends BottomSheetDialogFragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            BookNote note = list.get(position);
-            holder.tvText.setText(note.note);
+            NoteBookmarkItem item = list.get(position);
             
-            if (note.highlightedText != null && !note.highlightedText.isEmpty()) {
-                holder.tvHighlightedText.setVisibility(View.VISIBLE);
-                holder.tvHighlightedText.setText("\"" + note.highlightedText + "\"");
-            } else {
+            if (item.isBookmark) {
+                // Hiển thị như Bookmark
+                holder.tvText.setText(item.chapterTitle != null ? item.chapterTitle : "Dấu trang");
+                holder.tvText.setTypeface(null, android.graphics.Typeface.BOLD);
                 holder.tvHighlightedText.setVisibility(View.GONE);
+                holder.btnEdit.setVisibility(View.GONE);
+                // Đổi icon delete sang icon bookmark mờ để biết là bookmark (nếu muốn), hoặc giữ nguyên thùng rác
+                holder.btnDelete.setImageResource(R.drawable.ic_bookmark);
+                holder.btnDelete.setColorFilter(android.graphics.Color.parseColor("#E91E63"));
+            } else {
+                // Hiển thị như Note
+                holder.tvText.setText(item.note);
+                holder.tvText.setTypeface(null, android.graphics.Typeface.NORMAL);
+                if (item.highlightedText != null && !item.highlightedText.isEmpty()) {
+                    holder.tvHighlightedText.setVisibility(View.VISIBLE);
+                    holder.tvHighlightedText.setText("\"" + item.highlightedText + "\"");
+                } else {
+                    holder.tvHighlightedText.setVisibility(View.GONE);
+                }
+                holder.btnEdit.setVisibility(View.VISIBLE);
+                holder.btnDelete.setImageResource(R.drawable.ic_close);
+                holder.btnDelete.clearColorFilter();
             }
             
-            // Format page number and date
-            String pageText = "Trang " + note.pageNumber;
-            String dateText = formatSupabaseDate(note.createdAt);
+            String pageText = "Trang " + item.pageNumber;
+            String dateText = formatSupabaseDate(item.createdAt);
             holder.tvDate.setText(pageText + "  •  " + dateText);
 
             holder.itemView.setOnClickListener(v -> {
                 if (getActivity() instanceof EbookReaderActivity) {
-                    ((EbookReaderActivity) getActivity()).jumpToPage(note.pageNumber - 1);
+                    ((EbookReaderActivity) getActivity()).jumpToPage(item.pageNumber - 1);
                     dismiss();
                 }
             });
 
             holder.btnEdit.setOnClickListener(v -> {
-                editingNoteId = note.id;
-                etNoteInput.setText(note.note);
-                etNoteInput.requestFocus();
-                btnSaveNote.setText("Cập nhật");
+                if (!item.isBookmark) {
+                    editingNoteId = item.id;
+                    etNoteInput.setText(item.note);
+                    etNoteInput.requestFocus();
+                    btnSaveNote.setText("Cập nhật");
+                }
             });
 
             holder.btnDelete.setOnClickListener(v -> {
-                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Xóa ghi chú")
-                    .setMessage("Bạn có chắc muốn xóa ghi chú này không?")
-                    .setPositiveButton("Xóa", (dialog, which) -> deleteNote(note.id))
-                    .setNegativeButton("Hủy", null)
-                    .show();
+                if (item.isBookmark) {
+                    // Xóa Bookmark
+                    deleteBookmark(item.id, item.pageNumber - 1);
+                } else {
+                    // Xóa Note
+                    new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle("Xóa ghi chú")
+                        .setMessage("Bạn có chắc muốn xóa ghi chú này không?")
+                        .setPositiveButton("Xóa", (dialog, which) -> deleteNote(item.id))
+                        .setNegativeButton("Hủy", null)
+                        .show();
+                }
             });
         }
 
