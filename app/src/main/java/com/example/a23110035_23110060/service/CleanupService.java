@@ -19,7 +19,6 @@ public class CleanupService extends Service {
         new Thread(() -> {
             long deletedSize = 0;
             try {
-                // Xóa bộ nhớ đệm (Cache) của ứng dụng
                 File cacheDir = getCacheDir();
                 deletedSize += deleteDir(cacheDir);
 

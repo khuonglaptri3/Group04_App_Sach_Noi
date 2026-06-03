@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
             NavigationUI.setupWithNavController(bottomNav, navController);
         }
         
-        // Notification bell is hidden
 
         // Start CleanupService
         android.content.Intent cleanupIntent = new android.content.Intent(this, com.example.a23110035_23110060.service.CleanupService.class);

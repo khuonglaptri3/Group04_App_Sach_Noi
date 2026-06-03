@@ -84,7 +84,7 @@ public class EpubExtractor {
                 NodeList rootfiles = containerDoc.getElementsByTagName("rootfile");
                 if (rootfiles.getLength() == 0) throw new Exception("Invalid EPUB: no rootfile");
                 String opfPath = ((Element) rootfiles.item(0)).getAttribute("full-path");
-
+                
                 // 4. Parse content.opf
                 byte[] opfData = files.get(opfPath);
                 if (opfData == null) throw new Exception("OPF file not found: " + opfPath);
