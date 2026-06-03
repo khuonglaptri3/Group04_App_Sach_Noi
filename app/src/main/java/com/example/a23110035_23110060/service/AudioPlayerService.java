@@ -54,7 +54,7 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
     private AudioFocusRequest audioFocusRequest;
     private BroadcastReceiver noisyReceiver;
     private BroadcastReceiver phoneStateReceiver;
-
+                            
     @Override
     public void onCreate() {
         super.onCreate();
@@ -101,6 +101,11 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
             @Override
             public void onSkipToPrevious() {
                 PlayerManager.getInstance().previousChapter();
+            }
+
+            @Override
+            public void onSeekTo(long pos) {
+                PlayerManager.getInstance().seekTo((int) pos);
             }
         });
         mediaSession.setActive(true);
@@ -238,7 +243,8 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         // Update MediaSession state
         PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
                 .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS);
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                        PlaybackStateCompat.ACTION_SEEK_TO);
         
         stateBuilder.setState(isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED, 
                               PlayerManager.getInstance().getCurrentPosition(), 1.0f);
@@ -247,7 +253,8 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
         // Update MediaSession metadata
         MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, book.getTitle())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, book.getAuthorName());
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, book.getAuthorName())
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, PlayerManager.getInstance().getDuration());
         mediaSession.setMetadata(metadataBuilder.build());
 
         // Intents
