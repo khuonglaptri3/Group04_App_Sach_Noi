@@ -673,7 +673,7 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
     }
 
     protected void fetchReviews() {
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles!reviews_user_id_fkey(full_name,avatar_url),review_likes(user_id)&order=created_at.desc";
         String token = sessionManager.getAccessToken();
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -702,10 +702,26 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
                             if (avatar != null && !avatar.isEmpty() && !avatar.startsWith("http")) {
                                 avatar = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/avatars/" + avatar;
                             }
-                            reviews.add(new ReviewAdapter.Review(
+                            ReviewAdapter.Review r = new ReviewAdapter.Review(
                                     obj.getString("id"), name, avatar, obj.optString("comment"),
                                     obj.optInt("rating", 5), obj.optString("created_at")
-                            ));
+                            );
+                            r.likeCount = obj.optInt("like_count", 0);
+                            
+                            // Kiểm tra xem user hiện tại đã like chưa
+                            String currentUserId = sessionManager.getUserId();
+                            if (currentUserId != null) {
+                                JSONArray likes = obj.optJSONArray("review_likes");
+                                if (likes != null) {
+                                    for (int j = 0; j < likes.length(); j++) {
+                                        if (currentUserId.equals(likes.getJSONObject(j).optString("user_id"))) {
+                                            r.isLiked = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            reviews.add(r);
                         }
                         runOnUiThread(() -> {
                             currentReviewCount = reviews.size();
@@ -718,10 +734,39 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
                             adapter.setListener(new ReviewAdapter.ReviewInteractionListener() {
                                 @Override
                                 public void onLikeClick(ReviewAdapter.Review review, int position) {
+                                    String uid = sessionManager.getUserId();
+                                    if (uid == null) {
+                                        Toast.makeText(BaseBookDetailActivity.this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+
+                                    // Cập nhật UI tạm thời
                                     review.isLiked = !review.isLiked;
                                     review.likeCount += review.isLiked ? 1 : -1;
                                     adapter.notifyItemChanged(position);
-                                    Toast.makeText(BaseBookDetailActivity.this, review.isLiked ? "Đã thích" : "Đã bỏ thích", Toast.LENGTH_SHORT).show();
+
+                                    // Gọi API
+                                    String rpcUrl = BuildConfig.SUPABASE_URL + "/rest/v1/rpc/toggle_review_like";
+                                    JSONObject body = new JSONObject();
+                                    try {
+                                        body.put("p_review_id", review.id);
+                                        body.put("p_user_id", uid);
+                                    } catch (Exception e) {}
+
+                                    RequestBody reqBody = RequestBody.create(body.toString(), MediaType.parse("application/json"));
+                                    Request rpcRequest = new Request.Builder()
+                                            .url(rpcUrl)
+                                            .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                                            .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
+                                            .post(reqBody)
+                                            .build();
+
+                                    client.newCall(rpcRequest).enqueue(new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {}
+                                    });
                                 }
                             });
                             rvReviews.setAdapter(adapter);
@@ -733,7 +778,19 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
                                 btnViewAllReviews.setVisibility(View.GONE);
                             }
                         });
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        Log.e("BaseBookDetailActivity", "Error parsing reviews", e);
+                    }
+                } else {
+                    String err = response.body() != null ? response.body().string() : "No body";
+                    Log.e("BaseBookDetailActivity", "Failed to fetch reviews: " + response.code() + " " + err);
+                    
+                    // Fallback to old URL if new one fails (likely due to missing schema)
+                    if (url.contains("review_likes")) {
+                        String oldUrl = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles!reviews_user_id_fkey(full_name,avatar_url)&order=created_at.desc";
+                        Request fallbackReq = request.newBuilder().url(oldUrl).build();
+                        client.newCall(fallbackReq).enqueue(this);
+                    }
                 }
             }
         });

@@ -211,10 +211,10 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
                     PlayerManager.getInstance().togglePlayPause();
                     break;
                 case ACTION_NEXT:
-                    PlayerManager.getInstance().skipNext();
+                    PlayerManager.getInstance().seekForward(30000);
                     break;
                 case ACTION_PREVIOUS:
-                    PlayerManager.getInstance().previousChapter();
+                    PlayerManager.getInstance().seekBack(10000);
                     break;
                 case ACTION_STOP:
                     stopForeground(true);
@@ -247,7 +247,8 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
                         PlaybackStateCompat.ACTION_SEEK_TO);
         
         stateBuilder.setState(isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED, 
-                              PlayerManager.getInstance().getCurrentPosition(), 1.0f);
+                              PlayerManager.getInstance().getCurrentPosition(), 
+                              isPlaying ? PlayerManager.getInstance().getPlaybackSpeed() : 0f);
         mediaSession.setPlaybackState(stateBuilder.build());
 
         // Update MediaSession metadata

@@ -67,7 +67,7 @@ public class AllReviewsActivity extends AppCompatActivity {
         progressIndicator.setVisibility(View.VISIBLE);
         
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + 
-                     "&select=*,profiles(full_name,avatar_url)&order=created_at.desc";
+                     "&select=*,profiles!reviews_user_id_fkey(full_name,avatar_url),review_likes(user_id)&order=created_at.desc";
         
         String token = sessionManager.getAccessToken();
         Request.Builder builder = new Request.Builder()
@@ -95,25 +95,78 @@ public class AllReviewsActivity extends AppCompatActivity {
                             JSONObject profile = obj.optJSONObject("profiles");
                             String name = profile != null ? profile.optString("full_name", "Ẩn danh") : "Ẩn danh";
                             String avatar = profile != null ? profile.optString("avatar_url") : null;
-                            reviewList.add(new ReviewAdapter.Review(
+                            ReviewAdapter.Review r = new ReviewAdapter.Review(
                                     obj.getString("id"), name, avatar, obj.optString("comment"),
                                     obj.optInt("rating", 5), obj.optString("created_at")
-                            ));
+                            );
+                            r.likeCount = obj.optInt("like_count", 0);
+                            
+                            String currentUserId = sessionManager.getUserId();
+                            if (currentUserId != null) {
+                                JSONArray likes = obj.optJSONArray("review_likes");
+                                if (likes != null) {
+                                    for (int j = 0; j < likes.length(); j++) {
+                                        if (currentUserId.equals(likes.getJSONObject(j).optString("user_id"))) {
+                                            r.isLiked = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            reviewList.add(r);
                         }
                         runOnUiThread(() -> {
                             adapter.setListener((review, position1) -> {
+                                String uid = sessionManager.getUserId();
+                                if (uid == null) {
+                                    android.widget.Toast.makeText(AllReviewsActivity.this, "Vui lòng đăng nhập", android.widget.Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
                                 review.isLiked = !review.isLiked;
                                 review.likeCount += review.isLiked ? 1 : -1;
                                 adapter.notifyItemChanged(position1);
+
+                                String rpcUrl = BuildConfig.SUPABASE_URL + "/rest/v1/rpc/toggle_review_like";
+                                JSONObject body = new JSONObject();
+                                try {
+                                    body.put("p_review_id", review.id);
+                                    body.put("p_user_id", uid);
+                                } catch (Exception e) {}
+
+                                okhttp3.RequestBody reqBody = okhttp3.RequestBody.create(body.toString(), okhttp3.MediaType.parse("application/json"));
+                                Request rpcRequest = new Request.Builder()
+                                        .url(rpcUrl)
+                                        .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                                        .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
+                                        .post(reqBody)
+                                        .build();
+
+                                client.newCall(rpcRequest).enqueue(new Callback() {
+                                    @Override
+                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                                    @Override
+                                    public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {}
+                                });
                             });
                             adapter.notifyDataSetChanged();
                             progressIndicator.setVisibility(View.GONE);
                         });
                     } catch (Exception e) {
                         runOnUiThread(() -> progressIndicator.setVisibility(View.GONE));
+                        Log.e("AllReviewsActivity", "Error parsing reviews", e);
                     }
                 } else {
-                    runOnUiThread(() -> progressIndicator.setVisibility(View.GONE));
+                    String err = response.body() != null ? response.body().string() : "No body";
+                    Log.e("AllReviewsActivity", "Failed to fetch reviews: " + response.code() + " " + err);
+                    
+                    if (url.contains("review_likes")) {
+                        String oldUrl = BuildConfig.SUPABASE_URL + "/rest/v1/reviews?book_id=eq." + bookId + "&select=*,profiles!reviews_user_id_fkey(full_name,avatar_url)&order=created_at.desc";
+                        Request fallbackReq = builder.url(oldUrl).build();
+                        client.newCall(fallbackReq).enqueue(this);
+                    } else {
+                        runOnUiThread(() -> progressIndicator.setVisibility(View.GONE));
+                    }
                 }
             }
         });
