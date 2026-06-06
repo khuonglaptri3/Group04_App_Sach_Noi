@@ -136,20 +136,21 @@ public class  AudioPlayerActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    playerManager.seekTo(progress);
                     tvCurrentTime.setText(formatTime(progress));
                     tvTotalTime.setText("-" + formatTime(seekBar.getMax() - progress));
-                    TextView tvHeader = findViewById(R.id.tv_header);
-                    if (tvHeader != null) {
-                        String title = playerManager.getCurrentChapterTitle();
-                        if (title != null) tvHeader.setText(title.toUpperCase());
-                    }
                 }
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                playerManager.seekTo(seekBar.getProgress());
+                TextView tvHeader = findViewById(R.id.tv_header);
+                if (tvHeader != null) {
+                    String title = playerManager.getCurrentChapterTitle();
+                    if (title != null) tvHeader.setText(title.toUpperCase());
+                }
+            }
         });
 
         findViewById(R.id.ll_speed).setOnClickListener(v -> {

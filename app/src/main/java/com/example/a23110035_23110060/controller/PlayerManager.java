@@ -38,6 +38,7 @@ public class PlayerManager {
     private List<Chapter> chapters = new ArrayList<>();
     private int currentChapterIndex = -1;
     private boolean isPrepared = false;
+    private boolean isSeeking = false;
     
     private final Handler sleepTimerHandler = new Handler(Looper.getMainLooper());
     private Runnable sleepTimerRunnable;
@@ -53,6 +54,10 @@ public class PlayerManager {
         mediaPlayer.setOnCompletionListener(mp -> {
             isPlaying = false;
             if (callback != null) callback.onStateChange(false);
+        });
+        mediaPlayer.setOnSeekCompleteListener(mp -> {
+            isSeeking = false;
+            notifyService();
         });
     }
 
@@ -231,18 +236,30 @@ public class PlayerManager {
                 Log.e("PlayerManager", "Speed error", e);
             }
         }
+        notifyService();
     }
+    
+    public float getPlaybackSpeed() { return currentSpeed; }
 
     public void seekBack(int ms) {
-        mediaPlayer.seekTo(Math.max(mediaPlayer.getCurrentPosition() - ms, 0));
+        if (mediaPlayer != null) {
+            isSeeking = true;
+            mediaPlayer.seekTo(Math.max(mediaPlayer.getCurrentPosition() - ms, 0));
+        }
     }
 
     public void seekForward(int ms) {
-        mediaPlayer.seekTo(Math.min(mediaPlayer.getCurrentPosition() + ms, mediaPlayer.getDuration()));
+        if (mediaPlayer != null) {
+            isSeeking = true;
+            mediaPlayer.seekTo(Math.min(mediaPlayer.getCurrentPosition() + ms, mediaPlayer.getDuration()));
+        }
     }
 
     public void seekTo(int progress) {
-        mediaPlayer.seekTo(progress);
+        if (mediaPlayer != null) {
+            isSeeking = true;
+            mediaPlayer.seekTo(progress);
+        }
     }
 
     public void setChapters(List<Chapter> chapters) {
@@ -376,7 +393,7 @@ public class PlayerManager {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer != null && isPlaying && isPrepared) {
+                if (mediaPlayer != null && isPlaying && isPrepared && !isSeeking) {
                     try {
                         int current = mediaPlayer.getCurrentPosition();
                         int total = mediaPlayer.getDuration();
