@@ -407,6 +407,8 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
                              }
                              currentBook.setCoverUrl(obj.optString("cover_url"));
                              currentBook.setPremiumOnly(obj.optBoolean("is_premium_only", false));
+                             currentBook.setAudiobook(obj.optBoolean("is_audiobook", false));
+                             currentBook.setEbook(obj.optBoolean("is_ebook", false));
                             
                             // TÌM FILE MP3 VÀ EPUB TRONG KẾT QUẢ TRẢ VỀ
                             JSONArray filesArray = obj.optJSONArray("book_files");
@@ -731,44 +733,6 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
                             List<ReviewAdapter.Review> displayReviews = reviews.size() > 3 ? reviews.subList(0, 3) : reviews;
                             
                             ReviewAdapter adapter = new ReviewAdapter(displayReviews);
-                            adapter.setListener(new ReviewAdapter.ReviewInteractionListener() {
-                                @Override
-                                public void onLikeClick(ReviewAdapter.Review review, int position) {
-                                    String uid = sessionManager.getUserId();
-                                    if (uid == null) {
-                                        Toast.makeText(BaseBookDetailActivity.this, "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-
-                                    // Cập nhật UI tạm thời
-                                    review.isLiked = !review.isLiked;
-                                    review.likeCount += review.isLiked ? 1 : -1;
-                                    adapter.notifyItemChanged(position);
-
-                                    // Gọi API
-                                    String rpcUrl = BuildConfig.SUPABASE_URL + "/rest/v1/rpc/toggle_review_like";
-                                    JSONObject body = new JSONObject();
-                                    try {
-                                        body.put("p_review_id", review.id);
-                                        body.put("p_user_id", uid);
-                                    } catch (Exception e) {}
-
-                                    RequestBody reqBody = RequestBody.create(body.toString(), MediaType.parse("application/json"));
-                                    Request rpcRequest = new Request.Builder()
-                                            .url(rpcUrl)
-                                            .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                                            .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
-                                            .post(reqBody)
-                                            .build();
-
-                                    client.newCall(rpcRequest).enqueue(new Callback() {
-                                        @Override
-                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-                                        @Override
-                                        public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {}
-                                    });
-                                }
-                            });
                             rvReviews.setAdapter(adapter);
                             
                             // Nếu có hơn 3 đánh giá thì hiện nút Xem tất cả, ngược lại ẩn
@@ -798,6 +762,9 @@ public abstract class BaseBookDetailActivity extends AppCompatActivity {
 
     protected void updatePurchaseButtonUI() {
         if (currentBook == null) return;
+        
+        btnRead.setVisibility(currentBook.isEbook() ? android.view.View.VISIBLE : android.view.View.GONE);
+        btnPreview.setVisibility(currentBook.isAudiobook() ? android.view.View.VISIBLE : android.view.View.GONE);
         
         if (isBookInLibrary) {
             btnBuy.setEnabled(false);

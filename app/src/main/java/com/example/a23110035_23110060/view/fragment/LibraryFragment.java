@@ -56,7 +56,7 @@ public class LibraryFragment extends Fragment {
     private RecyclerView rvLibraryBooks;
     private SwipeRefreshLayout swipeRefresh;
     private View layoutEmpty;
-    private final OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client;
     private final List<LibraryBook> libraryBooks = new ArrayList<>();
     private LibraryBookAdapter adapter;
     private SessionManager sessionManager;
@@ -79,6 +79,7 @@ public class LibraryFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         sessionManager = new SessionManager(requireContext());
+        client = com.example.a23110035_23110060.controller.NetworkClient.getClient(requireContext());
         rvLibraryBooks = view.findViewById(R.id.rvLibraryBooks);
         swipeRefresh = view.findViewById(R.id.swipeRefreshLibrary);
         layoutEmpty = view.findViewById(R.id.layoutEmpty);
@@ -295,22 +296,78 @@ public class LibraryFragment extends Fragment {
                             lb.setPremium(bookObj.optBoolean("is_premium_only"));
                             lb.setAudiobook(isAudiobook);
                             lb.setEbook(isEbook);
-                            lb.setProgress(item.optInt("progress", 0));
+                            
+                            lb.setProgress(0); // Removing progress query due to relation error
                             int timeRemaining = item.optInt("time_remaining_minutes", 0);
                             lb.setTimeRemaining(timeRemaining > 0 ? "Còn " + (timeRemaining/60) + "g" : "");
                             libraryBooks.add(lb);
                         }
                         if (isAdded()) {
-                            requireActivity().runOnUiThread(() -> {
-                                adapter.notifyDataSetChanged();
-                                swipeRefresh.setRefreshing(false);
-                                layoutEmpty.setVisibility(libraryBooks.isEmpty() ? View.VISIBLE : View.GONE);
-                                rvLibraryBooks.setVisibility(libraryBooks.isEmpty() ? View.GONE : View.VISIBLE);
-                            });
+                            if (libraryBooks.isEmpty()) {
+                                requireActivity().runOnUiThread(() -> {
+                                    adapter.notifyDataSetChanged();
+                                    swipeRefresh.setRefreshing(false);
+                                    layoutEmpty.setVisibility(View.VISIBLE);
+                                    rvLibraryBooks.setVisibility(View.GONE);
+                                });
+                            } else {
+                                StringBuilder sb = new StringBuilder();
+                                for (int k = 0; k < libraryBooks.size(); k++) {
+                                    sb.append("\"").append(libraryBooks.get(k).getBookId()).append("\"");
+                                    if (k < libraryBooks.size() - 1) sb.append(",");
+                                }
+                                
+                                String progressUrl = BuildConfig.SUPABASE_URL + "/rest/v1/progress?user_id=eq." + sessionManager.getUserId() + "&book_id=in.(" + sb.toString() + ")";
+                                Request progressReq = new Request.Builder()
+                                        .url(progressUrl)
+                                        .addHeader("apikey", BuildConfig.SUPABASE_ANON_KEY)
+                                        .addHeader("Authorization", "Bearer " + sessionManager.getAccessToken())
+                                        .get()
+                                        .build();
+                                
+                                client.newCall(progressReq).enqueue(new Callback() {
+                                    @Override
+                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                        if (isAdded()) requireActivity().runOnUiThread(() -> updateUI());
+                                    }
+
+                                    @Override
+                                    public void onResponse(@NonNull Call call, @NonNull Response res) throws IOException {
+                                        if (res.isSuccessful() && res.body() != null) {
+                                            try {
+                                                JSONArray progArr = new JSONArray(res.body().string());
+                                                for (int j = 0; j < progArr.length(); j++) {
+                                                    JSONObject pObj = progArr.getJSONObject(j);
+                                                    String bId = pObj.getString("book_id");
+                                                    int pct = pObj.optInt("percent_complete", 0);
+                                                    for (LibraryBook b : libraryBooks) {
+                                                        if (b.getBookId().equals(bId)) {
+                                                            b.setProgress(pct);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            } catch (Exception e) {}
+                                        }
+                                        if (isAdded()) requireActivity().runOnUiThread(() -> updateUI());
+                                    }
+                                    
+                                    private void updateUI() {
+                                        adapter.notifyDataSetChanged();
+                                        swipeRefresh.setRefreshing(false);
+                                        layoutEmpty.setVisibility(libraryBooks.isEmpty() ? View.VISIBLE : View.GONE);
+                                        rvLibraryBooks.setVisibility(libraryBooks.isEmpty() ? View.GONE : View.VISIBLE);
+                                    }
+                                });
+                            }
                         }
                     } catch (Exception e) {
-                        Log.e("Library", "Error", e);
+                        Log.e("Library", "Error parsing", e);
+                        if (isAdded()) requireActivity().runOnUiThread(() -> swipeRefresh.setRefreshing(false));
                     }
+                } else {
+                    Log.e("Library", "Error fetching: " + response.code());
+                    if (isAdded()) requireActivity().runOnUiThread(() -> swipeRefresh.setRefreshing(false));
                 }
             }
         });

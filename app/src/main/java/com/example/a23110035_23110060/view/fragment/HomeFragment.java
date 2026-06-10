@@ -3,7 +3,6 @@ package com.example.a23110035_23110060.view.fragment;
 import com.example.a23110035_23110060.BuildConfig;
 import com.example.a23110035_23110060.R;
 
-import com.example.a23110035_23110060.view.adapter.HomePagerAdapter;
 import com.example.a23110035_23110060.view.activity.AudioPlayerActivity;
 
 import com.example.a23110035_23110060.model.Book;
@@ -26,12 +25,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager2.widget.ViewPager2;
-
 import com.bumptech.glide.Glide;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 import org.json.JSONArray;
 import java.io.IOException;
 import okhttp3.Call;
@@ -41,8 +36,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class HomeFragment extends Fragment {
-
-    private final String[] titles = new String[]{"Sách nói", "Sách điện tử"};
     private SessionManager sessionManager;
     private TextView tvGreeting;
     private OkHttpClient client;
@@ -69,14 +62,11 @@ public class HomeFragment extends Fragment {
         updateGreeting(sessionManager.getUserName());
         fetchUserProfile();
 
-        TabLayout tabLayout = view.findViewById(R.id.tabLayout);
-        ViewPager2 viewPager = view.findViewById(R.id.viewPager);
-
-        viewPager.setAdapter(new HomePagerAdapter(this, titles));
-
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            tab.setText(titles[position]);
-        }).attach();
+        if (savedInstanceState == null) {
+            getChildFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, HomeTabFragment.newInstance("all"))
+                    .commit();
+        }
 
         setupMiniPlayer(view);
     }

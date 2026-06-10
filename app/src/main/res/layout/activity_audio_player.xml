@@ -219,7 +219,7 @@
             app:tint="?attr/colorOnPrimary" />
 
         <ImageButton
-            android:id="@+id/btn_forward_30"
+            android:id="@+id/btn_forward_10"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginEnd="16dp"

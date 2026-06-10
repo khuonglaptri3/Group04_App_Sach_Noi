@@ -27,7 +27,7 @@ import java.util.Locale;
 
 public class  AudioPlayerActivity extends AppCompatActivity {
 
-    private ImageButton btnCollapse, btnSkipPrevious, btnSkipNext, btnReplay10, btnForward30;
+    private ImageButton btnCollapse, btnSkipPrevious, btnSkipNext, btnReplay10, btnForward10;
     private FloatingActionButton fabPlay;
     private SeekBar seekBar;
     private TextView tvTitle, tvAuthor, tvCurrentTime, tvTotalTime, tvSpeedValue;
@@ -90,7 +90,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         btnSkipPrevious = findViewById(R.id.btn_skip_previous);
         btnSkipNext = findViewById(R.id.btn_skip_next);
         btnReplay10 = findViewById(R.id.btn_replay_10);
-        btnForward30 = findViewById(R.id.btn_forward_30);
+        btnForward10 = findViewById(R.id.btn_forward_10);
         fabPlay = findViewById(R.id.fab_play);
         seekBar = findViewById(R.id.seek_bar);
         tvTitle = findViewById(R.id.tv_title);
@@ -128,7 +128,7 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         
         fabPlay.setOnClickListener(v -> playerManager.togglePlayPause());
         btnReplay10.setOnClickListener(v -> playerManager.seekBack(10000));
-        btnForward30.setOnClickListener(v -> playerManager.seekForward(30000));
+        btnForward10.setOnClickListener(v -> playerManager.seekForward(10000));
         btnSkipPrevious.setOnClickListener(v -> playerManager.previousChapter());
         btnSkipNext.setOnClickListener(v -> playerManager.nextChapter());
 

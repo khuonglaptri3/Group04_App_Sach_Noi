@@ -244,14 +244,18 @@ public class PlayerManager {
     public void seekBack(int ms) {
         if (mediaPlayer != null) {
             isSeeking = true;
-            mediaPlayer.seekTo(Math.max(mediaPlayer.getCurrentPosition() - ms, 0));
+            int newPosition = Math.max(mediaPlayer.getCurrentPosition() - ms, 0);
+            mediaPlayer.seekTo(newPosition);
+            if (callback != null) callback.onProgress(newPosition, mediaPlayer.getDuration());
         }
     }
 
     public void seekForward(int ms) {
         if (mediaPlayer != null) {
             isSeeking = true;
-            mediaPlayer.seekTo(Math.min(mediaPlayer.getCurrentPosition() + ms, mediaPlayer.getDuration()));
+            int newPosition = Math.min(mediaPlayer.getCurrentPosition() + ms, mediaPlayer.getDuration());
+            mediaPlayer.seekTo(newPosition);
+            if (callback != null) callback.onProgress(newPosition, mediaPlayer.getDuration());
         }
     }
 
@@ -259,6 +263,7 @@ public class PlayerManager {
         if (mediaPlayer != null) {
             isSeeking = true;
             mediaPlayer.seekTo(progress);
+            if (callback != null) callback.onProgress(progress, mediaPlayer.getDuration());
         }
     }
 
@@ -393,28 +398,29 @@ public class PlayerManager {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer != null && isPlaying && isPrepared && !isSeeking) {
-                    try {
-                        int current = mediaPlayer.getCurrentPosition();
-                        int total = mediaPlayer.getDuration();
-                        if (callback != null) callback.onProgress(current, total);
-                        
-                        progressSaveCounter++;
-                        if (progressSaveCounter >= 10) {
-                            autoSaveProgress();
-                            progressSaveCounter = 0;
-                        }
-
-                        if (chapters != null && currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
-                            Chapter currentChapter = chapters.get(currentChapterIndex);
-                            if (currentChapter.getEndTime() > 0 && current >= currentChapter.getEndTime()) {
-                                nextChapter();
-                                return;
+                if (mediaPlayer != null && isPlaying && isPrepared) {
+                    if (!isSeeking) {
+                        try {
+                            int current = mediaPlayer.getCurrentPosition();
+                            int total = mediaPlayer.getDuration();
+                            if (callback != null) callback.onProgress(current, total);
+                            
+                            progressSaveCounter++;
+                            if (progressSaveCounter >= 10) {
+                                autoSaveProgress();
+                                progressSaveCounter = 0;
                             }
-                        }
-                        
-                        handler.postDelayed(this, 1000);
-                    } catch (Exception e) {}
+
+                            if (chapters != null && currentChapterIndex >= 0 && currentChapterIndex < chapters.size()) {
+                                Chapter currentChapter = chapters.get(currentChapterIndex);
+                                if (currentChapter.getEndTime() > 0 && current >= currentChapter.getEndTime()) {
+                                    nextChapter();
+                                    return;
+                                }
+                            }
+                        } catch (Exception e) {}
+                    }
+                    handler.postDelayed(this, 1000);
                 }
             }
         }, 1000);

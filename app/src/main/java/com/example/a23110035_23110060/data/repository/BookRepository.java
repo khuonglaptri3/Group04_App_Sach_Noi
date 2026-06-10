@@ -49,8 +49,11 @@ public class BookRepository {
     }
 
     private void refreshFeaturedBooksFromNetwork(String type) {
-        String filter = type.equals("audio") ? "is_audiobook=eq.true" : "is_ebook=eq.true";
-        String url = BuildConfig.SUPABASE_URL + "/rest/v1/books?select=*,authors(name)&" + filter + "&limit=10";
+        String filter = "";
+        if (type.equals("audio")) filter = "&is_audiobook=eq.true";
+        else if (type.equals("ebook")) filter = "&is_ebook=eq.true";
+        
+        String url = BuildConfig.SUPABASE_URL + "/rest/v1/books?select=*,authors(name)" + filter + "&limit=10";
 
 
         Request request = new Request.Builder()

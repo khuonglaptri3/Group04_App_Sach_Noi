@@ -115,11 +115,6 @@ public class BookReviewsBottomSheet extends BottomSheetDialogFragment {
                         }
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
-                                adapter.setListener((review, position1) -> {
-                                    review.isLiked = !review.isLiked;
-                                    review.likeCount += review.isLiked ? 1 : -1;
-                                    adapter.notifyItemChanged(position1);
-                                });
                                 adapter.notifyDataSetChanged();
                                 progressIndicator.setVisibility(View.GONE);
                             });
