@@ -63,7 +63,7 @@
                         android:id="@+id/tvProfileName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lê Đức"
+                        tools:text="Lê Đức"
                         android:textColor="@android:color/white"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -72,7 +72,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Thành viên mọt sách"
+                        tools:text="Thành viên mọt sách"
                         android:textColor="#CCFFFFFF"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -109,7 +109,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="24"
+                        tools:text="24"
                         android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
@@ -144,7 +144,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="128"
+                        tools:text="128"
                         android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
@@ -179,7 +179,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="8"
+                        tools:text="8"
                         android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView

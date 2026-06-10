@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="24dp"
     android:background="?attr/selectableItemBackground">
@@ -29,7 +30,7 @@
                 android:id="@+id/tv_chapter_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="LỜI NÓI ĐẦU"
+                tools:text="LỜI NÓI ĐẦU"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -39,7 +40,7 @@
                 android:id="@+id/tv_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Trích đoạn 03:46"
+                tools:text="Trích đoạn 03:46"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="14sp"/>
                 
@@ -61,7 +62,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginStart="56dp"
         android:background="@drawable/bg_note_input"
-        android:text="Thêm ghi chú..."
+        tools:text="Thêm ghi chú..."
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:padding="16dp"/>

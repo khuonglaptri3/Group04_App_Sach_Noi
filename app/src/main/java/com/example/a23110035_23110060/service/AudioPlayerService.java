@@ -211,7 +211,7 @@ public class AudioPlayerService extends Service implements AudioManager.OnAudioF
                     PlayerManager.getInstance().togglePlayPause();
                     break;
                 case ACTION_NEXT:
-                    PlayerManager.getInstance().seekForward(30000);
+                    PlayerManager.getInstance().seekForward(10000);
                     break;
                 case ACTION_PREVIOUS:
                     PlayerManager.getInstance().seekBack(10000);

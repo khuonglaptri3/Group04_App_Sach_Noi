@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
-                android:text="PREMIUM"
+                tools:text="PREMIUM"
                 android:textColor="#FFFFFF"
                 android:textSize="9sp"
                 android:textStyle="bold" />

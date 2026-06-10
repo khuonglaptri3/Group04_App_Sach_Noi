@@ -68,7 +68,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="5dp"
                 android:paddingVertical="2dp"
-                android:text="MỚI"
+                tools:text="MỚI"
                 android:textAllCaps="true"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="8sp"

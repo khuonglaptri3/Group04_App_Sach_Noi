@@ -18,12 +18,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
-import com.google.android.material.tabs.TabLayout;
 
 public class ProfileFragment extends Fragment {
 
@@ -47,19 +44,11 @@ public class ProfileFragment extends Fragment {
                 ? (View) view.findViewById(R.id.tvGreetingSub).getParent() : null;
         if (greetingLayout != null) greetingLayout.setVisibility(View.GONE);
 
-        TabLayout tabLayout = view.findViewById(R.id.tabLayout);
-        if (tabLayout != null) tabLayout.setVisibility(View.GONE);
-
-        ViewPager2 viewPager = view.findViewById(R.id.viewPager);
-        viewPager.setAdapter(new FragmentStateAdapter(this) {
-            @NonNull
-            @Override
-            public Fragment createFragment(int position) {
-                return new ProfileContentFragment();
-            }
-            @Override
-            public int getItemCount() { return 1; }
-        });
+        if (savedInstanceState == null) {
+            getChildFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new ProfileContentFragment())
+                    .commit();
+        }
 
         setupMiniPlayer(view);
     }

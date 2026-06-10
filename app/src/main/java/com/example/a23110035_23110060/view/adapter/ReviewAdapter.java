@@ -22,18 +22,8 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
 
     private final List<Review> reviewList;
 
-    public interface ReviewInteractionListener {
-        void onLikeClick(Review review, int position);
-    }
-
-    private ReviewInteractionListener listener;
-
     public ReviewAdapter(List<Review> reviewList) {
         this.reviewList = reviewList;
-    }
-
-    public void setListener(ReviewInteractionListener listener) {
-        this.listener = listener;
     }
 
     @NonNull
@@ -49,7 +39,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
         holder.tvReviewerName.setText(review.reviewerName);
         holder.tvReviewComment.setText(review.comment);
         holder.tvReviewRating.setText(review.rating + "/5");
-        holder.tvLikeCount.setText(String.valueOf(review.likeCount));
 
         if (review.avatarUrl != null && !review.avatarUrl.isEmpty() && !review.avatarUrl.equals("null")) {
             String url = review.avatarUrl;
@@ -65,20 +54,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             holder.ivAvatar.setImageResource(R.drawable.bacl);
         }
 
-        int activeColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.heart_active);
-        int inactiveColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.md_theme_light_onSurfaceVariant);
 
-        if (review.isLiked) {
-            holder.ivLikeHeart.setColorFilter(activeColor);
-        } else {
-            holder.ivLikeHeart.setColorFilter(inactiveColor);
-        }
-
-        holder.llLikeReview.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onLikeClick(review, position);
-            }
-        });
 
         try {
             SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
@@ -99,9 +75,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
 
     static class ReviewViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView ivAvatar;
-        TextView tvReviewerName, tvReviewDate, tvReviewComment, tvReviewRating, tvLikeCount;
-        ImageView ivLikeHeart;
-        View llLikeReview;
+        TextView tvReviewerName, tvReviewDate, tvReviewComment, tvReviewRating;
 
         public ReviewViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -110,9 +84,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
             tvReviewDate = itemView.findViewById(R.id.tv_review_date);
             tvReviewComment = itemView.findViewById(R.id.tv_review_comment);
             tvReviewRating = itemView.findViewById(R.id.tv_review_rating);
-            tvLikeCount = itemView.findViewById(R.id.tv_like_count);
-            ivLikeHeart = itemView.findViewById(R.id.iv_like_heart);
-            llLikeReview = itemView.findViewById(R.id.ll_like_review);
         }
     }
 
