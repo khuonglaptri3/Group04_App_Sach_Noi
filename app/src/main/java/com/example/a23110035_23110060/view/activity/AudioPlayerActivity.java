@@ -156,13 +156,16 @@ public class  AudioPlayerActivity extends AppCompatActivity {
         findViewById(R.id.ll_speed).setOnClickListener(v -> {
             float currentSpeed = speeds[speedIndex];
             com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment bottomSheet = 
-                new com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment(currentSpeed, speed -> {
-                    playerManager.setPlaybackSpeed(speed);
-                    tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", speed));
-                    for (int i = 0; i < speeds.length; i++) {
-                        if (Math.abs(speeds[i] - speed) < 0.01f) {
-                            speedIndex = i;
-                            break;
+                new com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment(currentSpeed, new com.example.a23110035_23110060.view.bottomsheet.SpeedBottomSheetFragment.SpeedListener() {
+                    @Override
+                    public void onSpeedSelected(float speed) {
+                        playerManager.setPlaybackSpeed(speed);
+                        tvSpeedValue.setText(String.format(Locale.getDefault(), "%.2fx", speed));
+                        for (int i = 0; i < speeds.length; i++) {
+                            if (Math.abs(speeds[i] - speed) < 0.01f) {
+                                speedIndex = i;
+                                break;
+                            }
                         }
                     }
                 });
@@ -171,13 +174,16 @@ public class  AudioPlayerActivity extends AppCompatActivity {
 
         findViewById(R.id.ll_timer).setOnClickListener(v -> {
             com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment bottomSheet = 
-                new com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment(minutes -> {
-                    if (minutes > 0) {
-                        playerManager.setSleepTimer(minutes);
-                        Toast.makeText(this, "Sẽ tắt sau " + minutes + " phút", Toast.LENGTH_SHORT).show();
-                    } else {
-                        playerManager.cancelSleepTimer();
-                        Toast.makeText(this, "Đã tắt hẹn giờ", Toast.LENGTH_SHORT).show();
+                new com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment(new com.example.a23110035_23110060.view.bottomsheet.TimerBottomSheetFragment.TimerListener() {
+                    @Override
+                    public void onTimerSelected(int minutes) {
+                        if (minutes > 0) {
+                            playerManager.setSleepTimer(minutes);
+                            Toast.makeText(AudioPlayerActivity.this, "Sẽ tắt sau " + minutes + " phút", Toast.LENGTH_SHORT).show();
+                        } else {
+                            playerManager.cancelSleepTimer();
+                            Toast.makeText(AudioPlayerActivity.this, "Đã tắt hẹn giờ", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             bottomSheet.show(getSupportFragmentManager(), "TimerSettings");
@@ -190,10 +196,16 @@ public class  AudioPlayerActivity extends AppCompatActivity {
                 for (Chapter c : playerManager.getChapters()) {
                     titles.add(c.getTitle() != null ? c.getTitle() : "Chương " + c.getChapterNumber());
                 }
-                EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(titles, index -> {
-                    playerManager.playChapter(index);
+//                EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(titles, index -> {
+//                    playerManager.playChapter(index);
+//                });
+                EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(titles, new EbookChaptersBottomSheet.ChapterListener() {
+                    @Override
+                    public void onChapterSelected(int index) {
+                        playerManager.playChapter(index);
+                    }
                 });
-                
+
                 // Set the current playing chapter index to highlight it
                 int currentIdx = -1;
                 long currentPos = playerManager.getCurrentPosition();

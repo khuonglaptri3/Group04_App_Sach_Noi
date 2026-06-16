@@ -85,8 +85,11 @@ public class LibraryFragment extends Fragment {
         layoutEmpty = view.findViewById(R.id.layoutEmpty);
 
         rvLibraryBooks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new LibraryBookAdapter(libraryBooks, (book, position) -> {
-            deleteBookFromLibrary(book, position);
+        adapter = new LibraryBookAdapter(libraryBooks, new LibraryBookAdapter.OnItemDeleteListener() {
+            @Override
+            public void onDelete(LibraryBook book, int position) {
+                deleteBookFromLibrary(book, position);
+            }
         });
         rvLibraryBooks.setAdapter(adapter);
 
@@ -253,6 +256,7 @@ public class LibraryFragment extends Fragment {
             swipeRefresh.setRefreshing(false);
             return;
         }
+
         String filterQuery = currentTabFilter.equals("recent") ? "" : "&" + currentTabFilter;
         String url = BuildConfig.SUPABASE_URL + "/rest/v1/user_library?user_id=eq." + userId + 
                      "&select=*,books(id,title,cover_url,is_premium_only,is_audiobook,is_ebook,authors(name))" +

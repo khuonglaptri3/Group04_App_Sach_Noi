@@ -745,9 +745,12 @@ public class EbookReaderActivity extends AppCompatActivity {
             Toast.makeText(this, "Không có mục lục", Toast.LENGTH_SHORT).show();
             return;
         }
-        EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(chapterTitles, index -> {
-            if (index < chapterStartPages.size()) {
-                vpEbook.setCurrentItem(chapterStartPages.get(index), false);
+        EbookChaptersBottomSheet bottomSheet = new EbookChaptersBottomSheet(chapterTitles, new EbookChaptersBottomSheet.ChapterListener() {
+            @Override
+            public void onChapterSelected(int index) {
+                if (index < chapterStartPages.size()) {
+                    vpEbook.setCurrentItem(chapterStartPages.get(index), false);
+                }
             }
         });
         bottomSheet.show(getSupportFragmentManager(), "EbookChapters");

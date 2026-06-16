@@ -67,6 +67,16 @@ public class EbookChaptersBottomSheet extends BottomSheetDialogFragment {
                     if (listener != null) listener.onChapterSelected(position);
                     dismiss();
                 });
+//                holder.itemView.setOnClickListener(
+//                        new View.OnClickListener() {
+//                            @Override
+//                            public void onClick(View v) {
+//                                if (listener != null)
+//                                    listener.onChapterSelected(position);
+//                                dismiss();
+//                            }
+//                        }
+//                );
             }
 
             @Override

@@ -167,8 +167,11 @@ public class AudiobookDetailActivity extends BaseBookDetailActivity {
             titles.add(c.getTitle());
         }
         com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet bottomSheet = 
-            new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet(titles, index -> {
-                playChapter(chapterList, chapterList.get(index));
+            new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet(titles, new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet.ChapterListener() {
+                @Override
+                public void onChapterSelected(int index) {
+                    playChapter(chapterList, chapterList.get(index));
+                }
             });
         bottomSheet.show(getSupportFragmentManager(), "TableOfContents");
     }

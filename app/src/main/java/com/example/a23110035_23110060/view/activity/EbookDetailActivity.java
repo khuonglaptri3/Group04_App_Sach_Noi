@@ -144,8 +144,11 @@ public class EbookDetailActivity extends BaseBookDetailActivity {
     private void showAllChaptersBottomSheet() {
         if (chapterTitles.isEmpty()) return;
         com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet bottomSheet = 
-            new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet(chapterTitles, index -> {
-                readChapter(index);
+            new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet(chapterTitles, new com.example.a23110035_23110060.view.bottomsheet.EbookChaptersBottomSheet.ChapterListener() {
+                @Override
+                public void onChapterSelected(int index) {
+                    readChapter(index);
+                }
             });
         bottomSheet.show(getSupportFragmentManager(), "TableOfContents");
     }
