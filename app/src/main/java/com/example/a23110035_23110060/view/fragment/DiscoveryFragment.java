@@ -108,7 +108,7 @@ public class DiscoveryFragment extends Fragment {
         cardFeaturedCollection.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), BookListActivity.class);
             intent.putExtra("title", "Bộ sưu tập nổi bật");
-            intent.putExtra("filter", "rating_avg=gte.4.5"); // Ví dụ: lọc các sách đánh giá cao
+            intent.putExtra("filter", "rating_avg=gte.4.5"); //lọc các sách đánh giá cao
             startActivity(intent);
         });
 

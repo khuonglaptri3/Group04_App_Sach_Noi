@@ -77,7 +77,7 @@ public class LoginActivity extends AppCompatActivity {
         tvSignUp = findViewById(R.id.tvSignUp);
         ivPasswordToggle = findViewById(R.id.ivPasswordToggle);
 
-        client = new OkHttpClient();
+        client  = new OkHttpClient();
 
         // Navigate to SignUp
         tvSignUp.setOnClickListener(v -> {

@@ -62,22 +62,25 @@ public class DownloadManagerActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
 
         rvDownloads.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new DownloadAdapter(downloadList, (item, position) -> {
-            boolean deleted = DownloadHelper.deleteDownloadedFile(this, item.getBookId(), item.getFileType());
-            if (deleted) {
-                downloadList.remove(position);
-                adapter.notifyItemRemoved(position);
-                Toast.makeText(this, "Đã xóa file", Toast.LENGTH_SHORT).show();
-                
-                // Update Supabase
-                updateDownloadStatus(item.getBookId(), false);
+        adapter = new DownloadAdapter(downloadList, new DownloadAdapter.OnDownloadDeleteListener() {
+            @Override
+            public void onDelete(DownloadItem item, int position) {
+                boolean deleted = DownloadHelper.deleteDownloadedFile(DownloadManagerActivity.this, item.getBookId(), item.getFileType());
+                if (deleted) {
+                    downloadList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    Toast.makeText(DownloadManagerActivity.this, "Đã xóa file", Toast.LENGTH_SHORT).show();
+                    
+                    // Update Supabase
+                    updateDownloadStatus(item.getBookId(), false);
 
-                if (downloadList.isEmpty()) {
-                    rvDownloads.setVisibility(View.GONE);
-                    layoutEmptyDownloads.setVisibility(View.VISIBLE);
+                    if (downloadList.isEmpty()) {
+                        rvDownloads.setVisibility(View.GONE);
+                        layoutEmptyDownloads.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    Toast.makeText(DownloadManagerActivity.this, "Không thể xóa file", Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(this, "Không thể xóa file", Toast.LENGTH_SHORT).show();
             }
         });
         rvDownloads.setAdapter(adapter);
